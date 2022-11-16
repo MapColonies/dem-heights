@@ -1,13 +1,14 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import httpStatusCodes from 'http-status-codes';
+
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
-import { IAnotherResourceModel } from '../../../src/anotherResource/models/anotherResourceManager';
-import { AnotherResourceRequestSender } from './helpers/requestSender';
+import { IHeightModel } from '../../../src/heights/models/heightsManager';
+import { HeightsRequestSender } from './helpers/requestSender';
 
-describe('resourceName', function () {
-  let requestSender: AnotherResourceRequestSender;
+describe('heights', function () {
+  let requestSender: HeightsRequestSender;
   beforeEach(function () {
     const app = getApp({
       override: [
@@ -16,19 +17,23 @@ describe('resourceName', function () {
       ],
       useChild: true,
     });
-    requestSender = new AnotherResourceRequestSender(app);
+    requestSender = new HeightsRequestSender(app);
   });
 
   describe('Happy Path', function () {
-    it('should return 200 status code and the resource', async function () {
-      const response = await requestSender.getResource();
+    it('should return 200 status code and the heights', async function () {
+      const response = await requestSender.getHeights();
 
       expect(response.status).toBe(httpStatusCodes.OK);
-      expect(response).toSatisfyApiSpec();
 
-      const resource = response.body as IAnotherResourceModel;
-      expect(resource.kind).toBe('avi');
-      expect(resource.isAlive).toBe(false);
+      const heights = response.body as IHeightModel;
+      //expect(response).toSatisfyApiSpec();
+      expect(heights.dem).toBe(1037);
+    });
+    it('should return 200 status code and create the heights', async function () {
+      const response = await requestSender.getHeightsList();
+
+      expect(response.status).toBe(httpStatusCodes.OK);
     });
   });
   describe('Bad Path', function () {

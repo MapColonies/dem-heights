@@ -1,57 +1,38 @@
 openapi: 3.0.1
 info:
-  title: service-name
-  description: basic template for map colonies service
+  title: dem-elevation-extractor
+  description: map colonies service for extracting elevations from DTM/DSM geotiffs
   version: 1.0.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 paths:
-  /anotherResource:
+  /heights:
     get:
-      operationId: getAnotherResource
+      operationId: getHeights
       tags:
-        - anotherResource
-      summary: gets the resource
+        - heights
+      summary: gets the heights
       responses:
         200:
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/anotherResource'
-  /resourceName:
-    get:
-      operationId: getResourceName
-      tags:
-        - resourceName
-      summary: gets the resource
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/resource'
+                $ref: '#/components/schemas/heights'
     post:
-      operationId: createResource
+      operationId: getHeightsList
       tags:
-        - resourceName
-      summary: creates a new record of type resource
+        - heights
+      summary: get the heights
       responses:
-        201:
-          description: created
+        200:
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource'
-        400:
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
+                $ref: '#/components/schemas/heights'
 components:
   schemas:
     error:
@@ -61,27 +42,11 @@ components:
       properties:
         message:
           type: string
-    resource:
+    heights:
       type: object
       required:
-        - id
-        - name
-        - description
+        - dem
       properties:
-        id:
+        dem:
           type: number
           format: int64
-        name:
-          type: string
-        description:
-          type: string
-    anotherResource:
-      type: object
-      required:
-        - kind
-        - isAlive
-      properties:
-        kind:
-          type: string
-        isAlive:
-          type: boolean
