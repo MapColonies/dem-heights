@@ -6,7 +6,7 @@ const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const router = Router();
   const controller = dependencyContainer.resolve(HeightsController);
 
-  router.get('/', controller.getHeights);
+  router.get('/:longitude/:latitude', controller.getHeights);
   router.post('/', controller.getHeightsList);
 
   return router;

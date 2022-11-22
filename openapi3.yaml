@@ -8,12 +8,23 @@ info:
     url: https://opensource.org/licenses/MIT
 
 paths:
-  /heights:
+  /heights/{longitude}/{latitude}:
     get:
       operationId: getHeights
       tags:
         - heights
-      summary: gets the heights
+      summary: get heights
+      parameters:
+        - name: longitude
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: latitude
+          in: path
+          required: true
+          schema:
+            type: number
       responses:
         200:
           description: OK
@@ -21,18 +32,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/heights'
+  /heights:
     post:
       operationId: getHeightsList
       tags:
         - heights
-      summary: get the heights
+      summary: get heights
+      requestBody:
+        content:
+          application/json:
+              schema:
+                type: object
       responses:
         200:
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/heights'
+                type: object
 components:
   schemas:
     error:
