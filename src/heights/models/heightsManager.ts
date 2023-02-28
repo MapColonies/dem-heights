@@ -12,6 +12,7 @@ import {
   sampleTerrain,
   sampleTerrainMostDetailed
 } from 'cesium';
+import config from 'config';
 import { Feature, GeoJSON, Point } from 'geojson';
 import traverse from 'traverse';
 import { inject, injectable } from 'tsyringe';
@@ -33,7 +34,7 @@ export class HeightsManager {
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
 
   public async getHeights(coordinates: ICoordinates): Promise<IHeightModel> {
-    this.logger.info({ msg: 'Getting height' });
+    this.logger.info({ msg: 'Getting heights' });
     const point: GeoJSON = {
       "type": "Feature",
       "properties": {},
@@ -53,7 +54,7 @@ export class HeightsManager {
   }
 
   public async getHeightsList(geojson: GeoJSON): Promise<GeoJSON> {
-    this.logger.info({ msg: 'Getting height list' });
+    this.logger.info({ msg: 'Getting heights list' });
     const start = new Date();
     const result = await this.sample(geojson, { level: 11 });
     const end = new Date();
@@ -80,10 +81,7 @@ export class HeightsManager {
       if (positions.length && dPositions.length) {
         
         const CesiumProvider = new CesiumTerrainProvider({
-          url: new Resource({
-            url: 'http://localhost:8090',
-            // url: 'https://client-int-dem-integration-nginx-s3-gateway-route-integration.apps.j1lk3njp.eastus.aroapp.io/terrains/srtm100?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Ik1hcENvbG9uaWVzUUEifQ.eyJhbyI6WyJodHRwczovL2Rpc2NyZXRlLWxheWVyLWNsaWVudC1pbnRlZ3JhdGlvbi1yb3V0ZS1pbnRlZ3JhdGlvbi5hcHBzLmoxbGszbmpwLmVhc3R1cy5hcm9hcHAuaW8iLCJodHRwOi8vbG9jYWxob3N0OjMwMDAiXSwiZCI6WyJyYXN0ZXIiLCJkZW0iLCIzRCJdLCJpYXQiOjE2Njc3NDQ3MDAsInN1YiI6Im1hcGNvbG9uaWVzLWFwcCIsImlzcyI6Im1hcGNvbG9uaWVzLXRva2VuLWNsaSJ9.UHnG2z7kOfdsppEK3qJZR_z610CO3CINFIeHqwD3eJ-iNBf8_JTvFJes5UB5enxj-whqZ3PqSeWKB8iAVqANwPXhjv83_1JrA61TSPEuvbGf21s7GkflV-uok7esChP0uUuxZSWVjH1CQ85rWd_wHSjSFBitghrlbiko2AtcYRHBHRIo7s1djvDSG705PQB5O1y_AwCJMn-rXREYO7mG-sLsD5sdg8jsukiIYrLrEdStZHKgODIU94nZwp1xj6uwjH3o0XmY92pxjxFotR6caOef8hnSAB3BAwHiLzvb7w_SJfzotzl2MyZCHMwPIGbo4kRCYNQbsGGbekw0WqrhIw',
-          }),
+          url: config.get<string>('terrainProviderUrl')
         });
 
         const MIN_ZOOM_LEVEL = 0;

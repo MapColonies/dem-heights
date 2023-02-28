@@ -20,11 +20,13 @@ paths:
           required: true
           schema:
             type: number
+          example: 35.034
         - name: latitude
           in: path
           required: true
           schema:
             type: number
+          example: 32.691
       responses:
         200:
           description: OK
