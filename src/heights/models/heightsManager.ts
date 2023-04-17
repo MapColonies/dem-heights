@@ -52,10 +52,61 @@ export class HeightsManager {
     return { dem: ((result as Feature).geometry as Point).coordinates[2] };
   }
 
-  public async getPolygon(geojson: GeoJSON): Promise<GeoJSON> {
+  public async getPolygon(polygon: GeoJSON): Promise<GeoJSON> {
     this.logger.info({ msg: 'Getting polygon heights' });
+
+    const bbox = turf.bbox(polygon);
+    const cellSide = 1.0; // distance between points (in units)
+    const options = {
+      units: 'meters', // used in calculating cellSide, can be: degrees, radians, miles, or kilometers (default)
+      mask: polygon // if passed a Polygon or MultiPolygon, the grid Points will be created only inside it
+    };
+
+    // Creates a Point grid from a bounding box, FeatureCollection or Feature.
+    const pointGrid = turf.pointGrid(bbox, cellSide, options); // grid of points
+    const pointGridCoordinates = pointGrid.features.map(f => f.geometry.coordinates);
+
+    console.log(pointGridCoordinates); // 2,359 points inside the polygon
+
+    pointGridCoordinates.forEach(p => {
+      viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(p[0], p[1]),
+        point: {
+          color: Cesium.Color.fromRandom(),
+          pixelSize: 5,
+          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+        }
+      });
+    });
+    const positions = pointGridCoordinates.map(p => Cesium.Cartographic.fromDegrees(p[0], p[1]));
+
+    let bbox = turf.bbox(coords);
+//      let bboxLayer = L.geoJSON(turf.bboxPolygon(bbox)).addTo(map);
+//      map.fitBounds(bboxLayer.getBounds());
+
+      let cellWidth = 0.05;
+      let cellHeight = 0.05;
+
+      let bufferedBbox = turf.bbox(turf.buffer(coords, cellWidth, {units: 'kilometers'}));
+      let options = { units: "kilometers", mask: coords};
+      let squareGrid = turf.squareGrid(
+        bufferedBbox,
+//        bbox,
+        cellWidth,
+        options
+      );
+
+//      L.geoJSON(squareGrid).addTo(map);      
+      
+      let clippedGridLayer = L.geoJSON().addTo(map);
+
+      turf.featureEach(squareGrid, function (currentFeature, featureIndex) {
+        let intersected = turf.intersect(coords.features[0], currentFeature);
+        clippedGridLayer.addData(intersected);
+      });
+
     const start = new Date();
-    const result = await this.sample(geojson, { level: 11 });
+    const result = await this.sample(positions, { level: 11 });
     const end = new Date();
     console.log(result);
     console.log(`${end.getTime() - start.getTime()} ms`);
