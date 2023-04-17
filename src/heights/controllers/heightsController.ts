@@ -7,9 +7,8 @@ import { Meter } from '@map-colonies/telemetry';
 import { SERVICES } from '../../common/constants';
 import { IHeightModel, HeightsManager, ICoordinates } from '../models/heightsManager';
 
-
-type GetHeightsHandler = RequestHandler<ICoordinates, IHeightModel>;
-type GetHeightsListHandler = RequestHandler<undefined, GeoJSON, GeoJSON>;
+type GetHeightHandler = RequestHandler<ICoordinates, IHeightModel>;
+type GetHeightsHandler = RequestHandler<undefined, GeoJSON, GeoJSON>;
 
 @injectable()
 export class HeightsController {
@@ -21,19 +20,29 @@ export class HeightsController {
   ) {
   }
 
-  public getHeights: GetHeightsHandler = async (req, res, next) => {
+  public getHeight: GetHeightHandler = async (req, res, next) => {
     try {
-      const height: IHeightModel = await this.manager.getHeights(req.params); // 35.076, 32.675
+      const height: IHeightModel = await this.manager.getHeight(req.params); // 35.076, 32.675
       return res.status(httpStatus.OK).json(height);
     } catch (err) {
       next(err);
     }
   };
 
-  public getHeightsList: GetHeightsListHandler = async (req, res, next) => {
+  public getPolygon: GetHeightsHandler = async (req, res, next) => {
     try {
       const userInput: GeoJSON = req.body;
-      const heights = await this.manager.getHeightsList(userInput);
+      const heights = await this.manager.getPolygon(userInput);
+      return res.status(httpStatus.OK).json(heights);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  public getHeights: GetHeightsHandler = async (req, res, next) => {
+    try {
+      const userInput: GeoJSON = req.body;
+      const heights = await this.manager.getHeights(userInput);
       return res.status(httpStatus.OK).json(heights);
     } catch (err) {
       next(err);

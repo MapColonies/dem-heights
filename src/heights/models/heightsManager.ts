@@ -8,7 +8,6 @@
 import {
   Cartographic,
   CesiumTerrainProvider,
-  Resource,
   sampleTerrain,
   sampleTerrainMostDetailed
 } from 'cesium';
@@ -33,8 +32,8 @@ export class HeightsManager {
 
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
 
-  public async getHeights(coordinates: ICoordinates): Promise<IHeightModel> {
-    this.logger.info({ msg: 'Getting heights' });
+  public async getHeight(coordinates: ICoordinates): Promise<IHeightModel> {
+    this.logger.info({ msg: 'Getting height' });
     const point: GeoJSON = {
       "type": "Feature",
       "properties": {},
@@ -53,8 +52,18 @@ export class HeightsManager {
     return { dem: ((result as Feature).geometry as Point).coordinates[2] };
   }
 
-  public async getHeightsList(geojson: GeoJSON): Promise<GeoJSON> {
-    this.logger.info({ msg: 'Getting heights list' });
+  public async getPolygon(geojson: GeoJSON): Promise<GeoJSON> {
+    this.logger.info({ msg: 'Getting polygon heights' });
+    const start = new Date();
+    const result = await this.sample(geojson, { level: 11 });
+    const end = new Date();
+    console.log(result);
+    console.log(`${end.getTime() - start.getTime()} ms`);
+    return result;
+  }
+
+  public async getHeights(geojson: GeoJSON): Promise<GeoJSON> {
+    this.logger.info({ msg: 'Getting heights' });
     const start = new Date();
     const result = await this.sample(geojson, { level: 11 });
     const end = new Date();

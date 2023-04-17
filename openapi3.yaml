@@ -10,10 +10,10 @@ info:
 paths:
   /heights/{longitude}/{latitude}:
     get:
-      operationId: getHeights
+      operationId: getHeight
       tags:
         - heights
-      summary: get heights
+      summary: get height at a specific (lon,lat)
       parameters:
         - name: longitude
           in: path
@@ -33,13 +33,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/heights'
-  /heights:
+                $ref: '#/components/schemas/height'
+  /heights/polygon:
     post:
-      operationId: getHeightsList
+      operationId: getPolygon
       tags:
         - heights
-      summary: get heights
+      summary: get polygon heights
+      requestBody:
+        content:
+          application/json:
+              schema:
+                type: object
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+  /heights:
+    post:
+      operationId: getHeights
+      tags:
+        - heights
+      summary: get heights for any given geojson
       requestBody:
         content:
           application/json:
@@ -61,7 +79,7 @@ components:
       properties:
         message:
           type: string
-    heights:
+    height:
       type: object
       required:
         - dem

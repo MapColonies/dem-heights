@@ -7,19 +7,28 @@ describe('HeightsManager', () => {
   beforeEach(function () {
     heightsManager = new HeightsManager(jsLogger({ enabled: false }));
   });
-  describe('#getHeights', () => {
-    it('return heights', function () {
+  describe('#getHeight', () => {
+    it('return height', function () {
       // action
-      const height = heightsManager.getHeights();
+      const height = heightsManager.getHeight();
 
       // expectation
       expect(height.dem).toBe(1037);
     });
   });
-  describe('#getHeightsList', () => {
-    it('return heights list', function () {
+  describe('#getPolygon', () => {
+    it('return polygon heights', function () {
       // action
-      const heights = heightsManager.getHeightsList({ dem: 0 });
+      const heights = heightsManager.getPolygon({ dem: 0 });
+
+      // expectation
+      expect(heights).toHaveProperty('dem', 1037);
+    });
+  });
+  describe('#getHeights', () => {
+    it('return height list', function () {
+      // action
+      const heights = heightsManager.getHeights({ dem: 0 });
 
       // expectation
       expect(heights).toHaveProperty('dem', 1037);

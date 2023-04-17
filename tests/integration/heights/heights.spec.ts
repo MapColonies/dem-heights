@@ -1,7 +1,6 @@
 import jsLogger from '@map-colonies/js-logger';
 import { trace } from '@opentelemetry/api';
 import httpStatusCodes from 'http-status-codes';
-
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { IHeightModel } from '../../../src/heights/models/heightsManager';
@@ -22,7 +21,7 @@ describe('heights', function () {
 
   describe('Happy Path', function () {
     it('should return 200 status code and the heights', async function () {
-      const response = await requestSender.getHeights();
+      const response = await requestSender.getHeight();
 
       expect(response.status).toBe(httpStatusCodes.OK);
 
@@ -30,8 +29,13 @@ describe('heights', function () {
       //expect(response).toSatisfyApiSpec();
       expect(heights.dem).toBe(1037);
     });
-    it('should return 200 status code and create the heights', async function () {
-      const response = await requestSender.getHeightsList();
+    it('should return 200 status code and plygon heights', async function () {
+      const response = await requestSender.getPolygon();
+
+      expect(response.status).toBe(httpStatusCodes.OK);
+    });
+    it('should return 200 status code and geojson heights', async function () {
+      const response = await requestSender.getHeights();
 
       expect(response.status).toBe(httpStatusCodes.OK);
     });
