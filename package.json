@@ -50,6 +50,7 @@
     "@opentelemetry/api-metrics": "0.23.0",
     "@opentelemetry/instrumentation-express": "0.23.0",
     "@opentelemetry/instrumentation-http": "0.23.0",
+    "@supercharge/promise-pool": "^2.4.0",
     "@types/geojson": "^7946.0.10",
     "cesium": "^1.99.0",
     "compression": "^1.7.4",
