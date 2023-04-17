@@ -19,8 +19,8 @@ import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
 
 export interface ICoordinates {
-  longitude: number;
-  latitude: number;
+  longitude: string;
+  latitude: string;
 }
 
 export interface IHeightModel {
