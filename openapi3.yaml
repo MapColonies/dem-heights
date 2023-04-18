@@ -8,6 +8,42 @@ info:
     url: https://opensource.org/licenses/MIT
 
 paths:
+  /heights/points:
+    post:
+      operationId: getPoints
+      tags:
+        - heights
+      summary: get points heights
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+  /heights/path:
+    post:
+      operationId: getPath
+      tags:
+        - heights
+      summary: get path heights
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
   /heights/polygon:
     post:
       operationId: getPolygon

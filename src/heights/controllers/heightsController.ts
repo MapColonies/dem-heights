@@ -20,6 +20,26 @@ export class HeightsController {
   ) {
   }
 
+  public getPoints: GetHeightsHandler = async (req, res, next) => {
+    try {
+      const userInput: GeoJSON = req.body;
+      const heights = await this.manager.getPoints(userInput);
+      return res.status(httpStatus.OK).json(heights);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  public getPath: GetHeightsHandler = async (req, res, next) => {
+    try {
+      const userInput: GeoJSON = req.body;
+      const heights = await this.manager.getPath(userInput);
+      return res.status(httpStatus.OK).json(heights);
+    } catch (err) {
+      next(err);
+    }
+  };
+
   public getPolygon: GetHeightsHandler = async (req, res, next) => {
     try {
       const userInput: GeoJSON = req.body;

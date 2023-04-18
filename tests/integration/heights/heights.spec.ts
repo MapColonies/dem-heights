@@ -20,6 +20,16 @@ describe('heights', function () {
   });
 
   describe('Happy Path', function () {
+    it('should return 200 status code and points heights', async function () {
+      const response = await requestSender.getPoints();
+
+      expect(response.status).toBe(httpStatusCodes.OK);
+    });
+    it('should return 200 status code and path heights', async function () {
+      const response = await requestSender.getPath();
+
+      expect(response.status).toBe(httpStatusCodes.OK);
+    });
     it('should return 200 status code and plygon heights', async function () {
       const response = await requestSender.getPolygon();
 

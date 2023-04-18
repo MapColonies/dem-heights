@@ -12,6 +12,7 @@ import {
   sampleTerrainMostDetailed
 } from 'cesium';
 import config from 'config';
+import fetch from 'cross-fetch';
 import { Feature, FeatureCollection, GeoJSON, MultiPolygon, Point, Polygon } from 'geojson';
 import traverse from 'traverse';
 import { inject, injectable } from 'tsyringe';
@@ -35,11 +36,31 @@ export class HeightsManager {
 
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
 
+  public async getPoints(points: GeoJSON): Promise<GeoJSON> {
+    this.logger.info({ msg: 'Getting points heights' });
+    const start = new Date();
+    const result = await this.sample(points, { level: 11 });
+    const end = new Date();
+    console.log(result);
+    console.log(`${end.getTime() - start.getTime()} ms`);
+    return result;
+  }
+
+  public async getPath(path: GeoJSON): Promise<GeoJSON> {
+    this.logger.info({ msg: 'Getting path heights' });
+    const start = new Date();
+    const result = await this.sample(path, { level: 11 });
+    const end = new Date();
+    console.log(result);
+    console.log(`${end.getTime() - start.getTime()} ms`);
+    return result;
+  }
+
   public async getPolygon(polygon: GeoJSON): Promise<GeoJSON> {
     this.logger.info({ msg: 'Getting polygon heights' });
 
     const polygonBbox = bbox(polygon);
-    const cellSide = 1000.0; // distance between points (in units)
+    const cellSide = 600.0; // distance between points (in units)
     const options = {
       units: 'meters' as Units, // used in calculating cellSide, can be: degrees, radians, miles, or kilometers (default)
       mask: (polygon as FeatureCollection).features[0] as Feature<Polygon | MultiPolygon, Properties> // if passed a Polygon or MultiPolygon, the grid Points will be created only inside it
@@ -135,6 +156,7 @@ export class HeightsManager {
           sampleTerrainPromise = sampleTerrain(CesiumProvider, options.level, positions);
         } else {
           sampleTerrainPromise = sampleTerrainMostDetailed(CesiumProvider, positions);
+          // sampleTerrainPromise = fetch('https://dem-int-proxy-production-nginx-s3-gateway-route-integration.apps.j1lk3njp.eastus.aroapp.io/terrains/srtm100/11/2446/1394.terrain?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Im1hcC1jb2xvbmllcy1pbnQifQ.eyJkIjpbInJhc3RlciIsInJhc3RlcldtcyIsInJhc3RlckV4cG9ydCIsImRlbSIsInZlY3RvciIsIjNkIl0sImlhdCI6MTY3NDYzMjM0Niwic3ViIjoibWFwY29sb25pZXMtYXBwIiwiaXNzIjoibWFwY29sb25pZXMtdG9rZW4tY2xpIn0.D1u28gFlxf_Z1bzIiRHZonUgrdWwhZy8DtmQj15cIzaABRUrGV2n_OJlgWTuNfrao0SbUZb_s0_qUUW6Gz_zO3ET2bVx5xQjBu0CaIWdmUPDjEYr6tw-eZx8EjFFIyq3rs-Fo0daVY9cX1B2aGW_GeJir1oMnJUURhABYRoh60azzl_utee9UdhDpnr_QElNtzJZIKogngsxCWp7tI7wkTuNCBaQM7aLEcymk0ktxlWEAt1E0nGt1R-bx-HnPeeQyZlxx4UQ1nuYTijpz7N8poaCCExOFeafj9T7megv2BzTrKWgfM1eai8srSgNa3I5wKuW0EyYnGZxdbJe8aseZg&kuku='+dPositions[i].longitude.toFixed(8));
         }
         sampleTerrainPromise.then(() => {
           paths.forEach((path, i) => {
@@ -148,6 +170,19 @@ export class HeightsManager {
         }).catch(function (e) {
           return reject(e);
         });
+        // sampleTerrainPromise.then(() => {
+        //   return resolve({
+        //     "type": "Feature",
+        //     "properties": {
+        //       "al": "kuku"
+        //     },
+        //     "geometry": {
+        //       "coordinates": [
+                
+        //       ],
+        //       "type": "Polygon"
+        //     }})
+        // });
 
       } else {
         return reject(new Error('No coordinates found in input file'));
