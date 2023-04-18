@@ -12,9 +12,12 @@ import {
   sampleTerrainMostDetailed
 } from 'cesium';
 import config from 'config';
-import { Feature, GeoJSON, Point } from 'geojson';
+import { Feature, FeatureCollection, GeoJSON, MultiPolygon, Point, Polygon } from 'geojson';
 import traverse from 'traverse';
 import { inject, injectable } from 'tsyringe';
+import bbox from '@turf/bbox';
+import pointGrid from '@turf/point-grid';
+import { Properties, Units } from '@turf/turf';
 import { Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '../../common/constants';
 
@@ -31,6 +34,54 @@ export interface IHeightModel {
 export class HeightsManager {
 
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
+
+  public async getPolygon(polygon: GeoJSON): Promise<GeoJSON> {
+    this.logger.info({ msg: 'Getting polygon heights' });
+
+    const polygonBbox = bbox(polygon);
+    const cellSide = 1000.0; // distance between points (in units)
+    const options = {
+      units: 'meters' as Units, // used in calculating cellSide, can be: degrees, radians, miles, or kilometers (default)
+      mask: (polygon as FeatureCollection).features[0] as Feature<Polygon | MultiPolygon, Properties> // if passed a Polygon or MultiPolygon, the grid Points will be created only inside it
+    };
+
+    // Creates a Point grid from a bounding box, FeatureCollection or Feature.
+    const polygonPointGrid = pointGrid(polygonBbox, cellSide, options); // grid of points inside the given polygon
+
+    // let bbox = turf.bbox(polygon);
+    // let cellWidth = 0.05;
+    // let cellHeight = 0.05;
+
+    // let bufferedBbox = turf.bbox(turf.buffer(polygon, cellWidth, {units: 'kilometers'}));
+    // let options = { units: "kilometers", mask: polygon};
+    // let squareGrid = turf.squareGrid(
+    //   bufferedBbox,
+    //   // bbox,
+    //   cellWidth,
+    //   options
+    // );
+
+    // turf.featureEach(squareGrid, function (currentFeature, featureIndex) {
+    //   let intersected = turf.intersect(polygon.features[0], currentFeature);
+    // });
+
+    const start = new Date();
+    const result = await this.sample(polygonPointGrid, { level: 11 });
+    const end = new Date();
+    console.log(result);
+    console.log(`${end.getTime() - start.getTime()} ms`);
+    return result;
+  }
+
+  public async getHeights(geojson: GeoJSON): Promise<GeoJSON> {
+    this.logger.info({ msg: 'Getting heights' });
+    const start = new Date();
+    const result = await this.sample(geojson, { level: 11 });
+    const end = new Date();
+    console.log(result);
+    console.log(`${end.getTime() - start.getTime()} ms`);
+    return result;
+  }
 
   public async getHeight(coordinates: ICoordinates): Promise<IHeightModel> {
     this.logger.info({ msg: 'Getting height' });
@@ -50,77 +101,6 @@ export class HeightsManager {
     console.log(result);
     console.log(`${end.getTime() - start.getTime()} ms`);
     return { dem: ((result as Feature).geometry as Point).coordinates[2] };
-  }
-
-  public async getPolygon(polygon: GeoJSON): Promise<GeoJSON> {
-    this.logger.info({ msg: 'Getting polygon heights' });
-
-    const bbox = turf.bbox(polygon);
-    const cellSide = 1.0; // distance between points (in units)
-    const options = {
-      units: 'meters', // used in calculating cellSide, can be: degrees, radians, miles, or kilometers (default)
-      mask: polygon // if passed a Polygon or MultiPolygon, the grid Points will be created only inside it
-    };
-
-    // Creates a Point grid from a bounding box, FeatureCollection or Feature.
-    const pointGrid = turf.pointGrid(bbox, cellSide, options); // grid of points
-    const pointGridCoordinates = pointGrid.features.map(f => f.geometry.coordinates);
-
-    console.log(pointGridCoordinates); // 2,359 points inside the polygon
-
-    pointGridCoordinates.forEach(p => {
-      viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(p[0], p[1]),
-        point: {
-          color: Cesium.Color.fromRandom(),
-          pixelSize: 5,
-          heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
-        }
-      });
-    });
-    const positions = pointGridCoordinates.map(p => Cesium.Cartographic.fromDegrees(p[0], p[1]));
-
-    let bbox = turf.bbox(coords);
-//      let bboxLayer = L.geoJSON(turf.bboxPolygon(bbox)).addTo(map);
-//      map.fitBounds(bboxLayer.getBounds());
-
-      let cellWidth = 0.05;
-      let cellHeight = 0.05;
-
-      let bufferedBbox = turf.bbox(turf.buffer(coords, cellWidth, {units: 'kilometers'}));
-      let options = { units: "kilometers", mask: coords};
-      let squareGrid = turf.squareGrid(
-        bufferedBbox,
-//        bbox,
-        cellWidth,
-        options
-      );
-
-//      L.geoJSON(squareGrid).addTo(map);      
-      
-      let clippedGridLayer = L.geoJSON().addTo(map);
-
-      turf.featureEach(squareGrid, function (currentFeature, featureIndex) {
-        let intersected = turf.intersect(coords.features[0], currentFeature);
-        clippedGridLayer.addData(intersected);
-      });
-
-    const start = new Date();
-    const result = await this.sample(positions, { level: 11 });
-    const end = new Date();
-    console.log(result);
-    console.log(`${end.getTime() - start.getTime()} ms`);
-    return result;
-  }
-
-  public async getHeights(geojson: GeoJSON): Promise<GeoJSON> {
-    this.logger.info({ msg: 'Getting heights' });
-    const start = new Date();
-    const result = await this.sample(geojson, { level: 11 });
-    const end = new Date();
-    console.log(result);
-    console.log(`${end.getTime() - start.getTime()} ms`);
-    return result;
   }
 
   private async sample(data: GeoJSON, options?: { level: number }): Promise<GeoJSON> {

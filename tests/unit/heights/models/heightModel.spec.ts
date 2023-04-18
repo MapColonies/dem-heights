@@ -45,15 +45,6 @@ describe('HeightsManager', () => {
   beforeEach(function () {
     heightsManager = new HeightsManager(jsLogger({ enabled: false }));
   });
-  describe('#getHeight', () => {
-    it('return height', function () {
-      // action
-      const height = heightsManager.getHeight({longitude: '35.034', latitude: '32.691'});
-
-      // expectation
-      expect(height.dem).toBe(1037);
-    });
-  });
   describe('#getPolygon', () => {
     it('return polygon heights', function () {
       // action
@@ -70,6 +61,15 @@ describe('HeightsManager', () => {
 
       // expectation
       expect(heights).toHaveProperty('dem', 1037);
+    });
+  });
+  describe('#getHeight', () => {
+    it('return height', function () {
+      // action
+      const height = heightsManager.getHeight({longitude: '35.034', latitude: '32.691'});
+
+      // expectation
+      expect(height.dem).toBe(1037);
     });
   });
 });

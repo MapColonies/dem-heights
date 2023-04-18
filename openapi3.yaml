@@ -8,6 +8,42 @@ info:
     url: https://opensource.org/licenses/MIT
 
 paths:
+  /heights/polygon:
+    post:
+      operationId: getPolygon
+      tags:
+        - heights
+      summary: get polygon heights
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+  /heights:
+    post:
+      operationId: getHeights
+      tags:
+        - heights
+      summary: get heights for any given geojson
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
   /heights/{longitude}/{latitude}:
     get:
       operationId: getHeight
@@ -34,42 +70,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/height'
-  /heights/polygon:
-    post:
-      operationId: getPolygon
-      tags:
-        - heights
-      summary: get polygon heights
-      requestBody:
-        content:
-          application/json:
-              schema:
-                type: object
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-  /heights:
-    post:
-      operationId: getHeights
-      tags:
-        - heights
-      summary: get heights for any given geojson
-      requestBody:
-        content:
-          application/json:
-              schema:
-                type: object
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
 components:
   schemas:
     error:

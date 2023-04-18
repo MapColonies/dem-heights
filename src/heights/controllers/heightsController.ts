@@ -7,8 +7,8 @@ import { Meter } from '@map-colonies/telemetry';
 import { SERVICES } from '../../common/constants';
 import { IHeightModel, HeightsManager, ICoordinates } from '../models/heightsManager';
 
-type GetHeightHandler = RequestHandler<ICoordinates, IHeightModel>;
 type GetHeightsHandler = RequestHandler<undefined, GeoJSON, GeoJSON>;
+type GetHeightHandler = RequestHandler<ICoordinates, IHeightModel>;
 
 @injectable()
 export class HeightsController {
@@ -19,15 +19,6 @@ export class HeightsController {
     @inject(SERVICES.METER) private readonly meter: Meter
   ) {
   }
-
-  public getHeight: GetHeightHandler = async (req, res, next) => {
-    try {
-      const height: IHeightModel = await this.manager.getHeight(req.params); // 35.076, 32.675
-      return res.status(httpStatus.OK).json(height);
-    } catch (err) {
-      next(err);
-    }
-  };
 
   public getPolygon: GetHeightsHandler = async (req, res, next) => {
     try {
@@ -44,6 +35,15 @@ export class HeightsController {
       const userInput: GeoJSON = req.body;
       const heights = await this.manager.getHeights(userInput);
       return res.status(httpStatus.OK).json(heights);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  public getHeight: GetHeightHandler = async (req, res, next) => {
+    try {
+      const height: IHeightModel = await this.manager.getHeight(req.params); // 35.076, 32.675
+      return res.status(httpStatus.OK).json(height);
     } catch (err) {
       next(err);
     }
