@@ -30,42 +30,42 @@ export class HeightsController {
     }
   };
 
-  public getPath: GetHeightsHandler = async (req, res, next) => {
-    try {
-      const userInput: GeoJSON = req.body;
-      const heights = await this.manager.getPath(userInput);
-      return res.status(httpStatus.OK).json(heights);
-    } catch (err) {
-      next(err);
-    }
-  };
+  // public getPath: GetHeightsHandler = async (req, res, next) => {
+  //   try {
+  //     const userInput: GeoJSON = req.body;
+  //     const heights = await this.manager.getPath(userInput);
+  //     return res.status(httpStatus.OK).json(heights);
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // };
 
-  public getPolygon: GetHeightsHandler = async (req, res, next) => {
-    try {
-      const userInput: GeoJSON = req.body;
-      const heights = await this.manager.getPolygon(userInput);
-      return res.status(httpStatus.OK).json(heights);
-    } catch (err) {
-      next(err);
-    }
-  };
+  // public getPolygon: GetHeightsHandler = async (req, res, next) => {
+  //   try {
+  //     const userInput: GeoJSON = req.body;
+  //     const heights = await this.manager.getPolygon(userInput);
+  //     return res.status(httpStatus.OK).json(heights);
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // };
 
-  public getHeights: GetHeightsHandler = async (req, res, next) => {
-    try {
-      const userInput: GeoJSON = req.body;
-      const heights = await this.manager.getHeights(userInput);
-      return res.status(httpStatus.OK).json(heights);
-    } catch (err) {
-      next(err);
-    }
-  };
+  // public getHeights: GetHeightsHandler = async (req, res, next) => {
+  //   try {
+  //     const userInput: GeoJSON = req.body;
+  //     const heights = await this.manager.getHeights(userInput);
+  //     return res.status(httpStatus.OK).json(heights);
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // };
 
-  public getHeight: GetHeightHandler = async (req, res, next) => {
-    try {
-      const height: IHeightModel = await this.manager.getHeight(req.params); // 35.076, 32.675
-      return res.status(httpStatus.OK).json(height);
-    } catch (err) {
-      next(err);
-    }
-  };
+  // public getHeight: GetHeightHandler = async (req, res, next) => {
+  //   try {
+  //     const height: IHeightModel = await this.manager.getHeight(req.params); // 35.076, 32.675
+  //     return res.status(httpStatus.OK).json(height);
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // };
 }
