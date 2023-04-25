@@ -1,19 +1,9 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-/* eslint-disable @typescript-eslint/no-magic-numbers */
 import {
     Cartographic,
     sampleTerrainMostDetailed
 } from "cesium";
-import _ from 'lodash';
 import PromisePool from "@supercharge/promise-pool/dist";
-import config from "config";
-import { Feature, FeatureCollection, GeoJSON, MultiPolygon, Point, Polygon } from "geojson";
-import { inject, injectable } from "tsyringe";
+import { container, inject, injectable } from "tsyringe";
 import { Logger } from "@map-colonies/js-logger";
 import { SERVICES } from "../../common/constants";
 import { cartographicArrayClusteringForHeightRequests } from "../utilities";
@@ -31,23 +21,26 @@ export interface IHeightModel {
 
 @injectable()
 export class HeightsManager {
+    private readonly terrainProviders: TerrainProviders = container.resolve(TERRAIN_PROVIDERS);
+
     public constructor(
         @inject(SERVICES.LOGGER) private readonly logger: Logger,
-        @inject(TERRAIN_PROVIDERS) private readonly terrainProviders: TerrainProviders
     ) {}
 
-    public async getPoints(points: GeoJSON): Promise<GeoJSON> {
+    public async getPoints(points: Cartographic[]): Promise<PosWithHeight[]> {
+        console.log(this.terrainProviders);
         this.logger.info({ msg: "Getting points heights" });
         const start = new Date();
-        const result = await this.sample(points, { level: 11 });
+        const result = await this.samplePositionsHeights(points);
         const end = new Date();
-        console.log(result);
         console.log(`${end.getTime() - start.getTime()} ms`);
-        return result;
+        console.log('TOTAL REQUESTS => ', result.totalRequests);
+
+        return result.positions;
     }
 
-    private async samplePositionsHeights(positionsArr: Cartographic[]): Cartographic[] {
-        const MAX_REQ_PER_BATCH = 100;
+    private async samplePositionsHeights(positionsArr: Cartographic[]): Promise<{positions: PosWithHeight[], totalRequests: number}> {
+        const MAX_REQ_PER_BATCH = 50;
         
         const positionsWithProviders = this.attachTerrainProviderToPositions(positionsArr);
 
@@ -57,19 +50,35 @@ export class HeightsManager {
                 MAX_REQ_PER_BATCH
             );
 
-        const { results } = await PromisePool.for(sampleTerrainClusteredPositions)
-            .withConcurrency(sampleTerrainClusteredPositions.length)
+
+        const finalPositionsWithHeights: PosWithHeight[] = [];
+
+        for (const provider of sampleTerrainClusteredPositions) {
+            const terrainProvider = this.terrainProviders[provider.providerKey];
+            console.log('batches => ', provider.positions.length);
+
+            const { results } = await PromisePool
+            .for(provider.positions)
+            .withConcurrency(provider.positions.length)
             .useCorrespondingResults()
             .process(async (batch) => {
+                // Here we should attach additional info on top of each position returned via the catalog record.
+                
                 const posHeight = await sampleTerrainMostDetailed(terrainProvider, batch);
 
                 return posHeight;
             });
 
-        return results.flat() as Cartographic[];
+            finalPositionsWithHeights.push(...(results as Cartographic[][]).flat() as PosWithHeight[]);
+
+        }
+
+        return ({ positions: finalPositionsWithHeights, totalRequests });
     }
 
     private attachTerrainProviderToPositions(positions: Cartographic[]): PosWithTerrainProvider[] {
+        // Here comes some logic to detect which terrain provider is appropriate to each position based on business logic.
+
        const providerPerPos = Object.values(this.terrainProviders)[0];
        const providerKeyPerPos = Object.keys(this.terrainProviders)[0];
 

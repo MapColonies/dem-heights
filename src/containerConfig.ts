@@ -4,7 +4,7 @@ import { trace } from "@opentelemetry/api";
 import { DependencyContainer } from "tsyringe/dist/typings/types";
 import jsLogger, { LoggerOptions } from "@map-colonies/js-logger";
 import { Metrics } from "@map-colonies/telemetry";
-import { CesiumTerrainProvider, Resource } from "cesium";
+import { CesiumTerrainProvider, IonResource, Resource } from "cesium";
 import { SERVICES, SERVICE_NAME } from "./common/constants";
 import { tracing } from "./common/tracing";
 import { heightsRouterFactory, HEIGHTS_ROUTER_SYMBOL } from "./heights/routes/heightsRouter";
@@ -24,9 +24,9 @@ export interface RegisterOptions {
 export const CATALOG_RECORDS = Symbol("CATALOG_RECORDS");
 export const TERRAIN_PROVIDERS = Symbol("TERRAIN_PROVIDERS");
 
-export const registerExternalValues = async (
+export const registerExternalValues = (
     options?: RegisterOptions
-): Promise<DependencyContainer> => {
+): DependencyContainer => {
     const loggerConfig = config.get<LoggerOptions>("telemetry.logger");
 
     // @ts-expect-error the signature is wrong
@@ -44,12 +44,20 @@ export const registerExternalValues = async (
       const recordProviderLink = record.links.find(link => link.protocol === QMESH_PROTOCOL);
 
       if(recordProviderLink) {
-        const provider = await CesiumTerrainProvider.fromUrl(new Resource({
-            url: recordProviderLink.url,
-            queryParameters: {
-                token: config.get<string>('terrainProvidersToken')
-            }
-        }));
+        // Real logic
+        // const provider = await CesiumTerrainProvider.fromUrl(new Resource({
+        //     url: recordProviderLink.url,
+        //     queryParameters: {
+        //         token: config.get<string>('terrainProvidersToken')
+        //     }
+        // }));
+
+        // Cesium provider
+        const provider: CesiumTerrainProvider = new CesiumTerrainProvider({
+            url: IonResource.fromAssetId(1, {
+                accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5NDAxMTYyNC1lMzUwLTRkYzEtOWRkNC1kMjVkNjYwNWJjNTUiLCJpZCI6MTM1MDQ4LCJpYXQiOjE2ODIxNjIyMTl9.PvD5p7C_HyAp-JfTs1yKab4c3n_vYstn0AeD0qx_REg'
+            })
+        });        
 
         terrainProviders[record.id] = provider;
       }

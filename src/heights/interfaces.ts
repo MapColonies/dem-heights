@@ -1,4 +1,4 @@
-import { Cartographic, TerrainProvider } from "cesium";
+import { Cartographic, CesiumTerrainProvider } from "cesium";
 
 export enum TerrainTypes {
     DSM = "DSM",
@@ -12,8 +12,8 @@ export interface PosWithHeight extends Cartographic {
 }
 
 export interface PosWithTerrainProvider extends Cartographic {
-    terrainProvider: TerrainProvider;
+    terrainProvider: CesiumTerrainProvider;
     providerKey: string;
 }
 
-export type TerrainProviders = Record<string, TerrainProvider>;
+export type TerrainProviders = Record<string, CesiumTerrainProvider>;

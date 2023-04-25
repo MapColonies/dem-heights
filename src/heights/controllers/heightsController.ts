@@ -1,14 +1,16 @@
 import { RequestHandler } from 'express';
 import { GeoJSON } from 'geojson';
 import httpStatus from 'http-status-codes';
+import { Cartographic } from 'cesium';
 import { injectable, inject } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { Meter } from '@map-colonies/telemetry';
 import { SERVICES } from '../../common/constants';
 import { IHeightModel, HeightsManager, ICoordinates } from '../models/heightsManager';
+import { PosWithHeight } from '../interfaces';
 
-type GetHeightsHandler = RequestHandler<undefined, GeoJSON, GeoJSON>;
-type GetHeightHandler = RequestHandler<ICoordinates, IHeightModel>;
+type GetHeightsHandler = RequestHandler<undefined, PosWithHeight[], Cartographic[]>;
+// type GetHeightHandler = RequestHandler<ICoordinates, IHeightModel>;
 
 @injectable()
 export class HeightsController {
@@ -22,7 +24,7 @@ export class HeightsController {
 
   public getPoints: GetHeightsHandler = async (req, res, next) => {
     try {
-      const userInput: GeoJSON = req.body;
+      const userInput = req.body;
       const heights = await this.manager.getPoints(userInput);
       return res.status(httpStatus.OK).json(heights);
     } catch (err) {
