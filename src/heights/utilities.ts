@@ -8,48 +8,36 @@ export interface PositionsWithProviderKey {
     providerKey: string;
 }
 
-export interface BatchedPositionsWithProviderKey {
-    positions: Cartographic[][];
-    providerKey: string;
-}
-
 
 const createClustersByTerrainProvider = (
     data: PositionsWithProviderKey[],
     maxRequestsPerBatch: number
-): BatchedPositionsWithProviderKey[] => {
-    const clusters = new Map<string, Cartographic[][]>();
+): PositionsWithProviderKey[] => {
+    const clusters: (PositionsWithProviderKey & {count: number})[] = [];
 
     // Group positions by providerKey and split into subArrays
-    for (const item of data) {
+    for (let i=0;i<data.length;i++) {
+        const item = data[i];
         const positions = item.positions;
-        const subArrays = clusters.get(item.providerKey) ?? [];
-        for (let j = 0; j < positions.length; j += maxRequestsPerBatch) {
-            const subarray = positions.slice(
-                j,
-                Math.min(j + maxRequestsPerBatch, positions.length)
-            );
-            
-            subArrays.push(subarray.map(({latitude, longitude}) => ({latitude, longitude} as Cartographic)));
-            
+        const batchedPos = clusters.find((value) => value.providerKey === item.providerKey && value.count < maxRequestsPerBatch )
+        if(batchedPos){
+            batchedPos.positions.push(...positions);
+            batchedPos.count++;
+
+        } else{
+            clusters.push({providerKey: item.providerKey, positions, count:1}) 
         }
-        clusters.set(item.providerKey, subArrays);
     }
 
-    // Create a new object for each provider with the corresponding subarrays of positions
-    const result: BatchedPositionsWithProviderKey[] = [];
-    for (const [providerKey, positions] of clusters) {
-        result.push({ providerKey, positions });
-    }
-
-    return result;
+    // @ts-ignore
+    return clusters;
 };
 
 
 export const cartographicArrayClusteringForHeightRequests = (
     positions: PosWithTerrainProvider[],
     maxRequestsPerBatch = 1
-): { optimizedCluster: BatchedPositionsWithProviderKey[]; totalRequests: number } => {
+): { optimizedCluster: PositionsWithProviderKey[]; totalRequests: number } => {
     const positionsClustersByTile = new Map<string, Cartographic[]>();
 
     positions.forEach((pos) => {
@@ -65,7 +53,8 @@ export const cartographicArrayClusteringForHeightRequests = (
         // Add position to pos array in dictionary
         const currentPosInTile = positionsClustersByTile.get(positionTilePath) ?? [];
 
-        positionsClustersByTile.set(positionTilePath, [...currentPosInTile, pos]);
+        positionsClustersByTile.set(positionTilePath, 
+            [...currentPosInTile, {height: pos.height, latitude: pos.latitude, longitude: pos.longitude} as Cartographic]);
     });
 
     // Create batches of length up to max requests, by provider.

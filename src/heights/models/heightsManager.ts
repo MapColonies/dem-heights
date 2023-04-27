@@ -28,7 +28,6 @@ export class HeightsManager {
     ) {}
 
     public async getPoints(points: Cartographic[]): Promise<PosWithHeight[]> {
-        console.log(this.terrainProviders);
         this.logger.info({ msg: "Getting points heights" });
         const start = new Date();
         const result = await this.samplePositionsHeights(points);
@@ -40,7 +39,7 @@ export class HeightsManager {
     }
 
     private async samplePositionsHeights(positionsArr: Cartographic[]): Promise<{positions: PosWithHeight[], totalRequests: number}> {
-        const MAX_REQ_PER_BATCH = 50;
+        const MAX_REQ_PER_BATCH = 100;
         
         const positionsWithProviders = this.attachTerrainProviderToPositions(positionsArr);
 
@@ -53,25 +52,20 @@ export class HeightsManager {
 
         const finalPositionsWithHeights: PosWithHeight[] = [];
 
-        for (const provider of sampleTerrainClusteredPositions) {
-            const terrainProvider = this.terrainProviders[provider.providerKey];
-            console.log('batches => ', provider.positions.length);
+        const { results } = await PromisePool
+        .for(sampleTerrainClusteredPositions)
+        .withConcurrency(sampleTerrainClusteredPositions.length)
+        .useCorrespondingResults()
+        .process(async (batch) => {
+            // Here we should attach additional info on top of each position returned via the catalog record.
+            const terrainProvider = this.terrainProviders[batch.providerKey];
 
-            const { results } = await PromisePool
-            .for(provider.positions)
-            .withConcurrency(provider.positions.length)
-            .useCorrespondingResults()
-            .process(async (batch) => {
-                // Here we should attach additional info on top of each position returned via the catalog record.
-                
-                const posHeight = await sampleTerrainMostDetailed(terrainProvider, batch);
+            const posHeight = await sampleTerrainMostDetailed(terrainProvider, batch.positions);
 
-                return posHeight;
-            });
+            return posHeight;
+        });
 
-            finalPositionsWithHeights.push(...(results as Cartographic[][]).flat() as PosWithHeight[]);
-
-        }
+        finalPositionsWithHeights.push(...(results as Cartographic[][]).flat() as PosWithHeight[]);
 
         return ({ positions: finalPositionsWithHeights, totalRequests });
     }
@@ -173,7 +167,7 @@ export class HeightsManager {
     //       // @ts-ignore
     //       if (this.isLeaf && Number.isFinite(this.node) && Array.isArray(this.parent?.node) && this.parent?.node.length > 1 && this.key == '0') {
     //         positions.push(Cartographic.fromDegrees(this.parent?.node[0], this.parent?.node[1]));
-    //         dPositions.push({ longitude: this.parent?.node[0], latitude: this.parent?.node[1] });
+    //         dPositions.push({ longitude: th // Here we should attach additional info on top of each position returned via the catalog record.is.parent?.node[0], latitude: this.parent?.node[1] });
     //         paths.push(this.parent?.path as string[]);
     //       }
     //     });

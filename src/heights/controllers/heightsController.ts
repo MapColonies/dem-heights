@@ -9,7 +9,7 @@ import { SERVICES } from '../../common/constants';
 import { IHeightModel, HeightsManager, ICoordinates } from '../models/heightsManager';
 import { PosWithHeight } from '../interfaces';
 
-type GetHeightsHandler = RequestHandler<undefined, PosWithHeight[], Cartographic[]>;
+export type GetHeightsHandler = RequestHandler<undefined, PosWithHeight[], Cartographic[]>;
 // type GetHeightHandler = RequestHandler<ICoordinates, IHeightModel>;
 
 @injectable()
@@ -26,7 +26,8 @@ export class HeightsController {
     try {
       const userInput = req.body;
       const heights = await this.manager.getPoints(userInput);
-      return res.status(httpStatus.OK).json(heights);
+      res.locals.positions = heights;
+      next();
     } catch (err) {
       next(err);
     }

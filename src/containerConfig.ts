@@ -1,9 +1,11 @@
 import config from "config";
+import path from 'path';
 import { logMethod } from "@map-colonies/telemetry";
 import { trace } from "@opentelemetry/api";
 import { DependencyContainer } from "tsyringe/dist/typings/types";
 import jsLogger, { LoggerOptions } from "@map-colonies/js-logger";
 import { Metrics } from "@map-colonies/telemetry";
+import protobuf from 'protobufjs';
 import { CesiumTerrainProvider, IonResource, Resource } from "cesium";
 import { SERVICES, SERVICE_NAME } from "./common/constants";
 import { tracing } from "./common/tracing";
@@ -11,7 +13,6 @@ import { heightsRouterFactory, HEIGHTS_ROUTER_SYMBOL } from "./heights/routes/he
 import { InjectionObject, registerDependencies } from "./common/dependencyRegistration";
 import mockCatalogRecords from "./heights/MOCKS/catalog-records";
 import { TerrainProviders } from "./heights/interfaces";
-import catalogRecords from "./heights/MOCKS/catalog-records";
 
 const QMESH_PROTOCOL = 'TERRAIN_QMESH';
 export interface RegisterOptions {
@@ -23,10 +24,11 @@ export interface RegisterOptions {
 
 export const CATALOG_RECORDS = Symbol("CATALOG_RECORDS");
 export const TERRAIN_PROVIDERS = Symbol("TERRAIN_PROVIDERS");
+export const POS_WITH_HEIGHT_PROTO = Symbol("POS_WITH_HEIGHT_PROTO");
 
-export const registerExternalValues = (
+export const registerExternalValues = async (
     options?: RegisterOptions
-): DependencyContainer => {
+): Promise<DependencyContainer> => {
     const loggerConfig = config.get<LoggerOptions>("telemetry.logger");
 
     // @ts-expect-error the signature is wrong
@@ -40,7 +42,7 @@ export const registerExternalValues = (
 
     const terrainProviders: TerrainProviders = {};
 
-    for (const record of catalogRecords) {
+    for (const record of mockCatalogRecords) {
       const recordProviderLink = record.links.find(link => link.protocol === QMESH_PROTOCOL);
 
       if(recordProviderLink) {
@@ -63,6 +65,10 @@ export const registerExternalValues = (
       }
     }
 
+    console.log(__dirname);
+    const posWithHeightProtoRoot = await protobuf.load(path.resolve(__dirname, './proto/posWithHeight.proto'));
+    const posWithHeightProto = posWithHeightProtoRoot.lookupType('posWithHeightPackage.PosWithHeightResponse');
+
     const dependencies: InjectionObject<unknown>[] = [
         { token: SERVICES.CONFIG, provider: { useValue: config } },
         { token: SERVICES.LOGGER, provider: { useValue: logger } },
@@ -70,6 +76,7 @@ export const registerExternalValues = (
         { token: SERVICES.METER, provider: { useValue: meter } },
         { token: CATALOG_RECORDS, provider: { useValue: mockCatalogRecords } },
         { token: TERRAIN_PROVIDERS, provider: { useValue: terrainProviders } },
+        { token: POS_WITH_HEIGHT_PROTO, provider: { useValue: posWithHeightProto } },
         { token: HEIGHTS_ROUTER_SYMBOL, provider: { useFactory: heightsRouterFactory } },
         {
             token: "onSignal",
