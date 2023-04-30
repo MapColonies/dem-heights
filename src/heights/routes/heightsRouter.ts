@@ -4,22 +4,23 @@ import protobuf from 'protobufjs';
 import { HeightsController } from "../controllers/heightsController";
 import { convertReqPositionToRadiansMiddleware } from "../middlewares/dataToRadians";
 import { positionResAsDegreesMiddleware } from "../middlewares/dataToDegrees";
-import { POS_WITH_HEIGHT_PROTO } from "../../containerConfig";
+import { POS_WITH_HEIGHT_PROTO_REQUEST, POS_WITH_HEIGHT_PROTO_RESPONSE } from "../../containerConfig";
 import { encodeProtobufMiddleware } from "../middlewares/encodeProtobuf";
 import { decodeProtobufMiddleware } from "../middlewares/decodeProtobuf";
 
 const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
     const router = Router();
     const controller = dependencyContainer.resolve(HeightsController);
-    const posWithHeightProto = dependencyContainer.resolve<protobuf.Type>(POS_WITH_HEIGHT_PROTO);
-
+    const posWithHeightProtoRequest = dependencyContainer.resolve<protobuf.Type>(POS_WITH_HEIGHT_PROTO_REQUEST);
+    const posWithHeightProtoResponse = dependencyContainer.resolve<protobuf.Type>(POS_WITH_HEIGHT_PROTO_RESPONSE);
+    
     router.post(
         "/points",
-        // decodeProtobufMiddleware(posWithHeightProto),
+        decodeProtobufMiddleware(posWithHeightProtoRequest),
         convertReqPositionToRadiansMiddleware,
         controller.getPoints,
         positionResAsDegreesMiddleware,
-        encodeProtobufMiddleware(posWithHeightProto)
+        encodeProtobufMiddleware(posWithHeightProtoResponse)
 
     );
     // router.post('/path', controller.getPath);

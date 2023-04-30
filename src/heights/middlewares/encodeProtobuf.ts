@@ -1,17 +1,23 @@
+import fs from "fs/promises";
+import path from "path";
 import { RequestHandler } from "express";
-import protobuf from 'protobufjs';
+import protobuf from "protobufjs";
 import { PosWithHeight } from "../interfaces";
 import { GetHeightsHandler } from "../controllers/heightsController";
 
-export const encodeProtobufMiddleware: (protobufClass: protobuf.Type) => GetHeightsHandler = (protobufClass) => {
+export const encodeProtobufMiddleware: (protobufClass: protobuf.Type) => GetHeightsHandler = (
+    protobufClass
+) => {
     return (req, res, next) => {
-        console.log(protobufClass.verify({data: res.locals.positions as PosWithHeight[]}))
-        const encodedData = protobufClass.encode({data: res.locals.positions as PosWithHeight[]}).finish();
+        // We should return data the same way its requested.
+        if (req.headers["content-type"] === "application/octet-stream") {
+            const encodedData = protobufClass
+                .encode({ data: res.locals.positions as PosWithHeight[] })
+                .finish();
 
-        // console.log(res.locals.positions)
+            res.send(encodedData);
+        }
 
-        // const decode = protobufClass.decode(Buffer.from(encodedData));
-        // @ts-ignore
-        res.send(encodedData);
-    }
+        res.send({ data: res.locals.positions as PosWithHeight[] });
+    };
 };

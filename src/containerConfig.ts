@@ -1,5 +1,5 @@
-import config from "config";
 import path from 'path';
+import config from "config";
 import { logMethod } from "@map-colonies/telemetry";
 import { trace } from "@opentelemetry/api";
 import { DependencyContainer } from "tsyringe/dist/typings/types";
@@ -14,6 +14,7 @@ import { InjectionObject, registerDependencies } from "./common/dependencyRegist
 import mockCatalogRecords from "./heights/MOCKS/catalog-records";
 import { TerrainProviders } from "./heights/interfaces";
 
+const PROTO_FILE = './proto/posWithHeight.proto';
 const QMESH_PROTOCOL = 'TERRAIN_QMESH';
 export interface RegisterOptions {
     override?: InjectionObject<unknown>[];
@@ -24,7 +25,8 @@ export interface RegisterOptions {
 
 export const CATALOG_RECORDS = Symbol("CATALOG_RECORDS");
 export const TERRAIN_PROVIDERS = Symbol("TERRAIN_PROVIDERS");
-export const POS_WITH_HEIGHT_PROTO = Symbol("POS_WITH_HEIGHT_PROTO");
+export const POS_WITH_HEIGHT_PROTO_RESPONSE = Symbol("POS_WITH_HEIGHT_PROTO_RESPONSE");
+export const POS_WITH_HEIGHT_PROTO_REQUEST = Symbol("POS_WITH_HEIGHT_PROTO_REQUEST");
 
 export const registerExternalValues = async (
     options?: RegisterOptions
@@ -66,8 +68,9 @@ export const registerExternalValues = async (
     }
 
     console.log(__dirname);
-    const posWithHeightProtoRoot = await protobuf.load(path.resolve(__dirname, './proto/posWithHeight.proto'));
-    const posWithHeightProto = posWithHeightProtoRoot.lookupType('posWithHeightPackage.PosWithHeightResponse');
+    const posWithHeightProtoRoot = await protobuf.load(path.resolve(__dirname, PROTO_FILE));
+    const posWithHeightProtoResponse = posWithHeightProtoRoot.lookupType('posWithHeightPackage.PosWithHeightResponse');
+    const posWithHeightProtoRequest = posWithHeightProtoRoot.lookupType('posWithHeightPackage.PosRequest');
 
     const dependencies: InjectionObject<unknown>[] = [
         { token: SERVICES.CONFIG, provider: { useValue: config } },
@@ -76,7 +79,8 @@ export const registerExternalValues = async (
         { token: SERVICES.METER, provider: { useValue: meter } },
         { token: CATALOG_RECORDS, provider: { useValue: mockCatalogRecords } },
         { token: TERRAIN_PROVIDERS, provider: { useValue: terrainProviders } },
-        { token: POS_WITH_HEIGHT_PROTO, provider: { useValue: posWithHeightProto } },
+        { token: POS_WITH_HEIGHT_PROTO_RESPONSE, provider: { useValue: posWithHeightProtoResponse } },
+        { token: POS_WITH_HEIGHT_PROTO_REQUEST, provider: { useValue: posWithHeightProtoRequest } },
         { token: HEIGHTS_ROUTER_SYMBOL, provider: { useFactory: heightsRouterFactory } },
         {
             token: "onSignal",

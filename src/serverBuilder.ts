@@ -49,6 +49,7 @@ export class ServerBuilder {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
     }
 
+    this.serverInstance.use(bodyParser.raw({ type: 'application/octet-stream' , limit: '5mb' }));
     this.serverInstance.use(bodyParser.json(this.config.get<bodyParser.Options>('server.request.payload')));
 
     const ignorePathRegex = new RegExp(`^${this.config.get<string>('openapiConfig.basePath')}/.*`, 'i');
