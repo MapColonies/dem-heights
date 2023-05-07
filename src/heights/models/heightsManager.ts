@@ -68,23 +68,8 @@ export class HeightsManager {
 
     // Creates a Point grid from a bounding box, FeatureCollection or Feature.
     const polygonPointGrid = pointGrid(polygonBbox, cellSide, options); // grid of points inside the given polygon
-
-    // let bbox = turf.bbox(polygon);
-    // let cellWidth = 0.05;
-    // let cellHeight = 0.05;
-
-    // let bufferedBbox = turf.bbox(turf.buffer(polygon, cellWidth, {units: 'kilometers'}));
-    // let options = { units: "kilometers", mask: polygon};
-    // let squareGrid = turf.squareGrid(
-    //   bufferedBbox,
-    //   // bbox,
-    //   cellWidth,
-    //   options
-    // );
-
-    // turf.featureEach(squareGrid, function (currentFeature, featureIndex) {
-    //   let intersected = turf.intersect(polygon.features[0], currentFeature);
-    // });
+    // turf.squareGrid(...);
+    // turf.triangleGrid(...);
 
     const start = new Date();
     const result = await this.sample(polygonPointGrid, { level: 11 });
@@ -151,12 +136,11 @@ export class HeightsManager {
         let sampleTerrainPromise;
         if (options?.level) {
           if ((options.level < MIN_ZOOM_LEVEL) || (options.level > MAX_ZOOM_LEVEL)) {
-            return reject(new Error(`Level must between ${MIN_ZOOM_LEVEL} and ${MAX_ZOOM_LEVEL}`));
+            return reject(new Error(`Level must be between ${MIN_ZOOM_LEVEL} and ${MAX_ZOOM_LEVEL}`));
           }
           sampleTerrainPromise = sampleTerrain(CesiumProvider, options.level, positions);
         } else {
           sampleTerrainPromise = sampleTerrainMostDetailed(CesiumProvider, positions);
-          // sampleTerrainPromise = fetch('https://dem-int-proxy-production-nginx-s3-gateway-route-integration.apps.j1lk3njp.eastus.aroapp.io/terrains/srtm100/11/2446/1394.terrain?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Im1hcC1jb2xvbmllcy1pbnQifQ.eyJkIjpbInJhc3RlciIsInJhc3RlcldtcyIsInJhc3RlckV4cG9ydCIsImRlbSIsInZlY3RvciIsIjNkIl0sImlhdCI6MTY3NDYzMjM0Niwic3ViIjoibWFwY29sb25pZXMtYXBwIiwiaXNzIjoibWFwY29sb25pZXMtdG9rZW4tY2xpIn0.D1u28gFlxf_Z1bzIiRHZonUgrdWwhZy8DtmQj15cIzaABRUrGV2n_OJlgWTuNfrao0SbUZb_s0_qUUW6Gz_zO3ET2bVx5xQjBu0CaIWdmUPDjEYr6tw-eZx8EjFFIyq3rs-Fo0daVY9cX1B2aGW_GeJir1oMnJUURhABYRoh60azzl_utee9UdhDpnr_QElNtzJZIKogngsxCWp7tI7wkTuNCBaQM7aLEcymk0ktxlWEAt1E0nGt1R-bx-HnPeeQyZlxx4UQ1nuYTijpz7N8poaCCExOFeafj9T7megv2BzTrKWgfM1eai8srSgNa3I5wKuW0EyYnGZxdbJe8aseZg&kuku='+dPositions[i].longitude.toFixed(8));
         }
         sampleTerrainPromise.then(() => {
           paths.forEach((path, i) => {
@@ -170,20 +154,6 @@ export class HeightsManager {
         }).catch(function (e) {
           return reject(e);
         });
-        // sampleTerrainPromise.then(() => {
-        //   return resolve({
-        //     "type": "Feature",
-        //     "properties": {
-        //       "al": "kuku"
-        //     },
-        //     "geometry": {
-        //       "coordinates": [
-                
-        //       ],
-        //       "type": "Polygon"
-        //     }})
-        // });
-
       } else {
         return reject(new Error('No coordinates found in input file'));
       }
