@@ -50,35 +50,30 @@ const generateCswBody = (
   sortColumn: string,
   startPosition: number,
   maxRecords?: number
-): string => `<csw:GetRecords xmlns="http://www.opengis.net/cat/csw/2.0.2" ${namespaceString} service="CSW" version="2.0.2" resultType="results" outputSchema="http://schema.mapcolonies.com/dem" startPosition="${startPosition}" ${
-  maxRecords !== undefined ? `maxRecords="${maxRecords}"` : ''
-}>
-<csw:Query typeNames="csw:Record">
-  <csw:ElementSetName>full</csw:ElementSetName>
-  <csw:Constraint version="2.0.2">
-    <ogc:Filter>
-      <ogc:And>
-        <ogc:PropertyIsEqualTo>
-          <ogc:PropertyName>mc:productType</ogc:PropertyName>
-          <ogc:Literal>DTM</ogc:Literal>
-        </ogc:PropertyIsEqualTo>
-        <ogc:Contains>
-          <ogc:PropertyName>ows:BoundingBox</ogc:PropertyName>
-          <gml:Envelope>
-            <gml:lowerCorner>${bbox[1]} ${bbox[0]}</gml:lowerCorner>
-            <gml:upperCorner>${bbox[3]} ${bbox[2]}</gml:upperCorner>
-          </gml:Envelope>
-        </ogc:Contains>
-      </ogc:And>
-    </ogc:Filter>
-  </csw:Constraint>
-          <ogc:SortBy>
-          <ogc:SortProperty>
-              <ogc:PropertyName>${sortColumn}</ogc:PropertyName>
-              <ogc:SortOrder>${sortOrder}</ogc:SortOrder>
-          </ogc:SortProperty>
-      </ogc:SortBy>
-</csw:Query>
+): string => `<csw:GetRecords xmlns="http://www.opengis.net/cat/csw/2.0.2" ${namespaceString} service="CSW" version="2.0.2" resultType="results" outputSchema="http://schema.mapcolonies.com/dem" startPosition="${startPosition}" ${maxRecords !== undefined ? `maxRecords="${maxRecords}"` : ''}>
+  <csw:Query typeNames="csw:Record">
+    <csw:ElementSetName>full</csw:ElementSetName>
+    <csw:Constraint version="2.0.2">
+      <ogc:Filter>
+        <ogc:And>
+          <ogc:PropertyIsEqualTo>
+            <ogc:PropertyName>mc:productStatus</ogc:PropertyName>
+            <ogc:Literal>PUBLISHED</ogc:Literal>
+          </ogc:PropertyIsEqualTo>
+          <ogc:PropertyIsEqualTo>
+            <ogc:PropertyName>mc:hasTerrain</ogc:PropertyName>
+            <ogc:Literal>true</ogc:Literal>
+          </ogc:PropertyIsEqualTo> 
+        </ogc:And>
+      </ogc:Filter>
+    </csw:Constraint>
+    <ogc:SortBy>
+      <ogc:SortProperty>
+        <ogc:PropertyName>${sortColumn}</ogc:PropertyName>
+        <ogc:SortOrder>${sortOrder}</ogc:SortOrder>
+      </ogc:SortProperty>
+    </ogc:SortBy>
+  </csw:Query>
 </csw:GetRecords>`;
 
 export interface CswRecord {
@@ -87,6 +82,7 @@ export interface CswRecord {
   // bbox: BBox;
   imagingEndDate: string;
 }
+
 export interface CSWResponse {
   nextRecord: number;
   recordsMatched: number;
@@ -146,10 +142,10 @@ export class CswClient {
       const error = err as AxiosError;
       this.logger.debug(error.toJSON());
       if (error.response) {
-        this.logger.error('request to csw failed', { headers: error.response.headers, status: error.response.status });
-        throw new Error('request to the catalog has failed');
+        this.logger.error('Request to csw failed', { headers: error.response.headers, status: error.response.status });
+        throw new Error('Request to the catalog has failed');
       } else if (error.request !== undefined) {
-        throw new UpstreamUnavailableError('catalog did not respond');
+        throw new UpstreamUnavailableError('Catalog did not respond');
       }
       throw err;
     }
