@@ -16,6 +16,7 @@ export const encodeProtobufMiddleware: (protobufClass: protobuf.Type) => GetHeig
                 .finish();
 
             res.send(encodedData);
+            return;
         }
 
         res.send({ data: res.locals.positions as PosWithHeight[] });

@@ -20,6 +20,7 @@
     "start": "npm run build && cd dist && node ./index.js",
     "start:watch": "nodemon --exec ts-node -- ./src/index.ts",
     "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist && copyfiles -f ./src/proto/* ./dist/proto ",
+    "proto:generate": "protoc --openapi_out=src/proto/protoc_generated src/proto/posWithHeight.proto",
     "clean": "rimraf dist",
     "install": "npx husky install"
   },
@@ -43,7 +44,8 @@
     "@godaddy/terminus": "^4.11.1",
     "@map-colonies/error-express-handler": "^2.1.0",
     "@map-colonies/express-access-log-middleware": "^1.0.0",
-    "@map-colonies/js-logger": "^0.0.5",
+    "@map-colonies/js-logger": "^1.0.1",
+    "@map-colonies/mc-model-types": "^14.1.2",
     "@map-colonies/openapi-express-viewer": "^2.0.1",
     "@map-colonies/read-pkg": "0.0.1",
     "@map-colonies/telemetry": "3.1.0",

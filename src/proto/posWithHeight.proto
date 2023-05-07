@@ -3,12 +3,12 @@ syntax = "proto3";
 package posWithHeightPackage;
 
 message PosMessage {
-    double longitude = 1;
-    double latitude = 2;
-    optional double height = 3;
-    optional string update = 4;
-    optional double res = 5;
-    optional TerrainTypes type = 6;
+    required double longitude = 1;
+    required double latitude = 2;
+    double height = 3;
+    string update = 4;
+    double res = 5;
+    TerrainTypes type = 6;
 }
 
 enum TerrainTypes {

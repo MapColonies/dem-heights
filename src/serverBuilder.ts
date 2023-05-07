@@ -43,6 +43,7 @@ export class ServerBuilder {
   }
 
   private registerPreRoutesMiddleware(): void {
+    // @ts-ignore
     this.serverInstance.use(httpLogger({ logger: this.logger }));
 
     if (this.config.get<boolean>('server.response.compression.enabled')) {

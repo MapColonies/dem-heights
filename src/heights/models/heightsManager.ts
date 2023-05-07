@@ -7,8 +7,8 @@ import { container, inject, injectable } from "tsyringe";
 import { Logger } from "@map-colonies/js-logger";
 import { SERVICES } from "../../common/constants";
 import { cartographicArrayClusteringForHeightRequests } from "../utilities";
-import { PosWithHeight, PosWithTerrainProvider, TerrainProviders } from "../interfaces";
-import { TERRAIN_PROVIDERS } from "../../containerConfig";
+import { PosWithHeight, PosWithTerrainProvider } from "../interfaces";
+import DEMTerrainCacheManager from "./DEMTerrainCacheManager";
 
 export interface ICoordinates {
     longitude: string;
@@ -21,7 +21,8 @@ export interface IHeightModel {
 
 @injectable()
 export class HeightsManager {
-    private readonly terrainProviders: TerrainProviders = container.resolve(TERRAIN_PROVIDERS);
+    private readonly demTerrainCacheManager = container.resolve(DEMTerrainCacheManager);
+    private readonly terrainProviders = this.demTerrainCacheManager.terrainProviders;
 
     public constructor(
         @inject(SERVICES.LOGGER) private readonly logger: Logger,
