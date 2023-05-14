@@ -2,6 +2,10 @@
 
 This is a repo for extracting elevation info in a given location/position.
 
+data repo:
+
+https://github.com/MapColonies/dem-heights-data
+
 ## Run Locally
 
 Clone the project:
