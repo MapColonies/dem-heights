@@ -29,4 +29,5 @@ COPY --chown=node:node ./config ./config
 
 USER node
 EXPOSE 8080
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["dumb-init", "node", "--max_old_space_size=512", "./index.js"]

@@ -5,10 +5,13 @@ import { Logger } from "@map-colonies/js-logger";
 import { Meter } from "@map-colonies/telemetry";
 import { SERVICES } from "../../common/constants";
 import { HeightsManager } from "../models/heightsManager";
-import { PosWithHeight } from "../interfaces";
+import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from "../interfaces";
 
 export interface GetHeightsPointsRequest {
     positions: Cartographic[];
+    productType?: TerrainTypes;
+    excludeFields?: AdditionalFieldsEnum[];
+
 }
 
 export interface GetHeightsPointsResponse {
@@ -33,7 +36,14 @@ export class HeightsController {
     public getPoints: GetHeightsHandler = async (req, res, next) => {
         try {
             const userInput = req.body;
-            const heights = await this.manager.getPoints(userInput.positions);
+            const DEFAULT_TERRAIN_TYPE = TerrainTypes.MIXED;
+            
+            const heights = await this.manager.getPoints(
+                userInput.positions, 
+                userInput.productType ?? DEFAULT_TERRAIN_TYPE,
+                userInput.excludeFields
+            );
+
             res.locals.positions = heights;
             next();
         } catch (err) {

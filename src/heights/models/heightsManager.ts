@@ -1,13 +1,17 @@
-import {
-    Cartographic,
-    sampleTerrainMostDetailed
-} from "cesium";
+import { Cartographic, Math, sampleTerrainMostDetailed } from "cesium";
+import { Polygon } from "geojson";
+import { Feature, point } from "@turf/turf";
+import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
+import { HttpError } from "express-openapi-validator/dist/framework/types";
+import { PycswDemCatalogRecord } from "@map-colonies/mc-model-types";
+import httpStatusCodes from "http-status-codes";
 import PromisePool from "@supercharge/promise-pool/dist";
-import { container, inject, injectable } from "tsyringe";
+import { container, delay, inject, injectable } from "tsyringe";
 import { Logger } from "@map-colonies/js-logger";
 import { SERVICES } from "../../common/constants";
 import { cartographicArrayClusteringForHeightRequests } from "../utilities";
-import { PosWithHeight, PosWithTerrainProvider } from "../interfaces";
+import { AdditionalFieldsEnum, PosWithHeight, PosWithTerrainProvider, TerrainProviders, TerrainTypes } from "../interfaces";
+import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from "../../containerConfig";
 import DEMTerrainCacheManager from "./DEMTerrainCacheManager";
 
 export interface ICoordinates {
@@ -21,63 +25,146 @@ export interface IHeightModel {
 
 @injectable()
 export class HeightsManager {
-    private readonly demTerrainCacheManager = container.resolve(DEMTerrainCacheManager);
+    private readonly demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
+    private readonly catalogRecordsMap = container.resolve<Record<string, PycswDemCatalogRecord>>(CATALOG_RECORDS_MAP);
     private readonly terrainProviders = this.demTerrainCacheManager.terrainProviders;
 
     public constructor(
-        @inject(SERVICES.LOGGER) private readonly logger: Logger,
+        @inject(SERVICES.LOGGER) private readonly logger: Logger
     ) {}
 
-    public async getPoints(points: Cartographic[]): Promise<PosWithHeight[]> {
+    public async getPoints(
+        points: Cartographic[],
+        requestedProductType: TerrainTypes,
+        excludeFields: AdditionalFieldsEnum[] = []
+    ): Promise<PosWithHeight[]> {
         this.logger.info({ msg: "Getting points heights" });
         const start = new Date();
-        const result = await this.samplePositionsHeights(points);
+        const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields);
         const end = new Date();
-        console.log(`${end.getTime() - start.getTime()} ms`);
-        console.log('TOTAL REQUESTS => ', result.totalRequests);
+
+        this.logger.debug({ msg: `Request took ${end.getTime() - start.getTime()} ms` });
+        this.logger.debug({ msg: `Total Requests ${result.totalRequests} ms` });
 
         return result.positions;
     }
 
-    private async samplePositionsHeights(positionsArr: Cartographic[]): Promise<{positions: PosWithHeight[], totalRequests: number}> {
-        const MAX_REQ_PER_BATCH = 100;
-        
-        const positionsWithProviders = this.attachTerrainProviderToPositions(positionsArr);
+    private async samplePositionsHeights(
+        positionsArr: Cartographic[],
+        requestedProductType: TerrainTypes,
+        excludeFields:  AdditionalFieldsEnum[],
+    ): Promise<{ positions: PosWithHeight[]; totalRequests: number }> {
+        const MAX_REQ_PER_BATCH = 150;
+        const MAXIMUM_TILES_PER_REQUEST = 150;
+
+        const positionsWithProviders = this.attachTerrainProviderToPositions(
+            positionsArr,
+            requestedProductType
+        );
 
         const { optimizedCluster: sampleTerrainClusteredPositions, totalRequests } =
-            cartographicArrayClusteringForHeightRequests(
-                positionsWithProviders,
-                MAX_REQ_PER_BATCH
-            );
+            cartographicArrayClusteringForHeightRequests(positionsWithProviders, MAX_REQ_PER_BATCH);
 
+        if (totalRequests > MAXIMUM_TILES_PER_REQUEST) {
+            const err = new Error("Points density is too low to compute");
+            (err as HttpError).status = httpStatusCodes.BAD_REQUEST;
+
+            throw err;
+        }
 
         const finalPositionsWithHeights: PosWithHeight[] = [];
 
-        const { results } = await PromisePool
-        .for(sampleTerrainClusteredPositions)
-        .withConcurrency(sampleTerrainClusteredPositions.length)
-        .useCorrespondingResults()
-        .process(async (batch) => {
-            // Here we should attach additional info on top of each position returned via the catalog record.
-            const terrainProvider = this.terrainProviders[batch.providerKey];
+        const additionalFields = Object.values(AdditionalFieldsEnum);
 
-            const posHeight = await sampleTerrainMostDetailed(terrainProvider, batch.positions);
+        const { results } = await PromisePool.for(sampleTerrainClusteredPositions)
+            .withConcurrency(sampleTerrainClusteredPositions.length)
+            .useCorrespondingResults()
+            .process(async (batch) => {
+                const provider = this.terrainProviders[batch.providerKey];
+                const qmeshRecord = this.catalogRecordsMap[batch.providerKey];
+                
+                const positionsWithHeights = await sampleTerrainMostDetailed(provider, batch.positions);
+                
+                // attach additional info on top of each position returned via the catalog record.
+                positionsWithHeights.forEach(pos => {
+                    for(const field of additionalFields) {
+                        if(!excludeFields.includes(field) && typeof qmeshRecord[field] !== 'undefined') {
+                            (pos as unknown as Record<string, unknown>)[field] = qmeshRecord[field];
+                        }
+                    }
+                    });
+                
+               return positionsWithHeights as PosWithHeight[];
 
-            return posHeight;
         });
 
-        finalPositionsWithHeights.push(...(results as Cartographic[][]).flat() as PosWithHeight[]);
+        finalPositionsWithHeights.push(
+            ...((results as PosWithHeight[][]).flat())
+        );
 
-        return ({ positions: finalPositionsWithHeights, totalRequests });
+        return { positions: finalPositionsWithHeights, totalRequests };
     }
 
-    private attachTerrainProviderToPositions(positions: Cartographic[]): PosWithTerrainProvider[] {
-        // Here comes some logic to detect which terrain provider is appropriate to each position based on business logic.
+    private attachTerrainProviderToPositions(
+        positions: Cartographic[],
+        requestedProductType: TerrainTypes
+    ): PosWithTerrainProvider[] {
 
-       const providerPerPos = Object.values(this.terrainProviders)[0];
-       const providerKeyPerPos = Object.keys(this.terrainProviders)[0];
+        /**
+         * Filter terrain providers by requested product type.
+         * Filter terrain providers by footprint point intersection.
+         * Sort by highest resolution (Lower is better).
+         * Attach first to the point
+         */
 
-       return positions.map(position => ({...position, providerKey: providerKeyPerPos, terrainProvider: providerPerPos } as PosWithTerrainProvider));
+        return positions.map((position) => {
+            const terrainProvidersEntries = Object.entries(this.terrainProviders);
+            
+            // Filter terrain providers by requested product type if not MIXED.
+            const productTypeFilteredTerrains =
+                requestedProductType !== TerrainTypes.MIXED
+                    ? terrainProvidersEntries
+                          .filter(([terrainKey]) => {
+                              const qmeshRecord = this.catalogRecordsMap[terrainKey];
+
+                              return qmeshRecord.productType?.includes(requestedProductType);
+                          })
+                    : terrainProvidersEntries;
+
+            // Filter terrain providers by footprint point intersection.
+            const terrainsFilterByFootprint = productTypeFilteredTerrains.filter(([terrainKey]) => {
+                const qmeshRecord = this.catalogRecordsMap[terrainKey];
+                const isPointInFootprint = booleanPointInPolygon([Math.toDegrees(position.longitude), Math.toDegrees(position.latitude)], qmeshRecord.footprint as Feature<Polygon>);
+               
+                return isPointInFootprint;
+            });
+            
+            // Sort by highest resolution (Lower is better).
+            const sortedTerrainsByResolution = terrainsFilterByFootprint.sort(([terrainAKey], [terrainBKey]) => {
+                const qmeshRecordA = this.catalogRecordsMap[terrainAKey];
+                const qmeshRecordB = this.catalogRecordsMap[terrainBKey];
+
+                return (qmeshRecordA.resolutionMeter as number) - (qmeshRecordB.resolutionMeter as number);
+            });
+
+            if(sortedTerrainsByResolution.length === 0) {
+                //TODO: Decide what to do when there is no appropriate terrain providers for a position. The code is heavily depends on it.
+
+                const err = new Error("Could not find providers with the requested parameters");
+                (err as HttpError).status = httpStatusCodes.NOT_FOUND;
+    
+                throw err;
+            }
+
+            // Attach first to the point
+            const [terrainKey, provider] = sortedTerrainsByResolution[0];
+
+            return {
+                ...position,
+                providerKey: terrainKey,
+                terrainProvider: provider
+            } as PosWithTerrainProvider;
+        });
     }
 
     // public async getPath(path: GeoJSON): Promise<GeoJSON> {

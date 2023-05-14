@@ -1,16 +1,17 @@
 import path from 'path';
 import config from "config";
 import { logMethod } from "@map-colonies/telemetry";
-import { trace } from "@opentelemetry/api";
-import { DependencyContainer } from "tsyringe/dist/typings/types";
+import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import jsLogger, { LoggerOptions } from "@map-colonies/js-logger";
 import { Metrics } from "@map-colonies/telemetry";
+import { trace } from "@opentelemetry/api";
+import { DependencyContainer } from "tsyringe/dist/typings/types";
 import protobuf from 'protobufjs';
 import { SERVICES, SERVICE_NAME } from "./common/constants";
 import { tracing } from "./common/tracing";
 import { heightsRouterFactory, HEIGHTS_ROUTER_SYMBOL } from "./heights/routes/heightsRouter";
 import { InjectionObject, registerDependencies } from "./common/dependencyRegistration";
-import mockCatalogRecords from "./heights/MOCKS/catalog-records";
+import DEMTerrainCacheManager from './heights/models/DEMTerrainCacheManager';
 
 const PROTO_FILE = './proto/posWithHeight.proto';
 export interface RegisterOptions {
@@ -19,14 +20,21 @@ export interface RegisterOptions {
 }
 
 
-export const CATALOG_RECORDS = Symbol("CATALOG_RECORDS");
+export const CATALOG_RECORDS_MAP = Symbol("CATALOG_RECORDS_MAP");
 export const POS_WITH_HEIGHT_PROTO_RESPONSE = Symbol("POS_WITH_HEIGHT_PROTO_RESPONSE");
 export const POS_WITH_HEIGHT_PROTO_REQUEST = Symbol("POS_WITH_HEIGHT_PROTO_REQUEST");
+export const DEM_TERRAIN_CACHE_MANAGER = Symbol("DEM_TERRAIN_CACHE_MANAGER");
 
 export const registerExternalValues = async (
     options?: RegisterOptions
 ): Promise<DependencyContainer> => {
     const loggerConfig = config.get<LoggerOptions>("telemetry.logger");
+
+    const catalogRecordsMap = Object.fromEntries(
+        (JSON.parse(config.get<string>("demCatalogRecords")) as PycswDemCatalogRecord[]).map(
+            (record) => [record.id as string, record]
+        )
+    );
 
     // @ts-expect-error the signature is wrong
     const logger = jsLogger({...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod }});
@@ -37,6 +45,9 @@ export const registerExternalValues = async (
     tracing.start();
     const tracer = trace.getTracer(SERVICE_NAME);
 
+    const demTerrainCacheManager = new DEMTerrainCacheManager(config);
+    await demTerrainCacheManager.initTerrainProviders();
+
     const posWithHeightProtoRoot = await protobuf.load(path.resolve(__dirname, PROTO_FILE));
     const posWithHeightProtoResponse = posWithHeightProtoRoot.lookupType('posWithHeightPackage.PosWithHeightResponse');
     const posWithHeightProtoRequest = posWithHeightProtoRoot.lookupType('posWithHeightPackage.PosRequest');
@@ -46,8 +57,9 @@ export const registerExternalValues = async (
         { token: SERVICES.LOGGER, provider: { useValue: logger } },
         { token: SERVICES.TRACER, provider: { useValue: tracer } },
         { token: SERVICES.METER, provider: { useValue: meter } },
-        { token: CATALOG_RECORDS, provider: { useValue: mockCatalogRecords } },
+        { token: CATALOG_RECORDS_MAP, provider: { useValue: catalogRecordsMap } },
         { token: POS_WITH_HEIGHT_PROTO_RESPONSE, provider: { useValue: posWithHeightProtoResponse } },
+        { token: DEM_TERRAIN_CACHE_MANAGER, provider: { useValue: demTerrainCacheManager } },
         { token: POS_WITH_HEIGHT_PROTO_REQUEST, provider: { useValue: posWithHeightProtoRequest } },
         { token: HEIGHTS_ROUTER_SYMBOL, provider: { useFactory: heightsRouterFactory } },
         {

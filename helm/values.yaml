@@ -21,7 +21,7 @@ caPath: '/usr/local/share/ca-certificates'
 caKey: 'ca.crt'
 
 image:
-  repository: ts-server-boilerplate
+  repository: heights
   tag: 'latest'
 
 env:
@@ -38,6 +38,10 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
+  terrainProvidersToken: TOKEN
+  demCatalogRecords: []
+  protoFileUrl: ''
+  serviceVersion: ''
 
 resources:
   enabled: true

@@ -2,13 +2,20 @@ import { Cartographic, CesiumTerrainProvider } from "cesium";
 
 export enum TerrainTypes {
     DSM = "DSM",
-    DTM = "DTM"
+    DTM = "DTM",
+    MIXED = "MIXED",
+}
+
+export enum AdditionalFieldsEnum {
+    PRODUCT_TYPE = 'productType',
+    UPDATE_DATE = 'updateDate',
+    RESOLUTION_METER = 'resolutionMeter',
 }
 
 export interface PosWithHeight extends Cartographic {
-    update?: string;
-    res?: number;
-    type?: TerrainTypes;
+    updateDate?: string;
+    resolutionMeter?: number;
+    productType?: TerrainTypes;
 }
 
 export interface PosWithTerrainProvider extends Cartographic {
