@@ -18,9 +18,9 @@ data:
   {{ if .Values.env.metrics.enabled }}
   TELEMETRY_METRICS_ENABLED: 'true'
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
+  {{ end }}
   TERRAIN_PROVIDERS_TOKEN: {{ .Values.env.terrainProvidersToken | quote }}
   DEM_CATALOG_RECORDS: {{ .Values.env.demCatalogRecords | quote }}
   PROTO_FILE_URL: {{ .Values.env.protoFileUrl | quote }}
   SERVICE_VERSION: {{ .Values.env.serviceVersion | quote }}
-  {{ end }}
 {{- end }}

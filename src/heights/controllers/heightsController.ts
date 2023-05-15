@@ -6,6 +6,7 @@ import { Meter } from "@map-colonies/telemetry";
 import { SERVICES } from "../../common/constants";
 import { HeightsManager } from "../models/heightsManager";
 import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from "../interfaces";
+import { CommonErrors } from "../../common/commonErrors";
 
 export interface GetHeightsPointsRequest {
     positions: Cartographic[];
@@ -28,9 +29,8 @@ export type GetHeightsHandler = RequestHandler<
 @injectable()
 export class HeightsController {
     public constructor(
-        @inject(SERVICES.LOGGER) private readonly logger: Logger,
         @inject(HeightsManager) private readonly manager: HeightsManager,
-        @inject(SERVICES.METER) private readonly meter: Meter
+        @inject(CommonErrors) private readonly commonErrors: CommonErrors
     ) {}
 
     public getPoints: GetHeightsHandler = async (req, res, next) => {
@@ -47,7 +47,7 @@ export class HeightsController {
             res.locals.positions = heights;
             next();
         } catch (err) {
-            next(err);
+            next(err)
         }
     };
 

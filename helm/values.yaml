@@ -21,8 +21,8 @@ caPath: '/usr/local/share/ca-certificates'
 caKey: 'ca.crt'
 
 image:
-  repository: heights
-  tag: 'latest'
+  repository: dem-heights
+  tag: 'v1.0.3'
 
 env:
   port: 8080
@@ -44,14 +44,14 @@ env:
   serviceVersion: ''
 
 resources:
-  enabled: true
+  enabled: false
   value:
     limits:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 1000m
+      memory: 500Mi
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 1000m
+      memory: 500Mi
 
 route:
   enabled: true

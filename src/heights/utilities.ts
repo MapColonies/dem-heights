@@ -5,9 +5,10 @@ import { PosWithTerrainProvider } from "./interfaces";
 
 export interface PositionsWithProviderKey {
     positions: Cartographic[];
-    providerKey: string;
+    providerKey: string | null;
 }
 
+const NO_PROVIDER_KEY = 'NO-PROVIDER';
 
 const createClustersByTerrainProvider = (
     data: PositionsWithProviderKey[],
@@ -24,8 +25,8 @@ const createClustersByTerrainProvider = (
             batchedPos.positions.push(...positions);
             batchedPos.count++;
 
-        } else{
-            clusters.push({providerKey: item.providerKey, positions, count:1}) 
+        } else {
+            clusters.push({providerKey: item.providerKey === NO_PROVIDER_KEY ? null : item.providerKey, positions, count:1}) 
         }
     }
 
@@ -41,6 +42,19 @@ export const cartographicArrayClusteringForHeightRequests = (
     const positionsClustersByTile = new Map<string, Cartographic[]>();
 
     positions.forEach((pos) => {
+        
+        // Check if position doesn't have attached terrain provider
+        if(typeof pos.terrainProvider === 'undefined' || typeof pos.providerKey === 'undefined') {
+            const positionTilePath = NO_PROVIDER_KEY;
+
+            const currentPosInTile = positionsClustersByTile.get(positionTilePath) ?? [];
+
+            positionsClustersByTile.set(positionTilePath, 
+                [...currentPosInTile, {latitude: pos.latitude, longitude: pos.longitude, height: null} as unknown as Cartographic]);
+            
+            return;
+        }
+
         // Get max level for position.
         const maxLevelAtPos = pos.terrainProvider.availability.computeMaximumLevelAtPosition(pos);
 
@@ -54,7 +68,7 @@ export const cartographicArrayClusteringForHeightRequests = (
         const currentPosInTile = positionsClustersByTile.get(positionTilePath) ?? [];
 
         positionsClustersByTile.set(positionTilePath, 
-            [...currentPosInTile, {height: pos.height, latitude: pos.latitude, longitude: pos.longitude} as Cartographic]);
+            [...currentPosInTile, {latitude: pos.latitude, longitude: pos.longitude} as Cartographic]);
     });
 
     // Create batches of length up to max requests, by provider.
@@ -67,6 +81,7 @@ export const cartographicArrayClusteringForHeightRequests = (
     });
 
     const newOptimizedCluster = createClustersByTerrainProvider(clusteredPositionsWithProviderKey, maxRequestsPerBatch);
+    const totalRequests = positionsClustersByTile.size - (+positionsClustersByTile.has(NO_PROVIDER_KEY));
 
-    return { optimizedCluster: newOptimizedCluster, totalRequests: positionsClustersByTile.size };
+    return { optimizedCluster: newOptimizedCluster, totalRequests: totalRequests };
 };

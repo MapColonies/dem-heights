@@ -41,12 +41,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        404:
-          description: Could not find terrain providers for the requested parameters.,
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
         400:
           description: Points density is too low to compute
           content:
@@ -60,9 +54,13 @@ components:
       type: object
       required:
         - message
+        - errorCode
       properties:
         message:
           type: string
+        errorCode:
+          oneOf:
+            - $ref: '#/components/schemas/errorCodesEnum'
     pointsReq:
       type: object
       required:
@@ -114,6 +112,7 @@ components:
                 type: number
                 format: double
               height:
+                nullable: true
                 type: number
                 format: double
     productTypeEnum:
@@ -128,3 +127,8 @@ components:
         - productType
         - updateDate
         - resolutionMeter
+    errorCodesEnum:
+      type: string
+      enum:
+        - POINTS_DENSITY_TOO_LOW_ERROR
+        - GENERAL_SERVER_ERROR

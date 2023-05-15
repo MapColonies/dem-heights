@@ -1,17 +1,16 @@
 import { Cartographic, Math, sampleTerrainMostDetailed } from "cesium";
 import { Polygon } from "geojson";
-import { Feature, point } from "@turf/turf";
+import { Feature } from "@turf/turf";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
-import { HttpError } from "express-openapi-validator/dist/framework/types";
 import { PycswDemCatalogRecord } from "@map-colonies/mc-model-types";
-import httpStatusCodes from "http-status-codes";
 import PromisePool from "@supercharge/promise-pool/dist";
-import { container, delay, inject, injectable } from "tsyringe";
+import { container, inject, injectable } from "tsyringe";
 import { Logger } from "@map-colonies/js-logger";
 import { SERVICES } from "../../common/constants";
 import { cartographicArrayClusteringForHeightRequests } from "../utilities";
-import { AdditionalFieldsEnum, PosWithHeight, PosWithTerrainProvider, TerrainProviders, TerrainTypes } from "../interfaces";
+import { AdditionalFieldsEnum, PosWithHeight, PosWithTerrainProvider, TerrainTypes } from "../interfaces";
 import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from "../../containerConfig";
+import { CommonErrors } from "../../common/commonErrors";
 import DEMTerrainCacheManager from "./DEMTerrainCacheManager";
 
 export interface ICoordinates {
@@ -30,7 +29,8 @@ export class HeightsManager {
     private readonly terrainProviders = this.demTerrainCacheManager.terrainProviders;
 
     public constructor(
-        @inject(SERVICES.LOGGER) private readonly logger: Logger
+        @inject(SERVICES.LOGGER) private readonly logger: Logger,
+        @inject(CommonErrors) private readonly commonErrors: CommonErrors
     ) {}
 
     public async getPoints(
@@ -66,10 +66,7 @@ export class HeightsManager {
             cartographicArrayClusteringForHeightRequests(positionsWithProviders, MAX_REQ_PER_BATCH);
 
         if (totalRequests > MAXIMUM_TILES_PER_REQUEST) {
-            const err = new Error("Points density is too low to compute");
-            (err as HttpError).status = httpStatusCodes.BAD_REQUEST;
-
-            throw err;
+            throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
         }
 
         const finalPositionsWithHeights: PosWithHeight[] = [];
@@ -80,6 +77,10 @@ export class HeightsManager {
             .withConcurrency(sampleTerrainClusteredPositions.length)
             .useCorrespondingResults()
             .process(async (batch) => {
+                if(batch.providerKey === null) {
+                    return batch.positions;
+                }
+
                 const provider = this.terrainProviders[batch.providerKey];
                 const qmeshRecord = this.catalogRecordsMap[batch.providerKey];
                 
@@ -144,16 +145,15 @@ export class HeightsManager {
                 const qmeshRecordA = this.catalogRecordsMap[terrainAKey];
                 const qmeshRecordB = this.catalogRecordsMap[terrainBKey];
 
+                // Add update date to sorting
+
                 return (qmeshRecordA.resolutionMeter as number) - (qmeshRecordB.resolutionMeter as number);
             });
 
             if(sortedTerrainsByResolution.length === 0) {
-                //TODO: Decide what to do when there is no appropriate terrain providers for a position. The code is heavily depends on it.
-
-                const err = new Error("Could not find providers with the requested parameters");
-                (err as HttpError).status = httpStatusCodes.NOT_FOUND;
-    
-                throw err;
+                return ({
+                    ...position
+                } as PosWithTerrainProvider);
             }
 
             // Attach first to the point

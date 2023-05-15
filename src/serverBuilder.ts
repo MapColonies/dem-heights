@@ -10,6 +10,7 @@ import httpLogger from '@map-colonies/express-access-log-middleware';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
 import { HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
+import { CommonErrors } from './common/commonErrors';
 
 @injectable()
 export class ServerBuilder {
@@ -18,7 +19,9 @@ export class ServerBuilder {
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(HEIGHTS_ROUTER_SYMBOL) private readonly heightsRouter: Router
+    @inject(HEIGHTS_ROUTER_SYMBOL) private readonly heightsRouter: Router,
+    @inject(CommonErrors) private readonly commonErrors: CommonErrors
+
   ) {
     this.serverInstance = express();
   }
@@ -59,6 +62,13 @@ export class ServerBuilder {
   }
 
   private registerPostRoutesMiddleware(): void {
-    this.serverInstance.use(getErrorHandlerMiddleware());
+    /**
+     * Was previously this.serverInstance.use(getErrorHandlerMiddleware());
+     * Via service boilerplate.
+     */
+    this.serverInstance.use(this.commonErrors.getCommonErrorHandlerMiddleware());
+    
+    // TODO: Find a way to include the default MC error handler as well
+    // this.serverInstance.use(getErrorHandlerMiddleware());
   }
 }

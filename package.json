@@ -19,7 +19,7 @@
     "build": "tsc --project tsconfig.build.json  && npm run assets:copy",
     "start": "npm run build && cd dist && node ./index.js",
     "start:watch": "copyfiles -f ./src/heights/MOCKS/proto/* ./src/proto && nodemon --exec ts-node -- ./src/index.ts",
-    "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist && copyfiles -f ./src/heights/MOCKS/proto/* ./dist/proto",
+    "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist",
     "clean": "rimraf dist",
     "install": "npx husky install"
   },
