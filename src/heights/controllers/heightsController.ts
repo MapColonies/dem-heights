@@ -24,7 +24,6 @@ export type GetHeightsHandler = RequestHandler<
     GetHeightsPointsResponse | Uint8Array,
     GetHeightsPointsRequest
 >;
-// type GetHeightHandler = RequestHandler<ICoordinates, IHeightModel>;
 
 @injectable()
 export class HeightsController {

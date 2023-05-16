@@ -1,6 +1,3 @@
-import fs from "fs/promises";
-import path from "path";
-import { RequestHandler } from "express";
 import protobuf from "protobufjs";
 import { PosWithHeight } from "../interfaces";
 import { GetHeightsHandler } from "../controllers/heightsController";

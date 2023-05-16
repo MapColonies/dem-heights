@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package posWithHeightPackage;
+
+message PosMessage {
+    required double longitude = 1;
+    required double latitude = 2;
+    double height = 3;
+    string updateDate = 4;
+    double resolutionMeter = 5;
+    TerrainTypes productType = 6;
+}
+
+enum TerrainTypes {
+    UNKNOWN = 0; 
+    MIXED = 1;
+    DSM = 2;
+    DTM = 3;
+}
+
+message PosWithHeightResponse {
+    repeated PosMessage data = 1;
+}
+
+message PosRequest {
+    repeated PosMessage positions = 1;
+    TerrainTypes type = 2;
+}
