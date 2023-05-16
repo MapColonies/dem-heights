@@ -15,111 +15,120 @@ paths:
         - heights
       summary: get points heights
       requestBody:
+        description: Points to calculate heights for.
         content:
           application/json:
             schema:
-              type: object
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-  /heights/path:
-    post:
-      operationId: getPath
-      tags:
-        - heights
-      summary: get path heights
-      requestBody:
-        content:
-          application/json:
+              $ref: '#/components/schemas/pointsReq'
+          application/octet-stream:
             schema:
-              type: object
+              type: string
+              format: binary
       responses:
         200:
           description: OK
           content:
             application/json:
               schema:
-                type: object
-  /heights/polygon:
-    post:
-      operationId: getPolygon
-      tags:
-        - heights
-      summary: get polygon heights
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        200:
-          description: OK
+                $ref: '#/components/schemas/pointsRes'
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        500: 
+          description: Service Error
           content:
             application/json:
               schema:
-                type: object
-  /heights:
-    post:
-      operationId: getHeights
-      tags:
-        - heights
-      summary: get heights for any given geojson
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        200:
-          description: OK
+                $ref: '#/components/schemas/error'
+        400:
+          description: Points density is too low to compute
           content:
             application/json:
               schema:
-                type: object
-  /heights/{longitude}/{latitude}:
-    get:
-      operationId: getHeight
-      tags:
-        - heights
-      summary: get height at a specific (lon,lat)
-      parameters:
-        - name: longitude
-          in: path
-          required: true
-          schema:
-            type: number
-          example: 35.034
-        - name: latitude
-          in: path
-          required: true
-          schema:
-            type: number
-          example: 32.691
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/height'
+                $ref: '#/components/schemas/error'
+
 components:
   schemas:
     error:
       type: object
       required:
         - message
+        - errorCode
       properties:
         message:
           type: string
-    height:
+        errorCode:
+          oneOf:
+            - $ref: '#/components/schemas/errorCodesEnum'
+    pointsReq:
       type: object
       required:
-        - dem
+        - positions
       properties:
-        dem:
-          type: number
-          format: int64
+        positions:
+          type: array
+          items:
+            type: object
+            required:
+              - longitude
+              - latitude
+            properties:
+              longitude:
+                type: number
+                format: double
+              latitude:
+                type: number
+                format: double
+        productType:
+          oneOf:
+            - $ref: '#/components/schemas/productTypeEnum'
+          default: MIXED
+        excludeFields:
+          type: array
+          uniqueItems: true
+          items:
+            oneOf: 
+              - $ref: '#/components/schemas/excludeFieldsEnum'
+          
+    pointsRes:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+              - longitude
+              - latitude
+              - height
+            properties:
+              longitude:
+                type: number
+                format: double
+              latitude:
+                type: number
+                format: double
+              height:
+                nullable: true
+                type: number
+                format: double
+    productTypeEnum:
+      type: string
+      enum: 
+        - DSM
+        - DTM
+        - MIXED
+    excludeFieldsEnum:
+      type: string
+      enum:
+        - productType
+        - updateDate
+        - resolutionMeter
+    errorCodesEnum:
+      type: string
+      enum:
+        - POINTS_DENSITY_TOO_LOW_ERROR
+        - GENERAL_SERVER_ERROR

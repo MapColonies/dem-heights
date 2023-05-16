@@ -2,10 +2,15 @@ import { Application } from 'express';
 import { registerExternalValues, RegisterOptions } from './containerConfig';
 import { ServerBuilder } from './serverBuilder';
 
-function getApp(registerOptions?: RegisterOptions): Application {
-  const container = registerExternalValues(registerOptions);
-  const app = container.resolve(ServerBuilder).build();
-  return app;
+async function getApp(registerOptions?: RegisterOptions): Promise<void | Application> {
+  return registerExternalValues(registerOptions)
+    .then((container) => {
+      const app = container.resolve(ServerBuilder).build();
+      return app;
+    })
+    .catch((e) => {
+      console.error(e as string);
+    });
 }
 
 export { getApp };

@@ -1,6 +1,6 @@
-{{- $chartName := include "ts-server-boilerplate.name" . -}}
-{{- $tracingUrl := include "ts-server-boilerplate.tracingUrl" . -}}
-{{- $metricsUrl := include "ts-server-boilerplate.metricsUrl" . -}}
+{{- $chartName := include "heights.name" . -}}
+{{- $tracingUrl := include "heights.tracingUrl" . -}}
+{{- $metricsUrl := include "heights.metricsUrl" . -}}
 {{- if .Values.enabled -}}
 apiVersion: v1
 kind: ConfigMap
@@ -19,4 +19,8 @@ data:
   TELEMETRY_METRICS_ENABLED: 'true'
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   {{ end }}
+  TERRAIN_PROVIDERS_TOKEN: {{ .Values.env.terrainProvidersToken | quote }}
+  DEM_CATALOG_RECORDS: {{ .Values.env.demCatalogRecords | quote }}
+  PROTO_FILE_URL: {{ .Values.env.protoFileUrl | quote }}
+  SERVICE_VERSION: {{ .Values.env.serviceVersion | quote }}
 {{- end }}

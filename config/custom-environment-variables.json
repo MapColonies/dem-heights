@@ -38,5 +38,9 @@
         }
       }
     }
-  }
+  },
+  "terrainProvidersToken": "TERRAIN_PROVIDERS_TOKEN",
+  "demCatalogRecords": "DEM_CATALOG_RECORDS",
+  "protoFileUrl": "PROTO_FILE_URL",
+  "serviceVersion": "SERVICE_VERSION"
 }

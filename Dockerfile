@@ -1,32 +1,23 @@
 FROM node:16 as build
 
-
-WORKDIR /tmp/buildApp
+WORKDIR /app
 
 COPY ./package*.json ./
+RUN npm ci
 
-RUN npm install
-COPY . .
+COPY . /app
 RUN npm run build
 
-FROM node:16.14.2-alpine3.14 as production
-
-RUN apk add dumb-init
-
 ENV NODE_ENV=production
-ENV SERVER_PORT=8080
 
+COPY ./entrypoint.sh ./
+RUN chmod +x ./entrypoint.sh
 
-WORKDIR /usr/src/app
-
-COPY --chown=node:node package*.json ./
-
-RUN npm ci --only=production
-
-COPY --chown=node:node --from=build /tmp/buildApp/dist .
-COPY --chown=node:node ./config ./config
-
+RUN mkdir -p ./clonedProtoFolder && chown -R root ./clonedProtoFolder && chmod -R g=u ./clonedProtoFolder && chown -R node ./clonedProtoFolder
+RUN mkdir -p ./dist/proto && chown -R root ./dist/proto && chmod -R g=u ./dist/proto && chown -R node ./dist/proto
 
 USER node
 EXPOSE 8080
-CMD ["dumb-init", "node", "--max_old_space_size=512", "./index.js"]
+
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["node", "--max_old_space_size=512", "./dist/index.js"]
