@@ -47,56 +47,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-  /heights/helpers/generateProtoBinary:
-    post:
-      operationId: generateProtoBinary
-      tags:
-        - heights
-      summary: Generate protobuffed binary for a json request
-      requestBody:
-        description: JSON request to parse
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/pointsReq'
-      responses:
-        200:
-          description: OK
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-  /heights/helpers/generateJsonPoints:
-    get:
-      operationId: generateJsonPoints
-      tags:
-        - heights
-      summary: Generate points request by a coordinate
-      parameters:
-        - name: coordinate
-          in: query
-          description: Coordinate to generate points in it's area.
-          required: true
-          schema:
-            type: string
-            example: "27.988257 86.925145 Latitude Longitude - Coordinate somewhere on everest (Space separated)"
-        - name: pointsCount
-          in: query
-          description: Number of points to generate.
-          required: false
-          schema:
-            type: integer
-            minimum: 100
-            example: 10000
-            default: 10000
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/pointsReq'
 components:
   schemas:
     error:

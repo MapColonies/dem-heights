@@ -1,6 +1,6 @@
 import { Cartographic } from "cesium";
 import protobuf from "protobufjs";
-import { GetHeightsHandler, GetHeightsPointsRequest } from "../controllers/heightsController";
+import { GetHeightsHandler, GetHeightsPointsRequest, GetHeightsPointsResponse } from "../controllers/heightsController";
 
 export const decodeProtobufMiddleware: (protobufClass: protobuf.Type) => GetHeightsHandler = (
     protobufClass
@@ -11,9 +11,10 @@ export const decodeProtobufMiddleware: (protobufClass: protobuf.Type) => GetHeig
             // body parser will transform req.body to a buffer if content type header represents binary data.
             const reqUintArray = new Uint8Array(req.body as unknown as ArrayBufferLike);
             const decodedData = protobufClass.decode(reqUintArray);
-            req.body = decodedData.toJSON() as GetHeightsPointsRequest;
+            res.json(decodedData.toJSON() as GetHeightsPointsResponse)
+            // req.body = decodedData.toJSON() as GetHeightsPointsRequest;
         }
 
-        next();
+        // next();
     };
 };

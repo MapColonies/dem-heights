@@ -7,8 +7,6 @@ import { positionResAsDegreesMiddleware } from "../middlewares/dataToDegrees";
 import { POS_WITH_HEIGHT_PROTO_REQUEST, POS_WITH_HEIGHT_PROTO_RESPONSE } from "../../containerConfig";
 import { encodeProtobufMiddleware } from "../middlewares/encodeProtobuf";
 import { decodeProtobufMiddleware } from "../middlewares/decodeProtobuf";
-import { generateProtoReqBinaryMiddleware } from "../middlewares/generateProtoReqBinary";
-import { generateJsonPointsMiddleware } from "../middlewares/generateJsonPoints";
 
 const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
     const router = Router();
@@ -23,16 +21,6 @@ const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
         controller.getPoints,
         positionResAsDegreesMiddleware,
         encodeProtobufMiddleware(posWithHeightProtoResponse)
-    );
-
-    router.post(
-        "/helpers/generateProtoBinary",
-        generateProtoReqBinaryMiddleware(posWithHeightProtoRequest),
-    );
-
-    router.get(
-        "/helpers/generateJsonPoints",
-        generateJsonPointsMiddleware(),
     );
     
     // router.post('/path', controller.getPath);
