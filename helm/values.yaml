@@ -22,7 +22,7 @@ caKey: 'ca.crt'
 
 image:
   repository: dem-heights
-  tag: 'v1.0.3'
+  tag: 'v1.0.0'
 
 env:
   port: 8080
