@@ -11,10 +11,9 @@ export const decodeProtobufMiddleware: (protobufClass: protobuf.Type) => GetHeig
             // body parser will transform req.body to a buffer if content type header represents binary data.
             const reqUintArray = new Uint8Array(req.body as unknown as ArrayBufferLike);
             const decodedData = protobufClass.decode(reqUintArray);
-            res.json(decodedData.toJSON() as GetHeightsPointsResponse)
-            // req.body = decodedData.toJSON() as GetHeightsPointsRequest;
+            req.body = decodedData.toJSON() as GetHeightsPointsRequest;
         }
 
-        // next();
+        next();
     };
 };
