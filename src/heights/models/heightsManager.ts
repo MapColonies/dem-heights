@@ -10,6 +10,7 @@ import { SERVICES } from "../../common/constants";
 import { cartographicArrayClusteringForHeightRequests } from "../utilities";
 import { AdditionalFieldsEnum, PosWithHeight, PosWithTerrainProvider, TerrainTypes } from "../interfaces";
 import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from "../../containerConfig";
+import { IConfig } from "../../common/interfaces";
 import { CommonErrors } from "../../common/commonErrors";
 import DEMTerrainCacheManager from "./DEMTerrainCacheManager";
 
@@ -30,7 +31,8 @@ export class HeightsManager {
 
     public constructor(
         @inject(SERVICES.LOGGER) private readonly logger: Logger,
-        @inject(CommonErrors) private readonly commonErrors: CommonErrors
+        @inject(CommonErrors) private readonly commonErrors: CommonErrors,
+        @inject(SERVICES.CONFIG) private readonly config:IConfig
     ) {}
 
     public async getPoints(
@@ -55,7 +57,7 @@ export class HeightsManager {
         excludeFields:  AdditionalFieldsEnum[],
     ): Promise<{ positions: PosWithHeight[]; totalRequests: number }> {
         const MAX_REQ_PER_BATCH = 150;
-        const MAXIMUM_TILES_PER_REQUEST = 150;
+        const MAXIMUM_TILES_PER_REQUEST = this.config.get<number>('maximumTilesPerRequest');
 
         const positionsWithProviders = this.attachTerrainProviderToPositions(
             positionsArr,
