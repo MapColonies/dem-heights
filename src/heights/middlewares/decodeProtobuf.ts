@@ -1,6 +1,5 @@
-import { Cartographic } from "cesium";
 import protobuf from "protobufjs";
-import { GetHeightsHandler, GetHeightsPointsRequest, GetHeightsPointsResponse } from "../controllers/heightsController";
+import { GetHeightsHandler, GetHeightsPointsRequest } from "../controllers/heightsController";
 
 export const decodeProtobufMiddleware: (protobufClass: protobuf.Type) => GetHeightsHandler = (
     protobufClass

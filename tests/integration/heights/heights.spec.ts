@@ -1,59 +1,65 @@
-import jsLogger from '@map-colonies/js-logger';
-import { trace } from '@opentelemetry/api';
+import { Application } from 'express';
 import httpStatusCodes from 'http-status-codes';
 import { getApp } from '../../../src/app';
-import { SERVICES } from '../../../src/common/constants';
-import { IHeightModel } from '../../../src/heights/models/heightsManager';
+import { GetHeightsPointsRequest, GetHeightsPointsResponse } from '../../../src/heights/controllers/heightsController';
+import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from '../../../src/heights/interfaces';
+import mockJsonPoints from '../../../src/heights/MOCKS/mockdata';
 import { HeightsRequestSender } from './helpers/requestSender';
 
 describe('heights', function () {
+  // NOTE: For testing add CESIUM_ION_TOKEN env with you'r cesium ION Asset token for their terrain provider service (Asset id 1).
+
+  jest.setTimeout(60000);
+  const mockJsonData = mockJsonPoints as GetHeightsPointsRequest;
   let requestSender: HeightsRequestSender;
-  beforeEach(function () {
-    const app = getApp({
-      override: [
-        { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
-        { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
-      ],
-      useChild: true,
-    });
-    requestSender = new HeightsRequestSender(app);
+
+  const basicPositionResponse: PosWithHeight = {
+    latitude: 0,
+    longitude: 0,
+    height: 0,
+    productType: TerrainTypes.DTM,
+    resolutionMeter: 0,
+    updateDate: new Date().toISOString()
+  } as PosWithHeight;
+
+  beforeAll(async function () {
+    const app = await getApp();
+    requestSender = new HeightsRequestSender(app as Application);
   });
 
-  describe('Happy Path', function () {
-    it('should return 200 status code and points heights', async function () {
-      const response = await requestSender.getPoints();
+  describe('Given valid params', function () {
+    describe('Get points height', function () {
+      it('should return 200 status code and points heights for basic usage',async function () {
+        const response = await requestSender.getPoints(mockJsonData);
+        
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response.body).toHaveProperty("data");
+        expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
+        
+        const getHeightsResProperties = Object.keys(basicPositionResponse);
 
-      expect(response.status).toBe(httpStatusCodes.OK);
-    });
-    it('should return 200 status code and path heights', async function () {
-      const response = await requestSender.getPath();
+        for(const position of (response.body as GetHeightsPointsResponse).data) {
+          for(const key of getHeightsResProperties) {
+            expect(position[key as keyof PosWithHeight]).toBeTruthy();
+          }
+        }
+      });
 
-      expect(response.status).toBe(httpStatusCodes.OK);
-    });
-    it('should return 200 status code and plygon heights', async function () {
-      const response = await requestSender.getPolygon();
-
-      expect(response.status).toBe(httpStatusCodes.OK);
-    });
-    it('should return 200 status code and geojson heights', async function () {
-      const response = await requestSender.getHeights();
-
-      expect(response.status).toBe(httpStatusCodes.OK);
-    });
-    it('should return 200 status code and the heights', async function () {
-      const response = await requestSender.getHeight();
-
-      expect(response.status).toBe(httpStatusCodes.OK);
-
-      const heights = response.body as IHeightModel;
-      //expect(response).toSatisfyApiSpec();
-      expect(heights.dem).toBe(1037);
+      it('should return 200 status code and points heights with excluded fields',async function () {
+        const response = await requestSender.getPoints({excludeFields: [AdditionalFieldsEnum.PRODUCT_TYPE, AdditionalFieldsEnum.UPDATE_DATE], ...mockJsonData});
+        
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response.body).toHaveProperty("data");
+        expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
+        
+        for(const position of (response.body as GetHeightsPointsResponse).data) {
+            expect(position[AdditionalFieldsEnum.PRODUCT_TYPE]).toBeFalsy();
+            expect(position[AdditionalFieldsEnum.UPDATE_DATE]).toBeFalsy();
+            expect(position[AdditionalFieldsEnum.RESOLUTION_METER]).toBeTruthy();
+        }
+      });
     });
   });
-  describe('Bad Path', function () {
-    // All requests with status code of 400
-  });
-  describe('Sad Path', function () {
-    // All requests with status code 4XX-5XX
-  });
+
+  // TODO: Protobuf tests.
 });

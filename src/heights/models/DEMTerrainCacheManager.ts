@@ -10,8 +10,10 @@ const QMESH_PROTOCOL = "TERRAIN_QMESH";
 @injectable()
 export default class DEMTerrainCacheManager {
     public terrainProviders: TerrainProviders = {};
-
-    public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig) {}
+    private readonly isTestMode: boolean;
+    public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig) {
+        this.isTestMode = config.get<boolean>('isTestMode');
+    }
 
     public async initTerrainProviders(): Promise<void> {
         const demCatalogRecords = JSON.parse(
@@ -27,8 +29,17 @@ export default class DEMTerrainCacheManager {
             
 
         for (const record of qmeshRecords) {
-            // Real logic
 
+            if(this.isTestMode) {
+                // Cesium provider              
+                const provider: CesiumTerrainProvider = await CesiumTerrainProvider.fromUrl(IonResource.fromAssetId(1, {
+                    accessToken: this.config.get("cesiumIONTerrainProviderToken")
+                }))
+
+                terrainProviders[record.id as string] = provider;
+                continue;
+            }
+            
             const recordProviderLink = record.links?.find(
                 (link) => link.protocol === QMESH_PROTOCOL
             );
@@ -44,16 +55,6 @@ export default class DEMTerrainCacheManager {
                 );
 
                 terrainProviders[record.id as string] = provider;
-
-                // Cesium provider
-                // const provider: CesiumTerrainProvider = new CesiumTerrainProvider({
-                //         url: IonResource.fromAssetId(1, {
-                //                 accessToken:
-                //                     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5NDAxMTYyNC1lMzUwLTRkYzEtOWRkNC1kMjVkNjYwNWJjNTUiLCJpZCI6MTM1MDQ4LCJpYXQiOjE2ODIxNjIyMTl9.PvD5p7C_HyAp-JfTs1yKab4c3n_vYstn0AeD0qx_REg"
-                //             })
-                //         });
-
-                //         terrainProviders[record.id as string] = provider;
             }
         }
 

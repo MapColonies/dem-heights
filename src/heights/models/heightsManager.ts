@@ -1,4 +1,4 @@
-import { Cartographic, Math, sampleTerrainMostDetailed } from "cesium";
+import { Cartographic, Math as CesiumMath, sampleTerrainMostDetailed } from "cesium";
 import { Polygon } from "geojson";
 import { Feature } from "@turf/turf";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
@@ -137,19 +137,29 @@ export class HeightsManager {
             // Filter terrain providers by footprint point intersection.
             const terrainsFilterByFootprint = productTypeFilteredTerrains.filter(([terrainKey]) => {
                 const qmeshRecord = this.catalogRecordsMap[terrainKey];
-                const isPointInFootprint = booleanPointInPolygon([Math.toDegrees(position.longitude), Math.toDegrees(position.latitude)], qmeshRecord.footprint as Feature<Polygon>);
+                const isPointInFootprint = booleanPointInPolygon([CesiumMath.toDegrees(position.longitude), CesiumMath.toDegrees(position.latitude)], qmeshRecord.footprint as Feature<Polygon>);
                
                 return isPointInFootprint;
             });
             
             // Sort by highest resolution (Lower is better).
             const sortedTerrainsByResolution = terrainsFilterByFootprint.sort(([terrainAKey], [terrainBKey]) => {
+                const A_BEFORE_B = -1;
+                const B_BEFORE_A = 1;
+
                 const qmeshRecordA = this.catalogRecordsMap[terrainAKey];
                 const qmeshRecordB = this.catalogRecordsMap[terrainBKey];
 
-                // Add update date to sorting
+                switch(true) {
+                    case (qmeshRecordA.resolutionMeter as number) < (qmeshRecordB.resolutionMeter as number):
+                        return A_BEFORE_B;
 
-                return (qmeshRecordA.resolutionMeter as number) - (qmeshRecordB.resolutionMeter as number);
+                    case (qmeshRecordA.resolutionMeter as number) > (qmeshRecordB.resolutionMeter as number):
+                        return B_BEFORE_A;
+                    default:
+                        // Equal resolutions, compare update date
+                        return (qmeshRecordB.updateDate as Date).getTime() - (qmeshRecordA.updateDate as Date).getTime();
+                }
             });
 
             if(sortedTerrainsByResolution.length === 0) {

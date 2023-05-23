@@ -43,5 +43,6 @@
   "demCatalogRecords": "DEM_CATALOG_RECORDS",
   "protoFileUrl": "PROTO_FILE_URL",
   "serviceVersion": "SERVICE_VERSION",
-  "maximumTilesPerRequest": "MAXIMUM_TILES_PER_REQUEST"
+  "maximumTilesPerRequest": "MAXIMUM_TILES_PER_REQUEST",
+  "cesiumIONTerrainProviderToken": "CESIUM_ION_TOKEN"
 }
