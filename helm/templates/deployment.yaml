@@ -15,6 +15,8 @@ metadata:
     environment: {{ include "heights.environment" . }}
     release: {{ $releaseName }}
     {{- include "heights.labels" . | nindent 4 }}
+  annotations:
+    collectord.io/index: {{ quote .Values.splunkIndex }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
