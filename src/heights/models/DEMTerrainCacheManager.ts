@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe";
 import { IConfig } from "config";
-import { CesiumTerrainProvider, IonResource, Resource } from "cesium";
+import { CesiumTerrainProvider, Resource } from "cesium";
 import { PycswDemCatalogRecord } from "@map-colonies/mc-model-types";
 import { TerrainProviders } from "../interfaces";
 import { SERVICES } from "../../common/constants";
@@ -10,10 +10,7 @@ const QMESH_PROTOCOL = "TERRAIN_QMESH";
 @injectable()
 export default class DEMTerrainCacheManager {
     public terrainProviders: TerrainProviders = {};
-    private readonly isTestMode: boolean;
-    public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig) {
-        this.isTestMode = config.get<boolean>('isTestMode');
-    }
+    public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig) {}
 
     public async initTerrainProviders(): Promise<void> {
         const demCatalogRecords = JSON.parse(
@@ -28,18 +25,7 @@ export default class DEMTerrainCacheManager {
             });
             
 
-        for (const record of qmeshRecords) {
-
-            if(this.isTestMode) {
-                // Cesium provider              
-                const provider: CesiumTerrainProvider = await CesiumTerrainProvider.fromUrl(IonResource.fromAssetId(1, {
-                    accessToken: this.config.get("cesiumIONTerrainProviderToken")
-                }))
-
-                terrainProviders[record.id as string] = provider;
-                continue;
-            }
-            
+        for (const record of qmeshRecords) {            
             const recordProviderLink = record.links?.find(
                 (link) => link.protocol === QMESH_PROTOCOL
             );

@@ -7,9 +7,6 @@ import mockJsonPoints from '../../../src/heights/MOCKS/mockdata';
 import { HeightsRequestSender } from './helpers/requestSender';
 
 describe('heights', function () {
-  // NOTE: For testing add CESIUM_ION_TOKEN env with you'r cesium ION Asset token for their terrain provider service (Asset id 1).
-
-  jest.setTimeout(60000);
   const mockJsonData = mockJsonPoints as GetHeightsPointsRequest;
   let requestSender: HeightsRequestSender;
 
