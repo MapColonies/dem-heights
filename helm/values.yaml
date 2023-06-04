@@ -14,16 +14,16 @@ splunkIndex: ''
 
 cloudProvider:
   dockerRegistryUrl: my-registry-url.io
-  imagePullSecretName: 'my-registry-secret'
+  imagePullSecretName: my-registry-secret
   flavor: openshift
 
 caSecretName: ''
-caPath: '/usr/local/share/ca-certificates'
-caKey: 'ca.crt'
+caPath: /usr/local/share/ca-certificates
+caKey: ca.crt
 
 image:
   repository: dem-heights
-  tag: 'v1.0.0'
+  tag: v1.0.2
 
 env:
   port: 8080
@@ -39,7 +39,7 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
-  terrainProvidersToken: TOKEN
+  terrainProvidersToken: ''
   demCatalogRecords: []
   protoFileUrl: ''
   serviceVersion: ''
@@ -50,10 +50,10 @@ resources:
   value:
     limits:
       cpu: 1000m
-      memory: 500Mi
+      memory: 200Mi
     requests:
-      cpu: 1000m
-      memory: 500Mi
+      cpu: 250m
+      memory: 200Mi
 
 route:
   enabled: true
@@ -65,7 +65,7 @@ route:
 ingress:
   enabled: false
   path: /
-  host: 'localhost'
+  host: localhost
   cors:
     enabled: true
     origin: '*'
