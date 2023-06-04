@@ -42,7 +42,6 @@ export class HeightsManager {
     ): Promise<PosWithHeight[]> {
         this.logger.info({ msg: "Getting points heights" });
         const start = new Date();
-        console.log("here 1")
 
         const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields);
         const end = new Date();
@@ -50,7 +49,6 @@ export class HeightsManager {
         this.logger.debug({ msg: `Request took ${end.getTime() - start.getTime()} ms` });
         this.logger.debug({ msg: `Total Requests ${result.totalRequests} ms` });
 
-        console.log("result", result)
 
         return result.positions;
     }
@@ -60,7 +58,6 @@ export class HeightsManager {
         requestedProductType: TerrainTypes,
         excludeFields:  AdditionalFieldsEnum[],
     ): Promise<{ positions: PosWithHeight[]; totalRequests: number }> {
-        console.log("here 2")
         const MAX_REQ_PER_BATCH = 150;
         const MAXIMUM_TILES_PER_REQUEST = this.config.get<number>('maximumTilesPerRequest');
 
@@ -69,12 +66,8 @@ export class HeightsManager {
             requestedProductType
         );
 
-        console.log("here 3")
-
         const { optimizedCluster: sampleTerrainClusteredPositions, totalRequests } =
             cartographicArrayClusteringForHeightRequests(positionsWithProviders, MAX_REQ_PER_BATCH);
-
-            console.log("here 4")
 
         if (totalRequests > MAXIMUM_TILES_PER_REQUEST) {
             throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
@@ -88,25 +81,16 @@ export class HeightsManager {
             .withConcurrency(sampleTerrainClusteredPositions.length)
             .useCorrespondingResults()
             .process(async (batch) => {
-                console.log("here 5")
 
                 if(batch.providerKey === null) {
-                    console.log("here 6")
-
                     return batch.positions;
                 }
-
-                console.log("here 7")
-
 
                 const provider = this.terrainProviders[batch.providerKey];
                 const qmeshRecord = this.catalogRecordsMap[batch.providerKey];
 
-                console.log("provider", provider)
-                console.log("qmeshRecord", qmeshRecord)
-                
                 const positionsWithHeights = await sampleTerrainMostDetailed(provider, batch.positions);
-                console.log("positionsWithHeights", positionsWithHeights);
+                
                 // attach additional info on top of each position returned via the catalog record.
                 positionsWithHeights.forEach(pos => {
                     for(const field of additionalFields) {
