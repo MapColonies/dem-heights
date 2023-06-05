@@ -12,6 +12,11 @@ export interface HttpErrorWithCode extends HttpError {
     status: number;
 }
 
+export enum CommonErrorCodes {
+    POINTS_DENSITY_TOO_LOW_ERROR = "POINTS_DENSITY_TOO_LOW_ERROR",
+    GENERAL_SERVER_ERROR = "GENERAL_SERVER_ERROR",
+}
+
 @singleton()
 export class CommonErrors {
     /**
