@@ -9,20 +9,22 @@ export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
 ) => {
     return (req, res, next) => {
         const startTime = performance.now();
-       
+        const posArray = res.locals.positions as PosWithHeight[];
+
         // We should return data the same way its requested.
         if (req.headers["content-type"] === "application/octet-stream") {
             const encodedData = protobufClass
-            .encode({ data: res.locals.positions as PosWithHeight[] })
+            .encode({ data: posArray })
             .finish();
             
             const endTime = performance.now();
     
-            logger.debug({protobufEncodeTime: endTime - startTime, location: '[encodeProtobufMiddleware]' , reqId: res.locals.reqId as string })
+            logger.debug({protobufEncodeTime: endTime - startTime, pointsNumber: posArray.length, location: '[encodeProtobufMiddleware]' , reqId: res.locals.reqId as string })
                     
             res.send(encodedData);
             return;
         }
-        res.send({ data: res.locals.positions as PosWithHeight[] });
+        
+        res.send({ data: posArray });
     };
 };

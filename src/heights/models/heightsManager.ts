@@ -49,8 +49,8 @@ export class HeightsManager {
 
         const timeEnd = performance.now();
 
-        this.logger.debug({ timeToResponse: timeEnd - timeStart, location: '[HeightsManager] [getPoints]', reqId });
-        this.logger.debug({ totalRequests: result.totalRequests, location: '[HeightsManager] [getPoints]', reqId });
+        this.logger.debug({ timeToResponse: timeEnd - timeStart, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', reqId });
+        this.logger.debug({ totalRequests: result.totalRequests, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', reqId });
 
         return result.positions;
     }
@@ -76,6 +76,7 @@ export class HeightsManager {
 
         this.logger.debug({ 
             attachProviderTime: attachProviderEnd - attachProviderStart, 
+            pointsNumber: positionsArr.length,
             location: '[HeightsManager] [samplePositionsHeights]',
             reqId
         });
@@ -90,6 +91,7 @@ export class HeightsManager {
 
         this.logger.debug({ 
             clusteringTime: clusteringEnd - clusteringStart,
+            pointsNumber: positionsArr.length,
             location: '[HeightsManager] [samplePositionsHeights]',
             reqId
         });
@@ -114,6 +116,7 @@ export class HeightsManager {
                     this.logger.debug({ 
                         msg: `No terrain to sample these positions.`,
                         positions: JSON.stringify(batch.positions),
+                        pointsNumber: positionsArr.length,
                         location: '[HeightsManager] [samplePositionsHeights]',
                         reqId
                     });
@@ -140,6 +143,7 @@ export class HeightsManager {
                 this.logger.debug({ 
                     terrainSamplingTime: samplingEnd - samplingStart,
                     providerId: batch.providerKey,
+                    pointsNumber: positionsArr.length,
                     location: '[HeightsManager] [samplePositionsHeights]',
                     reqId
                 });
