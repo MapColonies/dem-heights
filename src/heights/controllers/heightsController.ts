@@ -35,12 +35,14 @@ export class HeightsController {
     public getPoints: GetHeightsHandler = async (req, res, next) => {
         try {
             const userInput = req.body;
+            const reqId = res.locals.reqId as string;
             const DEFAULT_TERRAIN_TYPE = TerrainTypes.MIXED;
             
             const heights = await this.manager.getPoints(
                 userInput.positions, 
                 userInput.productType ?? DEFAULT_TERRAIN_TYPE,
-                userInput.excludeFields
+                userInput.excludeFields,
+                reqId,
             );
 
             res.locals.positions = heights;

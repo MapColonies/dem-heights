@@ -44,7 +44,7 @@ export class CommonErrors {
             // pino-http looks for this property for error info
             res.err = err;
 
-            res.status(err.status).send({
+            res.status(err.status as number | undefined ?? httpStatusCodes.INTERNAL_SERVER_ERROR).send({
                 message: err.message,
                 errorCode: err.errorCode,
                 status: err.status,

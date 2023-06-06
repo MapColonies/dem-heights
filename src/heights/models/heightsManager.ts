@@ -38,16 +38,19 @@ export class HeightsManager {
     public async getPoints(
         points: Cartographic[],
         requestedProductType: TerrainTypes,
-        excludeFields: AdditionalFieldsEnum[] = []
+        excludeFields: AdditionalFieldsEnum[] = [],
+        reqId?: string,
     ): Promise<PosWithHeight[]> {
-        this.logger.info({ msg: `[HeightsManager] [getPoints] Getting points heights for ${points.length} points.` });
+        this.logger.info({ msg: `Getting points heights for ${points.length} points.`, location: '[HeightsManager] [getPoints]', reqId });
         
-        const start = new Date();
-        const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields);
-        const end = new Date();
+        const timeStart = performance.now();
 
-        this.logger.debug({ msg: `[HeightsManager] [getPoints] Request took ${end.getTime() - start.getTime()} ms` });
-        this.logger.debug({ msg: `[HeightsManager] [getPoints] Total Requests ${result.totalRequests}` });
+        const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqId);
+
+        const timeEnd = performance.now();
+
+        this.logger.debug({ msg: `Request took ${timeEnd - timeStart} ms`, location: '[HeightsManager] [getPoints]', reqId });
+        this.logger.debug({ msg: `Total Requests ${result.totalRequests}`, location: '[HeightsManager] [getPoints]', reqId });
 
         return result.positions;
     }
@@ -56,17 +59,40 @@ export class HeightsManager {
         positionsArr: Cartographic[],
         requestedProductType: TerrainTypes,
         excludeFields:  AdditionalFieldsEnum[],
+        reqId?: string,
     ): Promise<{ positions: PosWithHeight[]; totalRequests: number }> {
         const MAX_REQ_PER_BATCH = 150;
-        const MAXIMUM_TILES_PER_REQUEST = this.config.get<number>('maximumTilesPerRequest');
+        const MAXIMUM_TILES_PER_REQUEST = this.config.has('maximumTilesPerRequest') ? this.config.get<number>('maximumTilesPerRequest') : undefined;
 
+        // Attach providers
+        const attachProviderStart = performance.now();
+        
         const positionsWithProviders = this.attachTerrainProviderToPositions(
             positionsArr,
             requestedProductType
         );
+        
+        const attachProviderEnd = performance.now();
+
+        this.logger.debug({ 
+            msg: `Attaching providers to positions took ${attachProviderEnd - attachProviderStart} ms`, 
+            location: '[HeightsManager] [samplePositionsHeights]',
+            reqId
+        });
+
+        // Positions Clustering
+        const clusteringStart = performance.now();
 
         const { optimizedCluster: sampleTerrainClusteredPositions, totalRequests } =
             cartographicArrayClusteringForHeightRequests(positionsWithProviders, MAX_REQ_PER_BATCH, this.logger);
+
+        const clusteringEnd = performance.now();
+
+        this.logger.debug({ 
+            msg: `Positions clustering took ${clusteringEnd - clusteringStart} ms`, 
+            location: '[HeightsManager] [samplePositionsHeights]',
+            reqId
+        });
 
         if (typeof MAXIMUM_TILES_PER_REQUEST !== 'undefined' && totalRequests > MAXIMUM_TILES_PER_REQUEST) {
             throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
@@ -76,11 +102,22 @@ export class HeightsManager {
 
         const additionalFields = Object.values(AdditionalFieldsEnum);
 
+        // Terrain sampling batches
         const { results } = await PromisePool.for(sampleTerrainClusteredPositions)
             .withConcurrency(sampleTerrainClusteredPositions.length)
             .useCorrespondingResults()
             .process(async (batch) => {
+                const samplingStart = performance.now();
+
                 if(batch.providerKey === null) {
+                    
+                    this.logger.debug({ 
+                        msg: `No terrain to sample these positions.`,
+                        positions: JSON.stringify(batch.positions),
+                        location: '[HeightsManager] [samplePositionsHeights]',
+                        reqId
+                    });
+
                     return batch.positions;
                 }
 
@@ -97,6 +134,17 @@ export class HeightsManager {
                         }
                     }
                     });
+                
+                const samplingEnd = performance.now();
+                
+                this.logger.debug({ 
+                    msg: `Terrain sampling took ${samplingEnd - samplingStart} ms`,
+                    providerId: batch.providerKey,
+                    location: '[HeightsManager] [samplePositionsHeights]',
+                    reqId
+                });
+
+
                 
                return positionsWithHeights as PosWithHeight[];
 

@@ -46,8 +46,9 @@ export class ServerBuilder {
   }
 
   private registerPreRoutesMiddleware(): void {
+    // This was commented because we don't need the logs for req and res.
     // @ts-ignore
-    this.serverInstance.use(httpLogger({ logger: this.logger }));
+    // this.serverInstance.use(httpLogger({ logger: this.logger }));
 
     if (this.config.get<boolean>('server.response.compression.enabled')) {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));

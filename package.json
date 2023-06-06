@@ -70,7 +70,8 @@
     "protobufjs": "^7.2.3",
     "reflect-metadata": "^0.1.13",
     "traverse": "^0.6.7",
-    "tsyringe": "^4.7.0"
+    "tsyringe": "^4.7.0",
+    "uuidv4": "^6.2.13"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.1",
