@@ -40,14 +40,15 @@ export class HeightsManager {
         requestedProductType: TerrainTypes,
         excludeFields: AdditionalFieldsEnum[] = []
     ): Promise<PosWithHeight[]> {
-        this.logger.info({ msg: "Getting points heights" });
+        this.logger.info({ msg: `[HeightsManager] [getPoints] Getting points heights for ${points.length} points.` });
+        
         const start = new Date();
 
         const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields);
         const end = new Date();
 
-        this.logger.debug({ msg: `Request took ${end.getTime() - start.getTime()} ms` });
-        this.logger.debug({ msg: `Total Requests ${result.totalRequests} ms` });
+        this.logger.debug({ msg: `[HeightsManager] [getPoints] Request took ${end.getTime() - start.getTime()} ms` });
+        this.logger.debug({ msg: `[HeightsManager] [getPoints] Total Requests ${result.totalRequests}` });
 
 
         return result.positions;
@@ -69,7 +70,7 @@ export class HeightsManager {
         const { optimizedCluster: sampleTerrainClusteredPositions, totalRequests } =
             cartographicArrayClusteringForHeightRequests(positionsWithProviders, MAX_REQ_PER_BATCH);
 
-        if (totalRequests > MAXIMUM_TILES_PER_REQUEST) {
+        if (typeof MAXIMUM_TILES_PER_REQUEST !== 'undefined' && totalRequests > MAXIMUM_TILES_PER_REQUEST) {
             throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
         }
 

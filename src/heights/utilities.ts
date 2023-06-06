@@ -20,13 +20,13 @@ const createClustersByTerrainProvider = (
     for (let i=0;i<data.length;i++) {
         const item = data[i];
         const positions = item.positions;
-        const batchedPos = clusters.find((value) => value.providerKey === item.providerKey && value.count < maxRequestsPerBatch )
+        const batchedPos = clusters.find((value) => value.providerKey === item.providerKey && value.count < maxRequestsPerBatch );
         if(batchedPos){
             batchedPos.positions.push(...positions);
             batchedPos.count++;
 
         } else {
-            clusters.push({providerKey: item.providerKey === NO_PROVIDER_KEY ? null : item.providerKey, positions, count:1}) 
+            clusters.push({providerKey: item.providerKey === NO_PROVIDER_KEY ? null : item.providerKey, positions, count:1});
         }
     }
 
