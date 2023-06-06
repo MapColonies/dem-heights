@@ -1,5 +1,6 @@
 /* eslint-disable import/exports-last */
 
+import { Logger } from "@map-colonies/js-logger";
 import { Cartographic } from "cesium";
 import { PosWithTerrainProvider } from "./interfaces";
 
@@ -20,13 +21,13 @@ const createClustersByTerrainProvider = (
     for (let i=0;i<data.length;i++) {
         const item = data[i];
         const positions = item.positions;
-        const batchedPos = clusters.find((value) => value.providerKey === item.providerKey && value.count < maxRequestsPerBatch )
+        const batchedPos = clusters.find((value) => value.providerKey === item.providerKey && value.count < maxRequestsPerBatch );
         if(batchedPos){
             batchedPos.positions.push(...positions);
             batchedPos.count++;
 
         } else {
-            clusters.push({providerKey: item.providerKey === NO_PROVIDER_KEY ? null : item.providerKey, positions, count:1}) 
+            clusters.push({providerKey: item.providerKey === NO_PROVIDER_KEY ? null : item.providerKey, positions, count:1});
         }
     }
 
@@ -37,7 +38,8 @@ const createClustersByTerrainProvider = (
 
 export const cartographicArrayClusteringForHeightRequests = (
     positions: PosWithTerrainProvider[],
-    maxRequestsPerBatch = 1
+    maxRequestsPerBatch = 1,
+    logger?: Logger
 ): { optimizedCluster: PositionsWithProviderKey[]; totalRequests: number } => {
     const positionsClustersByTile = new Map<string, Cartographic[]>();
 
@@ -79,6 +81,8 @@ export const cartographicArrayClusteringForHeightRequests = (
         const clusterProviderKey = key.split("_")[0];
         return { providerKey: clusterProviderKey, positions: val };
     });
+
+    logger?.debug({msg: `[utilities] [cartographicArrayClusteringForHeightRequests] Positions outside of providers ${+(positionsClustersByTile.get(NO_PROVIDER_KEY)?.length ?? 0)}`});
 
     const newOptimizedCluster = createClustersByTerrainProvider(clusteredPositionsWithProviderKey, maxRequestsPerBatch);
     const totalRequests = positionsClustersByTile.size - (+positionsClustersByTile.has(NO_PROVIDER_KEY));
