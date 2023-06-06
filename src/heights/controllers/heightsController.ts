@@ -37,6 +37,10 @@ export class HeightsController {
             const userInput = req.body;
             const reqId = res.locals.reqId as string;
             const DEFAULT_TERRAIN_TYPE = TerrainTypes.MIXED;
+
+            if(userInput.positions.length === 0) {
+                throw this.commonErrors.EMPTY_POSITIONS_ARRAY
+            }
             
             const heights = await this.manager.getPoints(
                 userInput.positions, 

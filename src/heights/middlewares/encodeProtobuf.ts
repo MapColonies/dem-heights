@@ -18,7 +18,7 @@ export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
             
             const endTime = performance.now();
     
-            logger.debug({msg: `Encoding protobuf took ${endTime - startTime} ms`, location: '[encodeProtobufMiddleware]' , reqId: res.locals.reqId as string })
+            logger.debug({protobufEncodeTime: endTime - startTime, location: '[encodeProtobufMiddleware]' , reqId: res.locals.reqId as string })
                     
             res.send(encodedData);
             return;

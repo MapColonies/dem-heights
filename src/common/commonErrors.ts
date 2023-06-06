@@ -27,6 +27,14 @@ export class CommonErrors {
         return err;
     }
 
+    public get EMPTY_POSITIONS_ARRAY(): HttpErrorWithCode {
+        const err = new Error(`Request's positions array must not be empty.`) as HttpErrorWithCode;
+        err.status = httpStatusCodes.BAD_REQUEST;
+        err.errorCode = "EMPTY_POSITIONS_ARRAY";
+
+        return err;
+    }
+
     public GENERAL_SERVER_ERROR(e: Error): HttpErrorWithCode {
         const err = new Error(`Sorry, something went wrong.`) as HttpErrorWithCode;
 

@@ -19,7 +19,7 @@ export const decodeProtobufMiddleware: (protobufClass: protobuf.Type, logger:Log
         
         const endTime = performance.now();
         
-        logger.debug({msg: `Decoding protobuf took ${endTime - startTime} ms`, location: '[decodeProtobufMiddleware]' , reqId: res.locals.reqId as string })
+        logger.debug({protobufDecodeTime: endTime - startTime, location: '[decodeProtobufMiddleware]' , reqId: res.locals.reqId as string })
 
         next();
     };

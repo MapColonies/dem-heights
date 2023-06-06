@@ -41,7 +41,7 @@ export class HeightsManager {
         excludeFields: AdditionalFieldsEnum[] = [],
         reqId?: string,
     ): Promise<PosWithHeight[]> {
-        this.logger.info({ msg: `Getting points heights for ${points.length} points.`, location: '[HeightsManager] [getPoints]', reqId });
+        this.logger.info({ msg: 'Getting points heights',pointsNumber: points.length, location: '[HeightsManager] [getPoints]', reqId });
         
         const timeStart = performance.now();
 
@@ -49,8 +49,8 @@ export class HeightsManager {
 
         const timeEnd = performance.now();
 
-        this.logger.debug({ msg: `Request took ${timeEnd - timeStart} ms`, location: '[HeightsManager] [getPoints]', reqId });
-        this.logger.debug({ msg: `Total Requests ${result.totalRequests}`, location: '[HeightsManager] [getPoints]', reqId });
+        this.logger.debug({ timeToResponse: timeEnd - timeStart, location: '[HeightsManager] [getPoints]', reqId });
+        this.logger.debug({ totalRequests: result.totalRequests, location: '[HeightsManager] [getPoints]', reqId });
 
         return result.positions;
     }
@@ -75,7 +75,7 @@ export class HeightsManager {
         const attachProviderEnd = performance.now();
 
         this.logger.debug({ 
-            msg: `Attaching providers to positions took ${attachProviderEnd - attachProviderStart} ms`, 
+            attachProviderTime: attachProviderEnd - attachProviderStart, 
             location: '[HeightsManager] [samplePositionsHeights]',
             reqId
         });
@@ -89,7 +89,7 @@ export class HeightsManager {
         const clusteringEnd = performance.now();
 
         this.logger.debug({ 
-            msg: `Positions clustering took ${clusteringEnd - clusteringStart} ms`, 
+            clusteringTime: clusteringEnd - clusteringStart,
             location: '[HeightsManager] [samplePositionsHeights]',
             reqId
         });
@@ -138,7 +138,7 @@ export class HeightsManager {
                 const samplingEnd = performance.now();
                 
                 this.logger.debug({ 
-                    msg: `Terrain sampling took ${samplingEnd - samplingStart} ms`,
+                    terrainSamplingTime: samplingEnd - samplingStart,
                     providerId: batch.providerKey,
                     location: '[HeightsManager] [samplePositionsHeights]',
                     reqId

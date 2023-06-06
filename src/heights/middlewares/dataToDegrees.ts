@@ -19,7 +19,7 @@ export const positionResAsDegreesMiddleware: (logger: Logger) => GetHeightsHandl
 
         const endTime = performance.now();
 
-        logger.debug({ msg: `Converting response to degrees took ${endTime - startTime} ms`, location: '[positionResAsDegreesMiddleware]', reqId: res.locals.reqId as string })
+        logger.debug({ convertToDegreesTime: endTime - startTime, location: '[positionResAsDegreesMiddleware]', reqId: res.locals.reqId as string })
         res.locals.positions = posInDegrees;
 
         next();

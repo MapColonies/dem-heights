@@ -14,7 +14,7 @@ export const convertReqPositionToRadiansMiddleware: (logger: Logger) => GetHeigh
         
         const endTime = performance.now();
 
-        logger.debug({msg: `Convert request positions to radians took ${endTime - startTime} ms`, location: '[convertReqPositionToRadiansMiddleware]', reqId: res.locals.reqId as string })
+        logger.debug({convertToRadiansTime: endTime - startTime, location: '[convertReqPositionToRadiansMiddleware]', reqId: res.locals.reqId as string })
         
         req.body = { ...req.body, positions };
 
