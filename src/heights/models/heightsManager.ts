@@ -68,7 +68,7 @@ export class HeightsManager {
         );
 
         const { optimizedCluster: sampleTerrainClusteredPositions, totalRequests } =
-            cartographicArrayClusteringForHeightRequests(positionsWithProviders, MAX_REQ_PER_BATCH);
+            cartographicArrayClusteringForHeightRequests(positionsWithProviders, MAX_REQ_PER_BATCH, this.logger);
 
         if (typeof MAXIMUM_TILES_PER_REQUEST !== 'undefined' && totalRequests > MAXIMUM_TILES_PER_REQUEST) {
             throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;

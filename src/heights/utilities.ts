@@ -1,5 +1,6 @@
 /* eslint-disable import/exports-last */
 
+import { Logger } from "@map-colonies/js-logger";
 import { Cartographic } from "cesium";
 import { PosWithTerrainProvider } from "./interfaces";
 
@@ -37,7 +38,8 @@ const createClustersByTerrainProvider = (
 
 export const cartographicArrayClusteringForHeightRequests = (
     positions: PosWithTerrainProvider[],
-    maxRequestsPerBatch = 1
+    maxRequestsPerBatch = 1,
+    logger?: Logger
 ): { optimizedCluster: PositionsWithProviderKey[]; totalRequests: number } => {
     const positionsClustersByTile = new Map<string, Cartographic[]>();
 
@@ -81,6 +83,9 @@ export const cartographicArrayClusteringForHeightRequests = (
     });
 
     const newOptimizedCluster = createClustersByTerrainProvider(clusteredPositionsWithProviderKey, maxRequestsPerBatch);
+
+    logger?.debug({msg: `Positions outside of providers ${+(positionsClustersByTile.get(NO_PROVIDER_KEY)?.length ?? 0)}`});
+
     const totalRequests = positionsClustersByTile.size - (+positionsClustersByTile.has(NO_PROVIDER_KEY));
 
     return { optimizedCluster: newOptimizedCluster, totalRequests: totalRequests };
