@@ -22,5 +22,5 @@ data:
   DEM_CATALOG_RECORDS: {{ .Values.env.demCatalogRecords | quote }}
   PROTO_FILE_URL: {{ .Values.env.protoFileUrl | quote }}
   SERVICE_VERSION: {{ .Values.env.serviceVersion | quote }}
-  MAXIMUM_TILES_PER_REQUEST: {{ .Values.env.maximumTilesPerRequest }}
+  MAXIMUM_TILES_PER_REQUEST: {{ .Values.env.maximumTilesPerRequest | quote }}
 {{- end }}
