@@ -32,6 +32,14 @@ export class CommonErrors {
         return err;
     }
 
+    public get EMPTY_POSITIONS_ARRAY(): HttpErrorWithCode {
+        const err = new Error(`Request's positions array must not be empty.`) as HttpErrorWithCode;
+        err.status = httpStatusCodes.BAD_REQUEST;
+        err.errorCode = "EMPTY_POSITIONS_ARRAY";
+
+        return err;
+    }
+
     public GENERAL_SERVER_ERROR(e: Error): HttpErrorWithCode {
         const err = new Error(`Sorry, something went wrong.`) as HttpErrorWithCode;
 
@@ -49,7 +57,7 @@ export class CommonErrors {
             // pino-http looks for this property for error info
             res.err = err;
 
-            res.status(err.status).send({
+            res.status(err.status as number | undefined ?? httpStatusCodes.INTERNAL_SERVER_ERROR).send({
                 message: err.message,
                 errorCode: err.errorCode,
                 status: err.status,

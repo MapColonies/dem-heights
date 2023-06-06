@@ -82,6 +82,12 @@ export const cartographicArrayClusteringForHeightRequests = (
         return { providerKey: clusterProviderKey, positions: val };
     });
 
+    const positionsOutOfBoundsCount = +(positionsClustersByTile.get(NO_PROVIDER_KEY)?.length ?? 0);
+    
+    if(positionsOutOfBoundsCount > 0) {
+        logger?.debug({msg: `Positions outside of providers: ${positionsOutOfBoundsCount}`, location: '[utilities] [cartographicArrayClusteringForHeightRequests]'});
+    }
+
     const newOptimizedCluster = createClustersByTerrainProvider(clusteredPositionsWithProviderKey, maxRequestsPerBatch);
 
     logger?.debug({msg: `Positions outside of providers ${+(positionsClustersByTile.get(NO_PROVIDER_KEY)?.length ?? 0)}`});

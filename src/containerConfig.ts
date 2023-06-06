@@ -3,6 +3,7 @@ import config from "config";
 import { logMethod } from "@map-colonies/telemetry";
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import jsLogger, { LoggerOptions } from "@map-colonies/js-logger";
+import pino from 'pino';
 import { Metrics } from "@map-colonies/telemetry";
 import { trace } from "@opentelemetry/api";
 import { DependencyContainer } from "tsyringe/dist/typings/types";
@@ -37,7 +38,7 @@ export const registerExternalValues = async (
     );
 
     // @ts-expect-error the signature is wrong
-    const logger = jsLogger({...loggerConfig, prettyPrint: loggerConfig.prettyPrint, hooks: { logMethod }});
+    const logger = jsLogger({...loggerConfig, prettyPrint: false, hooks: { logMethod }, timestamp: pino.stdTimeFunctions.isoTime });
 
     const metrics = new Metrics(SERVICE_NAME);
     const meter = metrics.start();
