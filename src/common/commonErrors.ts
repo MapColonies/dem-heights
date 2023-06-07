@@ -12,6 +12,22 @@ export interface HttpErrorWithCode extends HttpError {
     status: number;
 }
 
+export enum CommonErrorCodes {
+    POINTS_DENSITY_TOO_LOW_ERROR = "POINTS_DENSITY_TOO_LOW_ERROR",
+    GENERAL_SERVER_ERROR = "GENERAL_SERVER_ERROR",
+    EMPTY_POSITIONS_ARRAY = "EMPTY_POSITIONS_ARRAY",
+    MISSING_REQUIRED_PROPERTY = "MISSING_REQUIRED_PROPERTY",
+    INVALID_REQUEST = "INVALID_REQUEST",
+}
+
+export const commonErrorCodesToStatusMap = new Map([
+    [CommonErrorCodes.GENERAL_SERVER_ERROR, httpStatusCodes.INTERNAL_SERVER_ERROR],
+    [CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR, httpStatusCodes.BAD_REQUEST],
+    [CommonErrorCodes.EMPTY_POSITIONS_ARRAY, httpStatusCodes.BAD_REQUEST],
+    [CommonErrorCodes.MISSING_REQUIRED_PROPERTY, httpStatusCodes.BAD_REQUEST],
+    [CommonErrorCodes.INVALID_REQUEST, httpStatusCodes.BAD_REQUEST],
+])
+
 @singleton()
 export class CommonErrors {
     /**
@@ -22,7 +38,7 @@ export class CommonErrors {
     public get POINTS_DENSITY_TOO_LOW_ERROR(): HttpErrorWithCode {
         const err = new Error(`Points density is too low to compute.`) as HttpErrorWithCode;
         err.status = httpStatusCodes.BAD_REQUEST;
-        err.errorCode = "POINTS_DENSITY_TOO_LOW_ERROR";
+        err.errorCode = CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR;
 
         return err;
     }
@@ -30,7 +46,7 @@ export class CommonErrors {
     public get EMPTY_POSITIONS_ARRAY(): HttpErrorWithCode {
         const err = new Error(`Request's positions array must not be empty.`) as HttpErrorWithCode;
         err.status = httpStatusCodes.BAD_REQUEST;
-        err.errorCode = "EMPTY_POSITIONS_ARRAY";
+        err.errorCode = CommonErrorCodes.EMPTY_POSITIONS_ARRAY;
 
         return err;
     }
@@ -39,7 +55,7 @@ export class CommonErrors {
         const err = new Error(`Sorry, something went wrong.`) as HttpErrorWithCode;
 
         err.status = httpStatusCodes.INTERNAL_SERVER_ERROR;
-        err.errorCode = "GENERAL_SERVER_ERROR";
+        err.errorCode = CommonErrorCodes.GENERAL_SERVER_ERROR;
 
         this.logger.error(e, err.errorCode);
 
@@ -52,12 +68,27 @@ export class CommonErrors {
             // pino-http looks for this property for error info
             res.err = err;
 
-            res.status(err.status as number | undefined ?? httpStatusCodes.INTERNAL_SERVER_ERROR).send({
+            const applicationErrorCode: CommonErrorCodes = this.getErrorCode(err);
+
+            res.status(err.status as number | undefined ?? commonErrorCodesToStatusMap.get(applicationErrorCode) as number)
+            .send({
                 message: err.message,
-                errorCode: err.errorCode,
+                errorCode: err.errorCode as string | undefined ?? applicationErrorCode,
                 status: err.status,
                 stackTrace: process.env.NODE_ENV !== "production" ? err.stack : {}
             });
         };
+    }
+
+    private getErrorCode(err: HttpErrorWithCode): CommonErrorCodes {
+        const DEFAULT_REQUIRED_PROPERTY_KEYWORD = 'required property'
+        switch(true) {
+            case err.message.includes(DEFAULT_REQUIRED_PROPERTY_KEYWORD) && err.status === httpStatusCodes.BAD_REQUEST:
+                return CommonErrorCodes.MISSING_REQUIRED_PROPERTY
+            case err.status === httpStatusCodes.BAD_REQUEST:
+                return CommonErrorCodes.INVALID_REQUEST
+            default:
+                return CommonErrorCodes.GENERAL_SERVER_ERROR
+        }
     }
 }
