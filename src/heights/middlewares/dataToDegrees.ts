@@ -6,8 +6,8 @@ import { PosWithHeight } from "../interfaces";
 export const positionResAsDegreesMiddleware: (logger: Logger) => GetHeightsHandler = (logger) => {
     return (req, res, next) => {
         const startTime = performance.now();
-
-        const posInDegrees = (res.locals.positions as PosWithHeight[]).map(
+        const posArray = res.locals.positions as PosWithHeight[];
+        const posInDegrees = posArray.map(
             ({ latitude, longitude, ...other }) => {
                 return {
                     latitude: Math.toDegrees(latitude),
@@ -19,7 +19,7 @@ export const positionResAsDegreesMiddleware: (logger: Logger) => GetHeightsHandl
 
         const endTime = performance.now();
 
-        logger.debug({ convertToDegreesTime: endTime - startTime, location: '[positionResAsDegreesMiddleware]', reqId: res.locals.reqId as string })
+        logger.debug({ convertToDegreesTime: endTime - startTime, pointsNumber: posArray.length, location: '[positionResAsDegreesMiddleware]', reqId: res.locals.reqId as string })
         res.locals.positions = posInDegrees;
 
         next();

@@ -7,6 +7,7 @@ export const convertReqPositionToRadiansMiddleware: (logger: Logger) => GetHeigh
 ) => {
     return (req, res, next) => {
         const startTime = performance.now();
+        const posArray = req.body.positions;
         
         const positions = req.body.positions.map((pos) => {
             return Cartographic.fromDegrees(pos.longitude, pos.latitude);
@@ -14,7 +15,7 @@ export const convertReqPositionToRadiansMiddleware: (logger: Logger) => GetHeigh
         
         const endTime = performance.now();
 
-        logger.debug({convertToRadiansTime: endTime - startTime, location: '[convertReqPositionToRadiansMiddleware]', reqId: res.locals.reqId as string })
+        logger.debug({convertToRadiansTime: endTime - startTime, pointsNumber: posArray.length,  location: '[convertReqPositionToRadiansMiddleware]', reqId: res.locals.reqId as string })
         
         req.body = { ...req.body, positions };
 
