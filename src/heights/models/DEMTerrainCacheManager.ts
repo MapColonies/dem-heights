@@ -15,8 +15,8 @@ export default class DEMTerrainCacheManager {
     public async initTerrainProviders(): Promise<void> {
         const demCatalogRecords = JSON.parse(
             this.config.get<string>("demCatalogRecords")
-        ) as PycswDemCatalogRecord[];
-
+            ) as PycswDemCatalogRecord[];
+        
         const terrainProviders: TerrainProviders = {};
 
         const qmeshRecords = demCatalogRecords

@@ -303,6 +303,10 @@ export const positionsOutsideOfProviders = {
     ]
 };
 
+export const emptyPositionsRequest = {
+    positions: []
+};
+
 export default {
     positions: [
         { longitude: 86.825145, latitude: 27.888257 },

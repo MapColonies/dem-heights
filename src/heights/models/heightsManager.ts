@@ -43,6 +43,10 @@ export class HeightsManager {
     ): Promise<PosWithHeight[]> {
         this.logger.info({ msg: 'Getting points heights',pointsNumber: points.length, location: '[HeightsManager] [getPoints]', reqId });
         
+        if(points.length === 0) {
+            throw this.commonErrors.EMPTY_POSITIONS_ARRAY;
+        }
+        
         const timeStart = performance.now();
 
         const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqId);

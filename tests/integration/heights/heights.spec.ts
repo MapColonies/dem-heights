@@ -10,7 +10,7 @@ import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { GetHeightsPointsRequest, GetHeightsPointsResponse } from '../../../src/heights/controllers/heightsController';
 import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from '../../../src/heights/interfaces';
-import mockJsonPoints, { moreThen150RequestsPositions, positionsOutsideOfProviders } from '../../../src/heights/MOCKS/mockData';
+import mockJsonPoints, { emptyPositionsRequest, moreThen150RequestsPositions, positionsOutsideOfProviders } from '../../../src/heights/MOCKS/mockData';
 import { CommonErrorCodes, HttpErrorWithCode } from '../../../src/common/commonErrors';
 import { HeightsRequestSender } from './helpers/requestSender';
 
@@ -88,9 +88,9 @@ describe('heights', function () {
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
 
         for (const position of (response.body as GetHeightsPointsResponse).data) {
-          expect(position[AdditionalFieldsEnum.PRODUCT_TYPE]).toBeFalsy();
-          expect(position[AdditionalFieldsEnum.UPDATE_DATE]).toBeFalsy();
-          expect(position[AdditionalFieldsEnum.RESOLUTION_METER]).toBeTruthy();
+          expect(position[AdditionalFieldsEnum.PRODUCT_TYPE]).toBeUndefined();
+          expect(position[AdditionalFieldsEnum.UPDATE_DATE]).toBeUndefined();
+          expect(position[AdditionalFieldsEnum.RESOLUTION_METER]).toBeDefined();
         }
       });
 
@@ -104,7 +104,7 @@ describe('heights', function () {
         expect(response.body).toHaveProperty('data');
 
         for (const position of (response.body as GetHeightsPointsResponse).data) {
-          expect(position['latitude'] && position['longitude']).toBeTruthy();
+          expect(position['latitude'] && position['longitude']).toBeDefined();
 
           const extraFields = Object.keys(AdditionalFieldsEnum);
 
@@ -161,12 +161,21 @@ describe('heights', function () {
     });
 
     describe('Get points height (JSON)', function () {
-      it('Should return 400 status code with low density error for 150+ requests', async function () {
+      it('Should return 400 status code with low density error for 150+ requests (As configured)', async function () {
         const response = await requestSender.getPoints(mockJsonDataLowDensity);
 
         expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('errorCode');
         expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR);
+      });
+
+      it('Should return 400 status code with an empty positions error if positions array is empty', async function() {
+        const response = await requestSender.getPoints(emptyPositionsRequest);
+
+        expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+        expect(response.body).toHaveProperty('errorCode');
+        expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.EMPTY_POSITIONS_ARRAY);
+  
       });
     });
   });
