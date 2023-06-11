@@ -24,7 +24,6 @@ export default class DEMTerrainCacheManager {
                 return record.links?.some((link) => link.protocol === QMESH_PROTOCOL);
             });
             
-
         for (const record of qmeshRecords) {            
             const recordProviderLink = record.links?.find(
                 (link) => link.protocol === QMESH_PROTOCOL

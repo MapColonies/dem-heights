@@ -13,6 +13,7 @@ module.exports = {
   collectCoverageFrom: [
     '<rootDir>/src/**/*.ts',
     '!*/node_modules/',
+    '!<rootDir>/src/heights/middlewares/**',
     '!/vendor/**',
     '!*/common/**',
     '!**/controllers/**',

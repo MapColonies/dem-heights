@@ -94,7 +94,32 @@ describe('heights', function () {
         }
       });
 
-      it('should return 200 even if some points are not in any provider', async function () {
+      it("Should return 200 status code and the positions with null heights and no fields if no provider match for the request (Legit request)", async function () {
+        const nonExistingTerrainType = TerrainTypes.DSM;
+
+        const response = await requestSender.getPoints({
+          ...mockJsonData,
+          productType: nonExistingTerrainType
+        });
+  
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response.body).toHaveProperty('data');
+        expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
+  
+        for(const position of (response.body as GetHeightsPointsResponse).data) {
+          expect(position.height).toBeNull();
+  
+          const extraFields = Object.keys(AdditionalFieldsEnum);
+          for (const extraField of extraFields) {
+            const extraFieldFromEnum = AdditionalFieldsEnum[extraField as keyof typeof AdditionalFieldsEnum];
+  
+            expect(position[extraFieldFromEnum]).toBeUndefined();
+          }
+  
+        }
+      });
+
+      it('should return 200 status code even if some points are not in any provider', async function () {
         /**
          * If a position could not be found in any provider, its height will be null and will not include any extra field.
          */
@@ -102,6 +127,7 @@ describe('heights', function () {
 
         expect(response.status).toBe(httpStatusCodes.OK);
         expect(response.body).toHaveProperty('data');
+        expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonDataOutOfBounds.positions.length);
 
         for (const position of (response.body as GetHeightsPointsResponse).data) {
           expect(position['latitude'] && position['longitude']).toBeDefined();
@@ -175,7 +201,6 @@ describe('heights', function () {
         expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('errorCode');
         expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.EMPTY_POSITIONS_ARRAY);
-  
       });
     });
   });

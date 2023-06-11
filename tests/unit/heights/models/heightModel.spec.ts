@@ -164,19 +164,18 @@ describe("Get Heights model", function () {
       });
     });
 
-    it('Should throw an low density error for 150+ requests (As configured)', async function() {
+    it('Should throw low density error for 150+ requests (As configured)', async function() {
       await expect(heightsManager.getPoints(mockJsonDataLowDensity.positions, TerrainTypes.MIXED))
       .rejects
       .toHaveProperty('errorCode', CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR);
-
     });
 
-    it('Should throw an empty positions error if positions array is empty', async function() {
+    it('Should throw empty positions error if positions array is empty', async function() {
       await expect(heightsManager.getPoints(emptyPositionsRequest.positions, TerrainTypes.MIXED))
       .rejects
       .toHaveProperty('errorCode', CommonErrorCodes.EMPTY_POSITIONS_ARRAY);
-
     });
+    
   });
 
 
