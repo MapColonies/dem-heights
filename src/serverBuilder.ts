@@ -2,11 +2,9 @@ import express, { Router } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
-import { getErrorHandlerMiddleware } from '@map-colonies/error-express-handler';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import httpLogger from '@map-colonies/express-access-log-middleware';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
 import { HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
@@ -21,7 +19,6 @@ export class ServerBuilder {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(HEIGHTS_ROUTER_SYMBOL) private readonly heightsRouter: Router,
     @inject(CommonErrors) private readonly commonErrors: CommonErrors
-
   ) {
     this.serverInstance = express();
   }
@@ -54,7 +51,7 @@ export class ServerBuilder {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
     }
 
-    this.serverInstance.use(bodyParser.raw({ type: 'application/octet-stream' , limit: '5mb' }));
+    this.serverInstance.use(bodyParser.raw({ type: 'application/octet-stream', limit: '5mb' }));
     this.serverInstance.use(bodyParser.json(this.config.get<bodyParser.Options>('server.request.payload')));
 
     const ignorePathRegex = new RegExp(`^${this.config.get<string>('openapiConfig.basePath')}/.*`, 'i');
@@ -68,7 +65,7 @@ export class ServerBuilder {
      * Via service boilerplate.
      */
     this.serverInstance.use(this.commonErrors.getCommonErrorHandlerMiddleware());
-    
+
     // TODO: Find a way to include the default MC error handler as well
     // this.serverInstance.use(getErrorHandlerMiddleware());
   }

@@ -10,7 +10,11 @@ import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { GetHeightsPointsRequest, GetHeightsPointsResponse } from '../../../src/heights/controllers/heightsController';
 import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from '../../../src/heights/interfaces';
-import mockJsonPoints, { emptyPositionsRequest, moreThen150RequestsPositions, positionsOutsideOfProviders } from '../../../src/heights/MOCKS/mockData';
+import mockJsonPoints, {
+  emptyPositionsRequest,
+  moreThen150RequestsPositions,
+  positionsOutsideOfProviders,
+} from '../../../src/heights/MOCKS/mockData';
 import { CommonErrorCodes, HttpErrorWithCode } from '../../../src/common/commonErrors';
 import { HeightsRequestSender } from './helpers/requestSender';
 
@@ -94,28 +98,27 @@ describe('heights', function () {
         }
       });
 
-      it("Should return 200 status code and the positions with null heights and no fields if no provider match for the request (Legit request)", async function () {
+      it('Should return 200 status code and the positions with null heights and no fields if no provider match for the request (Legit request)', async function () {
         const nonExistingTerrainType = TerrainTypes.DSM;
 
         const response = await requestSender.getPoints({
           ...mockJsonData,
-          productType: nonExistingTerrainType
+          productType: nonExistingTerrainType,
         });
-  
+
         expect(response.status).toBe(httpStatusCodes.OK);
         expect(response.body).toHaveProperty('data');
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
-  
-        for(const position of (response.body as GetHeightsPointsResponse).data) {
+
+        for (const position of (response.body as GetHeightsPointsResponse).data) {
           expect(position.height).toBeNull();
-  
+
           const extraFields = Object.keys(AdditionalFieldsEnum);
           for (const extraField of extraFields) {
             const extraFieldFromEnum = AdditionalFieldsEnum[extraField as keyof typeof AdditionalFieldsEnum];
-  
+
             expect(position[extraFieldFromEnum]).toBeUndefined();
           }
-  
         }
       });
 
@@ -195,7 +198,7 @@ describe('heights', function () {
         expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR);
       });
 
-      it('Should return 400 status code with an empty positions error if positions array is empty', async function() {
+      it('Should return 400 status code with an empty positions error if positions array is empty', async function () {
         const response = await requestSender.getPoints(emptyPositionsRequest);
 
         expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);

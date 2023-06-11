@@ -35,7 +35,7 @@ paths:
               schema:
                 type: string
                 format: binary
-        500: 
+        500:
           description: Service Error
           content:
             application/json:
@@ -87,9 +87,9 @@ components:
           type: array
           uniqueItems: true
           items:
-            oneOf: 
+            oneOf:
               - $ref: '#/components/schemas/excludeFieldsEnum'
-          
+
     pointsRes:
       type: object
       required:
@@ -116,7 +116,7 @@ components:
                 format: double
     productTypeEnum:
       type: string
-      enum: 
+      enum:
         - DSM
         - DTM
         - MIXED

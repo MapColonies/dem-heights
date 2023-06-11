@@ -1,14 +1,17 @@
 import { container } from 'tsyringe';
-import { Cartesian2, Cartographic, CesiumTerrainProvider,Math as CesiumMath } from 'cesium';
+import { Cartesian2, Cartographic, CesiumTerrainProvider } from 'cesium';
 import { HeightsManager } from '../../../../src/heights/models/heightsManager';
-import mockJsonPoints, { moreThen150RequestsPositions, positionsOutsideOfProviders, emptyPositionsRequest } from '../../../../src/heights/MOCKS/mockData';
+import mockJsonPoints, {
+  moreThen150RequestsPositions,
+  positionsOutsideOfProviders,
+  emptyPositionsRequest,
+} from '../../../../src/heights/MOCKS/mockData';
 import { GetHeightsPointsRequest } from '../../../../src/heights/controllers/heightsController';
 import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from '../../../../src/heights/interfaces';
-import {registerTestValues} from '../../../configurations/testContainerConfig';
+import { registerTestValues } from '../../../configurations/testContainerConfig';
 import { CommonErrorCodes } from '../../../../src/common/commonErrors';
 
-
-describe("Get Heights model", function () {
+describe('Get Heights model', function () {
   const mockJsonData = mockJsonPoints as GetHeightsPointsRequest;
   const mockJsonDataLowDensity = moreThen150RequestsPositions as GetHeightsPointsRequest;
   const mockJsonDataOutOfBounds = positionsOutsideOfProviders as GetHeightsPointsRequest;
@@ -74,27 +77,27 @@ describe("Get Heights model", function () {
     jest.clearAllMocks();
   });
 
-  describe("Given valid parameters", function () {
-    it("Should return positions with height and extra metadata fields",  async function () {
+  describe('Given valid parameters', function () {
+    it('Should return positions with height and extra metadata fields', async function () {
       const result = await heightsManager.getPoints(mockJsonData.positions, TerrainTypes.MIXED);
-  
-          expect(result).toHaveLength(mockJsonData.positions.length);
-  
-          const getHeightsResProperties = Object.keys(basicPositionResponse);
-  
-          for (const position of result) {
-            for (const key of getHeightsResProperties) {
-              expect(position[key as keyof PosWithHeight]).toBeTruthy();
-            }
-          }
+
+      expect(result).toHaveLength(mockJsonData.positions.length);
+
+      const getHeightsResProperties = Object.keys(basicPositionResponse);
+
+      for (const position of result) {
+        for (const key of getHeightsResProperties) {
+          expect(position[key as keyof PosWithHeight]).toBeTruthy();
+        }
+      }
     });
-  
-    it("Should return positions with height and exclude fields if requested", async function () {
+
+    it('Should return positions with height and exclude fields if requested', async function () {
       const excludeFields = [AdditionalFieldsEnum.UPDATE_DATE, AdditionalFieldsEnum.PRODUCT_TYPE];
       const result = await heightsManager.getPoints(mockJsonData.positions, TerrainTypes.MIXED, excludeFields);
-  
+
       expect(result).toHaveLength(mockJsonData.positions.length);
-  
+
       for (const position of result) {
         expect(position[AdditionalFieldsEnum.PRODUCT_TYPE]).toBeUndefined();
         expect(position[AdditionalFieldsEnum.UPDATE_DATE]).toBeUndefined();
@@ -102,13 +105,13 @@ describe("Get Heights model", function () {
       }
     });
 
-    it("Should return the positions with null heights and no fields if no provider match for the request", async function () {
+    it('Should return the positions with null heights and no fields if no provider match for the request', async function () {
       const nonExistingTerrainType = TerrainTypes.DSM;
       const result = await heightsManager.getPoints(mockJsonData.positions, nonExistingTerrainType);
 
       expect(result).toHaveLength(mockJsonData.positions.length);
 
-      for(const position of result) {
+      for (const position of result) {
         expect(position.height).toBeNull();
 
         const extraFields = Object.keys(AdditionalFieldsEnum);
@@ -117,13 +120,12 @@ describe("Get Heights model", function () {
 
           expect(position[extraFieldFromEnum]).toBeUndefined();
         }
-
       }
     });
 
-    it("Should be able to return height and data for only a part of the positions", async function () {
+    it('Should be able to return height and data for only a part of the positions', async function () {
       const result = await heightsManager.getPoints(mockJsonDataOutOfBounds.positions, TerrainTypes.MIXED);
-      
+
       expect(result).toHaveLength(mockJsonDataOutOfBounds.positions.length);
 
       for (const position of result) {
@@ -139,12 +141,10 @@ describe("Get Heights model", function () {
           expect(typeof position[extraFieldFromEnum] === 'undefined').toEqual(isNullHeight);
         }
       }
-
-
     });
   });
 
-  describe("Given invalid params", function () {
+  describe('Given invalid params', function () {
     beforeAll(function () {
       cesiumTerrainProviderFromUrlSpy = jest.spyOn(CesiumTerrainProvider, 'fromUrl');
 
@@ -164,20 +164,18 @@ describe("Get Heights model", function () {
       });
     });
 
-    it('Should throw low density error for 150+ requests (As configured)', async function() {
-      await expect(heightsManager.getPoints(mockJsonDataLowDensity.positions, TerrainTypes.MIXED))
-      .rejects
-      .toHaveProperty('errorCode', CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR);
+    it('Should throw low density error for 150+ requests (As configured)', async function () {
+      await expect(heightsManager.getPoints(mockJsonDataLowDensity.positions, TerrainTypes.MIXED)).rejects.toHaveProperty(
+        'errorCode',
+        CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR
+      );
     });
 
-    it('Should throw empty positions error if positions array is empty', async function() {
-      await expect(heightsManager.getPoints(emptyPositionsRequest.positions, TerrainTypes.MIXED))
-      .rejects
-      .toHaveProperty('errorCode', CommonErrorCodes.EMPTY_POSITIONS_ARRAY);
+    it('Should throw empty positions error if positions array is empty', async function () {
+      await expect(heightsManager.getPoints(emptyPositionsRequest.positions, TerrainTypes.MIXED)).rejects.toHaveProperty(
+        'errorCode',
+        CommonErrorCodes.EMPTY_POSITIONS_ARRAY
+      );
     });
-    
   });
-
-
-
-}) 
+});
