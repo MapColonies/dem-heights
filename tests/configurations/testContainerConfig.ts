@@ -8,8 +8,8 @@ import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../src/contai
 
 async function registerTestValues(shouldInitTerrainProviders = true): Promise<void> {
   const demTerrainCacheManager = new DEMTerrainCacheManager(config);
-  
-  if(shouldInitTerrainProviders) {
+
+  if (shouldInitTerrainProviders) {
     await demTerrainCacheManager.initTerrainProviders();
   }
 

@@ -1,114 +1,107 @@
-import { Logger } from "@map-colonies/js-logger";
-import { Cartographic } from "cesium";
-import { NextFunction, Request, Response } from "express";
-import { container } from "tsyringe";
-import { isUuid } from "uuidv4";
-import { SERVICES } from "../../../../src/common/constants";
-import {
-    GetHeightsHandler,
-    GetHeightsPointsRequest
-} from "../../../../src/heights/controllers/heightsController";
-import { PosWithHeight } from "../../../../src/heights/interfaces";
-import { createReqIdMiddleware } from "../../../../src/heights/middlewares/createReqId";
-import { positionResAsDegreesMiddleware } from "../../../../src/heights/middlewares/dataToDegrees";
-import { convertReqPositionToRadiansMiddleware } from "../../../../src/heights/middlewares/dataToRadians";
-import { registerTestValues } from "../../../configurations/testContainerConfig";
+import { Logger } from '@map-colonies/js-logger';
+import { Cartographic } from 'cesium';
+import { NextFunction, Request, Response } from 'express';
+import { container } from 'tsyringe';
+import { isUuid } from 'uuidv4';
+import { SERVICES } from '../../../../src/common/constants';
+import { GetHeightsHandler, GetHeightsPointsRequest } from '../../../../src/heights/controllers/heightsController';
+import { PosWithHeight } from '../../../../src/heights/interfaces';
+import { createReqIdMiddleware } from '../../../../src/heights/middlewares/createReqId';
+import { positionResAsDegreesMiddleware } from '../../../../src/heights/middlewares/dataToDegrees';
+import { convertReqPositionToRadiansMiddleware } from '../../../../src/heights/middlewares/dataToRadians';
+import { registerTestValues } from '../../../configurations/testContainerConfig';
 
-describe("Get heights middlewares", function () {
-    let mockRequest: Request;
-    let mockResponse: Response;
-    let mockNext: NextFunction;
-    let logger: Logger;
-    let reqIdMiddleware: GetHeightsHandler;
-    let dataToRadiansMiddleware: GetHeightsHandler;
-    let dataToDegreesMiddleware: GetHeightsHandler;
+describe('Get heights middlewares', function () {
+  let mockRequest: Request;
+  let mockResponse: Response;
+  let mockNext: NextFunction;
+  let logger: Logger;
+  let reqIdMiddleware: GetHeightsHandler;
+  let dataToRadiansMiddleware: GetHeightsHandler;
+  let dataToDegreesMiddleware: GetHeightsHandler;
 
-    beforeAll(async function () {
-        await registerTestValues(false);
-        logger = container.resolve(SERVICES.LOGGER);
+  beforeAll(async function () {
+    await registerTestValues(false);
+    logger = container.resolve(SERVICES.LOGGER);
 
-        reqIdMiddleware = createReqIdMiddleware(logger);
-        dataToRadiansMiddleware = convertReqPositionToRadiansMiddleware(logger);
-        dataToDegreesMiddleware = positionResAsDegreesMiddleware(logger);
+    reqIdMiddleware = createReqIdMiddleware(logger);
+    dataToRadiansMiddleware = convertReqPositionToRadiansMiddleware(logger);
+    dataToDegreesMiddleware = positionResAsDegreesMiddleware(logger);
+  });
+
+  describe('Create request id middleware', function () {
+    beforeEach(function () {
+      mockResponse = {
+        locals: {},
+      } as Response;
+
+      mockRequest = {} as Request;
+
+      mockNext = jest.fn();
     });
 
-    describe("Create request id middleware", function () {
-        beforeEach(function () {
-            mockResponse = {
-                locals: {}
-            } as Response;
+    it('Should attach reqId property to res.locals object', function () {
+      // @ts-ignore
+      reqIdMiddleware(mockRequest, mockResponse, mockNext);
 
-            mockRequest = {} as Request;
+      expect(mockResponse.locals.reqId).toBeDefined();
+      expect(isUuid(mockResponse.locals.reqId as string)).toBeTruthy();
+    });
+  });
 
-            mockNext = jest.fn();
-        });
+  describe('Data to radians middleware', function () {
+    const position = { longitude: 86.82918540404042, latitude: 27.888257 };
+    const expectedResponseInRadians = {
+      longitude: 1.5154551721251082,
+      latitude: 0.4867419072923562,
+      height: 0,
+    } as Cartographic;
 
-        it("Should attach reqId property to res.locals object", function () {
-            // @ts-ignore
-            reqIdMiddleware(mockRequest, mockResponse, mockNext);
+    beforeEach(function () {
+      mockResponse = {
+        locals: {},
+      } as Response;
 
-            expect(mockResponse.locals.reqId).toBeDefined();
-            expect(isUuid(mockResponse.locals.reqId as string)).toBeTruthy();
-        });
+      mockRequest = {
+        body: {
+          positions: [position],
+        },
+      } as Request;
+
+      mockNext = jest.fn();
     });
 
-    describe("Data to radians middleware", function () {
-        const position = { longitude: 86.82918540404042, latitude: 27.888257 };
-        const expectedResponseInRadians = {
-            longitude: 1.5154551721251082,
-            latitude: 0.4867419072923562,
-            height: 0
-        } as Cartographic;
+    it('Should receive positions array via req.body.positions and attach back positions in radians', function () {
+      // @ts-ignore
+      dataToRadiansMiddleware(mockRequest, mockResponse, mockNext);
+      expect((mockRequest.body as GetHeightsPointsRequest).positions[0]).toEqual(expectedResponseInRadians);
+    });
+  });
 
-        beforeEach(function () {
-            mockResponse = {
-                locals: {}
-            } as Response;
+  describe('Data to degrees middleware', function () {
+    const positionInRadians = { longitude: 1.5154551721251082, latitude: 0.4867419072923562 };
+    const expectedResponseInDegrees = {
+      longitude: 86.82918540404042,
+      latitude: 27.888257,
+    } as Cartographic;
 
-            mockRequest = {
-                body: {
-                    positions: [position]
-                }
-            } as Request;
+    beforeEach(function () {
+      mockResponse = {
+        locals: {
+          positions: [positionInRadians],
+        },
+      } as unknown as Response;
 
-            mockNext = jest.fn();
-        });
+      mockRequest = {} as Request;
 
-        it("Should receive positions array via req.body.positions and attach back positions in radians", function () {
-            // @ts-ignore
-            dataToRadiansMiddleware(mockRequest, mockResponse, mockNext);
-            expect((mockRequest.body as GetHeightsPointsRequest).positions[0]).toEqual(
-                expectedResponseInRadians
-            );
-        });
+      mockNext = jest.fn();
     });
 
-    describe("Data to degrees middleware", function () {
-        const positionInRadians = { longitude: 1.5154551721251082, latitude: 0.4867419072923562 };
-        const expectedResponseInDegrees = {
-            longitude: 86.82918540404042,
-            latitude: 27.888257
-        } as Cartographic;
+    it('Should receive positions array via res.locals.positions and attach back positions in degrees', function () {
+      // @ts-ignore
+      dataToDegreesMiddleware(mockRequest, mockResponse, mockNext);
 
-        beforeEach(function () {
-            mockResponse = {
-                locals: {
-                    positions: [positionInRadians]
-                }
-            } as unknown as Response;
-
-            mockRequest = {} as Request;
-
-            mockNext = jest.fn();
-        });
-
-        it("Should receive positions array via res.locals.positions and attach back positions in degrees", function () {
-            // @ts-ignore
-            dataToDegreesMiddleware(mockRequest, mockResponse, mockNext);
-
-            expect((mockResponse.locals.positions as PosWithHeight[])[0]).toEqual(
-                expectedResponseInDegrees
-            );
-        });
+      expect((mockResponse.locals.positions as PosWithHeight[])[0]).toEqual(expectedResponseInDegrees);
     });
+  });
 });
