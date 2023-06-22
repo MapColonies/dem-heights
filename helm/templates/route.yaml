@@ -12,10 +12,21 @@ metadata:
     haproxy.router.openshift.io/timeout: {{ .Values.route.timeout.duration }}
     {{- end }}
 spec:
+  {{- if .Values.route.host }}
+  host: {{ .Values.route.host }}
+  {{- end }}
   path:  {{ .Values.route.path | default "/" }}
   to:
     kind: Service
     name: {{ $releaseName }}
+  {{- if .Values.route.https }}
   tls:
     termination: edge
+    {{- if .Values.route.useCert }}
+    certificate: {{ .Files.Get "config/cert.pem" | quote }}
+    key: {{ .Files.Get "config/key.pem" | quote }}
+    caCertificate: {{ .Files.Get "config/caCertificate.pem" | quote }}
+    insecureEdgeTerminationPolicy: Redirect
+    {{- end }}
+  {{- end -}}
 {{- end -}}
