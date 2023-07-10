@@ -110,7 +110,7 @@ ingress:
     enabled: false
     useExternal: ''
   host:
-  path: /api/heights/v1
+  path: /dem-heights
   cors:
     enabled: true
     origin: '*'
