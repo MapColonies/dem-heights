@@ -1,4 +1,4 @@
-{{- $cloudProviderFlavor := include "export-management.cloudProviderFlavor" . -}}
+{{- $cloudProviderFlavor := include "heights.cloudProviderFlavor" . -}}
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
 {{- $releaseName := .Release.Name -}}
 {{ $targetPort := ternary "external" "internal" .Values.authentication.opa.enabled }}
