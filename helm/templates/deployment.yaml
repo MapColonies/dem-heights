@@ -86,9 +86,9 @@ spec:
             mountPath: /config
             readOnly: true
           - name: jwt-public-keys
-            readOnly: true
             mountPath: /keys/mapColonies.jwks
             subPath: mapColonies.jwks
+            readOnly: true
           args:
           - "envoy"
           - "--config-path"
