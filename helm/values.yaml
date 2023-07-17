@@ -34,7 +34,6 @@ authentication:
 
 env:
   port: 80
-  internalPort: 80
   targetPort: 8080
   protocol: TCP
   logLevel: info
@@ -71,7 +70,7 @@ opa:
 envoy:
   image: envoyproxy/envoy
   imageTag: v1.20.7
-  port: 8000
+  port: 6565
   maxRequestBytes: 8192
   requestedDomain: dem
   resources:
