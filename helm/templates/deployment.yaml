@@ -1,10 +1,10 @@
+{{- if .Values.enabled -}}
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "heights.name" . -}}
 {{- $cloudProviderFlavor := include "heights.cloudProviderFlavor" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "heights.cloudProviderDockerRegistryUrl" . -}}
 {{- $cloudProviderImagePullSecretName := include "heights.cloudProviderImagePullSecretName" . -}}
 {{- $imageTag := include "heights.tag" . -}}
-{{- if .Values.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -46,6 +46,7 @@ spec:
           {{- with .Values.image }}
           image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $imageTag }}
           {{- end }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
           volumeMounts:
             {{- if .Values.caSecretName }}
             - mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
@@ -77,7 +78,75 @@ spec:
           resources:
             {{- toYaml .Values.resources.value | nindent 12 }}
           {{- end }}
+        {{- if .Values.authentication.opa.enabled }}
+        - name: envoy
+          image: "{{ .Values.envoy.image }}:{{ .Values.envoy.imageTag }}"
+          volumeMounts:
+          - name: proxy-config
+            mountPath: /config
+            readOnly: true
+          - name: jwt-public-keys
+            readOnly: true
+            mountPath: /keys/mapColonies.jwks
+            subPath: mapColonies.jwks
+          args:
+          - "envoy"
+          - "--config-path"
+          - "/config/envoy.yaml"
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          {{- if .Values.envoy.resources.enabled }}
+          resources:
+            {{- toYaml .Values.envoy.resources.value | nindent 12 }}
+          {{- end }}
+        - name: opa
+          image: "{{ .Values.opa.image }}:{{ .Values.opa.imageTag }}"
+          volumeMounts:
+          - name: opa-policy
+            mountPath: /policy
+            readOnly: true
+          args:
+          - "run"
+          - "--server"
+          - "--addr=0.0.0.0:8181"
+          - "--diagnostic-addr=0.0.0.0:8282"
+          - "--set=plugins.envoy_ext_authz_grpc.add=:{{ .Values.opa.imageTag }}"
+          - "--set=plugins.envoy_ext_authz_grpc.path=envoy/authz/allow"
+          {{- if .Values.opa.enableLogging }}
+          - "--set=decision_logs.console=true"
+          {{- end }}
+          - "/policy/policy.rego"
+          {{- if .Values.opa.resources.enabled }}
+          resources:
+            {{- toYaml .Values.opa.resources.value | nindent 12 }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health?plugins
+              port: 8282
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health?plugins
+              port: 8282
+            initialDelaySeconds: 5
+            periodSeconds: 30
+        {{- end }}
       volumes:
+        {{- if .Values.authentication.opa.enabled }}
+        - name: opa-policy
+          secret:
+            secretName: {{ .Release.Name }}-opa
+        - name: proxy-config
+          configMap:
+            name: {{ .Release.Name }}-envoy
+        - name: jwt-public-keys
+          secret:
+            secretName: {{ .Values.global.authentication.jwtPublicKeySecretName }}
+        {{- end }}
         {{- if .Values.caSecretName }}
         - name: root-ca
           secret:

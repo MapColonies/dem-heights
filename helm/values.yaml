@@ -10,6 +10,7 @@ replicaCount: 1
 initialDelaySeconds: 60
 nodePort: 30030 #for minikube deployment only
 resetOnConfigChange: true
+imagePullPolicy: Always
 splunkIndex: ''
 
 cloudProvider:
@@ -25,8 +26,14 @@ image:
   repository: dem-heights
   tag: v1.0.2
 
+authentication:
+    opa:
+      enabled: false
+      customHeaderName: ''
+
 env:
-  port: 8080
+  port: 80
+  internalPort: 80
   targetPort: 8080
   protocol: TCP
   logLevel: info
@@ -45,8 +52,39 @@ env:
   serviceVersion: ''
   maximumTilesPerRequest: 150
 
+opa:
+  image: openpolicyagent/opa
+  imageTag: 0.29.4-envoy-3
+  port: 9191
+  enableLogging: false
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 400m
+        memory: 200Mi
+      requests:
+        cpu: 100m
+        memory: 200Mi
+        
+envoy:
+  image: envoyproxy/envoy
+  imageTag: v1.20.7
+  port: 8000
+  maxRequestBytes: 8192
+  requestedDomain: rasterExport
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 400m
+        memory: 200Mi
+      requests:
+        cpu: 100m
+        memory: 200Mi
+
 resources:
-  enabled: false
+  enabled: true
   value:
     limits:
       cpu: 1000m
@@ -59,7 +97,7 @@ route:
   enabled: true
   https: true
   host:
-  path: /
+  path: /api/heights/v1
   timeout:
     enabled: false # defaults to 30s by openshift
     duration: 60s # supported units (us, ms, s, m, h, d)
@@ -67,8 +105,12 @@ route:
 
 ingress:
   enabled: false
+  type: nginx-org # supported values: 'nginx-org' | 'nginx-kubernetes
+  tls:
+    enabled: false
+    useExternal: ''
   host:
-  path: /
+  path: /dem-heights
   cors:
     enabled: true
     origin: '*'

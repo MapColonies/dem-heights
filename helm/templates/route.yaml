@@ -1,7 +1,7 @@
-{{- $releaseName := .Release.Name -}}
-{{- $chartName := include "heights.name" . -}}
 {{- $cloudProviderFlavor := include "heights.cloudProviderFlavor" . -}}
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
+{{- $releaseName := .Release.Name -}}
+{{ $targetPort := ternary "external" "internal" .Values.authentication.opa.enabled }}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
@@ -16,6 +16,8 @@ spec:
   host: {{ .Values.route.host }}
   {{- end }}
   path:  {{ .Values.route.path | default "/" }}
+  port:
+    targetPort: {{ $targetPort }}
   to:
     kind: Service
     name: {{ $releaseName }}
