@@ -45,7 +45,7 @@ describe('Get heights middlewares', function () {
       reqCtxMiddleware(mockRequest, mockResponse, mockNext);
 
       expect(mockResponse.locals.reqCtx).toBeDefined();
-      expect(isUuid((mockResponse.locals.reqCtx as Record<string,unknown>).reqId as string)).toBeTruthy();
+      expect(isUuid((mockResponse.locals.reqCtx as Record<string, unknown>).reqId as string)).toBeTruthy();
     });
   });
 

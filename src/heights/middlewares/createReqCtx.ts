@@ -10,8 +10,8 @@ export const createReqCtxMiddleware: (logger: Logger) => GetHeightsHandler = (lo
     const reqId = v4();
     res.locals.reqCtx = {
       reqId,
-      customerName: get(req, `headers['x-sub']`)
-    }
+      customerName: get(req, `headers['x-sub']`),
+    };
     next();
   };
 };
