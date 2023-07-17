@@ -4,8 +4,8 @@
   "description": "This is template for map colonies typescript service",
   "main": "./src/index.ts",
   "scripts": {
-    "test:unit": "jest --config=./tests/configurations/unit/jest.config.js",
-    "test:integration": "NODE_OPTIONS=--experimental-vm-modules jest --config=./tests/configurations/integration/jest.config.js",
+    "test:unit": "npm run assets:copyMock && node --experimental-vm-modules node_modules/jest/bin/jest.js --config=./tests/configurations/unit/jest.config.js",
+    "test:integration": "npm run assets:copyMock && node --experimental-vm-modules node_modules/jest/bin/jest.js --config=./tests/configurations/integration/jest.config.js",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "prelint:fix": "npm run format:fix",
@@ -18,8 +18,9 @@
     "prebuild": "npm run clean",
     "build": "tsc --project tsconfig.build.json  && npm run assets:copy",
     "start": "npm run build && cd dist && node ./index.js",
-    "start:watch": "copyfiles -f ./src/heights/MOCKS/proto/* ./src/proto && nodemon --exec ts-node -- ./src/index.ts",
+    "start:watch": "nodemon --exec ts-node -- ./src/index.ts",
     "assets:copy": "copyfiles -f ./config/* ./dist/config && copyfiles -f ./openapi3.yaml ./dist/ && copyfiles ./package.json dist",
+    "assets:copyMock": "copyfiles -f ./src/heights/MOCKS/proto/* ./src/proto",
     "clean": "rimraf dist",
     "install": "npx husky install"
   },

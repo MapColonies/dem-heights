@@ -1,9 +1,4 @@
 {
-    "typescript.tsdk": "node_modules/typescript/lib",
-    "cSpell.words": [
-        "middlewares",
-        "PROTO",
-        "protobuf",
-        "QMESH"
-    ]
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "cSpell.words": ["middlewares", "PROTO", "protobuf", "QMESH"]
 }
