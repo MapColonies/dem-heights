@@ -17,7 +17,7 @@ export const convertReqPositionToRadiansMiddleware: (logger: Logger) => GetHeigh
       convertToRadiansTime: endTime - startTime,
       pointsNumber: posArray.length,
       location: '[convertReqPositionToRadiansMiddleware]',
-      reqId: res.locals.reqId as string,
+      ...res.locals.reqCtx,
     });
 
     req.body = { ...req.body, positions };

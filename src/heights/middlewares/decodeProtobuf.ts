@@ -22,7 +22,7 @@ export const decodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
         protobufDecodeTime: endTime - startTime,
         pointsNumber: posArray.length,
         location: '[decodeProtobufMiddleware]',
-        reqId: res.locals.reqId as string,
+        ...res.locals.reqCtx,
       });
     }
 
