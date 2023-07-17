@@ -39,9 +39,9 @@ export class HeightsManager {
     points: Cartographic[],
     requestedProductType: TerrainTypes,
     excludeFields: AdditionalFieldsEnum[] = [],
-    reqId?: string
+    reqCtx?: Record<string, unknown>
   ): Promise<PosWithHeight[]> {
-    this.logger.info({ msg: 'Getting points heights', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', reqId });
+    this.logger.info({ msg: 'Getting points heights', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
 
     if (points.length === 0) {
       throw this.commonErrors.EMPTY_POSITIONS_ARRAY;
@@ -49,12 +49,12 @@ export class HeightsManager {
 
     const timeStart = performance.now();
 
-    const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqId);
+    const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqCtx);
 
     const timeEnd = performance.now();
 
-    this.logger.debug({ timeToResponse: timeEnd - timeStart, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', reqId });
-    this.logger.debug({ totalRequests: result.totalRequests, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', reqId });
+    this.logger.debug({ timeToResponse: timeEnd - timeStart, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+    this.logger.debug({ totalRequests: result.totalRequests, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
 
     return result.positions;
   }
@@ -63,7 +63,7 @@ export class HeightsManager {
     positionsArr: Cartographic[],
     requestedProductType: TerrainTypes,
     excludeFields: AdditionalFieldsEnum[],
-    reqId?: string
+    reqCtx?: Record<string, unknown>
   ): Promise<{ positions: PosWithHeight[]; totalRequests: number }> {
     const MAX_REQ_PER_BATCH = 150;
     const MAXIMUM_TILES_PER_REQUEST = this.config.has('maximumTilesPerRequest') ? this.config.get<number>('maximumTilesPerRequest') : undefined;
@@ -79,7 +79,7 @@ export class HeightsManager {
       attachProviderTime: attachProviderEnd - attachProviderStart,
       pointsNumber: positionsArr.length,
       location: '[HeightsManager] [samplePositionsHeights]',
-      reqId,
+      ...reqCtx,
     });
 
     // Positions Clustering
@@ -97,7 +97,7 @@ export class HeightsManager {
       clusteringTime: clusteringEnd - clusteringStart,
       pointsNumber: positionsArr.length,
       location: '[HeightsManager] [samplePositionsHeights]',
-      reqId,
+      ...reqCtx,
     });
 
     if (typeof MAXIMUM_TILES_PER_REQUEST !== 'undefined' && totalRequests > MAXIMUM_TILES_PER_REQUEST) {
@@ -121,7 +121,7 @@ export class HeightsManager {
             positions: JSON.stringify(batch.positions),
             pointsNumber: positionsArr.length,
             location: '[HeightsManager] [samplePositionsHeights]',
-            reqId,
+            ...reqCtx,
           });
 
           return batch.positions;
@@ -148,7 +148,7 @@ export class HeightsManager {
           providerId: batch.providerKey,
           pointsNumber: positionsArr.length,
           location: '[HeightsManager] [samplePositionsHeights]',
-          reqId,
+          ...reqCtx,
         });
 
         return positionsWithHeights as PosWithHeight[];

@@ -9,7 +9,7 @@ import { POS_WITH_HEIGHT_PROTO_REQUEST, POS_WITH_HEIGHT_PROTO_RESPONSE } from '.
 import { encodeProtobufMiddleware } from '../middlewares/encodeProtobuf';
 import { decodeProtobufMiddleware } from '../middlewares/decodeProtobuf';
 import { SERVICES } from '../../common/constants';
-import { createReqIdMiddleware } from '../middlewares/createReqId';
+import { createReqCtxMiddleware } from '../middlewares/createReqCtx';
 
 const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const router = Router();
@@ -21,7 +21,7 @@ const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
 
   router.post(
     '/points',
-    createReqIdMiddleware(logger),
+    createReqCtxMiddleware(logger),
     decodeProtobufMiddleware(posWithHeightProtoRequest, logger),
     convertReqPositionToRadiansMiddleware(logger),
     controller.getPoints,
