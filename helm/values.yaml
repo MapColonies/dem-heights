@@ -27,6 +27,7 @@ image:
   tag: v1.0.2
 
 authentication:
+  jwtPublicKeySecretName: map-colonies-jwks
   opa:
     enabled: false
     customHeaderName: ''

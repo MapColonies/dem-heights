@@ -145,7 +145,7 @@ spec:
             name: {{ .Release.Name }}-envoy
         - name: jwt-public-keys
           secret:
-            secretName: {{ .Values.global.authentication.jwtPublicKeySecretName }}
+            secretName: {{ .Values.authentication.jwtPublicKeySecretName }}
         {{- end }}
         {{- if .Values.caSecretName }}
         - name: root-ca
