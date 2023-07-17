@@ -6,7 +6,7 @@ import { isUuid } from 'uuidv4';
 import { SERVICES } from '../../../../src/common/constants';
 import { GetHeightsHandler, GetHeightsPointsRequest } from '../../../../src/heights/controllers/heightsController';
 import { PosWithHeight } from '../../../../src/heights/interfaces';
-import { createReqIdMiddleware } from '../../../../src/heights/middlewares/createReqId';
+import { createReqCtxMiddleware } from '../../../../src/heights/middlewares/createReqCtx';
 import { positionResAsDegreesMiddleware } from '../../../../src/heights/middlewares/dataToDegrees';
 import { convertReqPositionToRadiansMiddleware } from '../../../../src/heights/middlewares/dataToRadians';
 import { registerTestValues } from '../../../configurations/testContainerConfig';
@@ -16,7 +16,7 @@ describe('Get heights middlewares', function () {
   let mockResponse: Response;
   let mockNext: NextFunction;
   let logger: Logger;
-  let reqIdMiddleware: GetHeightsHandler;
+  let reqCtxMiddleware: GetHeightsHandler;
   let dataToRadiansMiddleware: GetHeightsHandler;
   let dataToDegreesMiddleware: GetHeightsHandler;
 
@@ -24,7 +24,7 @@ describe('Get heights middlewares', function () {
     await registerTestValues(false);
     logger = container.resolve(SERVICES.LOGGER);
 
-    reqIdMiddleware = createReqIdMiddleware(logger);
+    reqCtxMiddleware = createReqCtxMiddleware(logger);
     dataToRadiansMiddleware = convertReqPositionToRadiansMiddleware(logger);
     dataToDegreesMiddleware = positionResAsDegreesMiddleware(logger);
   });
@@ -40,12 +40,12 @@ describe('Get heights middlewares', function () {
       mockNext = jest.fn();
     });
 
-    it('Should attach reqId property to res.locals object', function () {
+    it('Should attach reqCtx property to res.locals object', function () {
       // @ts-ignore
-      reqIdMiddleware(mockRequest, mockResponse, mockNext);
+      reqCtxMiddleware(mockRequest, mockResponse, mockNext);
 
-      expect(mockResponse.locals.reqId).toBeDefined();
-      expect(isUuid(mockResponse.locals.reqId as string)).toBeTruthy();
+      expect(mockResponse.locals.reqCtx).toBeDefined();
+      expect(isUuid((mockResponse.locals.reqCtx as Record<string, unknown>).reqId as string)).toBeTruthy();
     });
   });
 

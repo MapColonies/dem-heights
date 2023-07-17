@@ -21,7 +21,7 @@ export const positionResAsDegreesMiddleware: (logger: Logger) => GetHeightsHandl
       convertToDegreesTime: endTime - startTime,
       pointsNumber: posArray.length,
       location: '[positionResAsDegreesMiddleware]',
-      reqId: res.locals.reqId as string,
+      ...res.locals.reqCtx,
     });
     res.locals.positions = posInDegrees;
 

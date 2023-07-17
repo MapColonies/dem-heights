@@ -18,7 +18,7 @@ export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
         protobufEncodeTime: endTime - startTime,
         pointsNumber: posArray.length,
         location: '[encodeProtobufMiddleware]',
-        reqId: res.locals.reqId as string,
+        ...res.locals.reqCtx,
       });
 
       res.send(encodedData);
