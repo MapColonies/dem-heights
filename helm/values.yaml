@@ -73,7 +73,7 @@ envoy:
   imageTag: v1.20.7
   port: 8000
   maxRequestBytes: 8192
-  requestedDomain: rasterExport
+  requestedDomain: dem
   resources:
     enabled: true
     value:
