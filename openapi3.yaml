@@ -2,11 +2,10 @@ openapi: 3.0.1
 info:
   title: dem-heights
   description: map-colonies service for extracting elevations from DTM/DSM geotiffs
-  version: 1.0.0
+  version: 1.1.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 paths:
   /heights/points:
     post:
@@ -25,7 +24,7 @@ paths:
               type: string
               format: binary
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
@@ -35,14 +34,14 @@ paths:
               schema:
                 type: string
                 format: binary
-        500:
-          description: Service Error
+        '400':
+          description: Points density is too low to compute
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
-        400:
-          description: Points density is too low to compute
+        '500':
+          description: Service Error
           content:
             application/json:
               schema:
@@ -89,7 +88,6 @@ components:
           items:
             oneOf:
               - $ref: '#/components/schemas/excludeFieldsEnum'
-
     pointsRes:
       type: object
       required:
