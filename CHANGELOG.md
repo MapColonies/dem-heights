@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.1](https://github.com/MapColonies/dem-heights/compare/v1.1.0...v1.1.1) (2023-07-18)
+
+
+### Bug Fixes
+
+* add mc-utils as dep ([5259133](https://github.com/MapColonies/dem-heights/commit/52591336fd5d1313a26c9b9c94136aa372d93d8d))
+
 ## 1.1.0 (2023-07-18)
 
 
