@@ -2,11 +2,11 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "heights.name" . -}}
 {{- $cloudProviderFlavor := include "heights.cloudProviderFlavor" . -}}
-{{ $targetPort := ternary .Values.envoy.port .Values.env.targetPort .Values.authentication.opa.enabled }}
+{{- $serviceName := include "service.fullname" . -}}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $releaseName }}
+  name: {{ $serviceName }}
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}

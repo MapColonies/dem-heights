@@ -27,6 +27,13 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
+Create service name as used by the service name label.
+*/}}
+{{- define "service.fullname" -}}
+{{- printf "%s-%s" .Release.Name "service" }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "heights.labels" -}}
@@ -119,5 +126,15 @@ Returns the tracing url from global if exists or from the chart's values
     {{- .Values.global.metrics.url -}}
 {{- else -}}
     {{- .Values.env.metrics.url -}}
+{{- end -}}
+{{- end -}}
+
+{{- if ne .Values.authentication.opa.customHeaderName "" -}}
+{{- $headerList = append $headerList .Values.authentication.opa.customHeaderName -}}
+{{- end -}}
+{{- $headerList = uniq $headerList -}}
+{{-  quote (join "," $headerList) -}}
+{{- else -}}
+{{- .Values.authentication.opa.customHeaderName | quote -}}
 {{- end -}}
 {{- end -}}

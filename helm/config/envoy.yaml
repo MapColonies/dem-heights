@@ -48,7 +48,7 @@ static_resources:
                             prefix: "/"
                           requires:
                             provider_name: "map-colonies-jwt"
-                      bypass_cors_preflight: true # all cors preflight requests without auth 
+                      bypass_cors_preflight: true # all cors preflight requests without auth
                   - name: envoy.filters.http.set_metadata
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.set_metadata.v3.Config
