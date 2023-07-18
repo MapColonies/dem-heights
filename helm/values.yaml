@@ -97,7 +97,7 @@ route:
   enabled: true
   https: true
   host:
-  path: /api/heights/v1
+  path:
   timeout:
     enabled: false # defaults to 30s by openshift
     duration: 60s # supported units (us, ms, s, m, h, d)
@@ -110,7 +110,7 @@ ingress:
     enabled: false
     useExternal: ''
   host:
-  path: /dem-heights
+  path:
   cors:
     enabled: true
     origin: '*'
