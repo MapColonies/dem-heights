@@ -1,4 +1,3 @@
-
 {{- if .Values.nginx.enabled -}}
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "heights.name" . -}}
@@ -11,8 +10,9 @@ metadata:
   labels:
     app: {{ $releaseName }}-{{ $chartName }}
     component: nginx-service
-    environment: {{ .Values.environment }}
-    release: {{ .Release.Name }}
+    environment: {{ include "heights.environment" . }}
+    release: {{ $releaseName }}
+    {{- include "heights.labels" . | nindent 4 }}
 spec:
   # In case cloudProavider=azure
   {{- if eq $cloudProviderFlavor "azure" }}
@@ -26,18 +26,19 @@ spec:
     - name: internal
       port: {{ .Values.nginx.internalPort }}
       targetPort: {{ .Values.env.port }}
-      protocol: TCP
+      protocol: {{ .Values.env.protocol }}
     {{- if .Values.authentication.opa.enabled }}
     - name: external
       port: {{ .Values.nginx.port }}
       targetPort: {{ .Values.envoy.port }}
-      protocol: TCP
+      protocol: {{ .Values.env.protocol }}
     {{- end }}
-      {{- if eq $cloudProviderFlavor "minikube" }}
-      nodePort: {{ .Values.nginx.nodePort }}
-      {{- end }}
+    {{- if eq $cloudProviderFlavor "minikube" }}
+    nodePort: {{ .Values.nginx.nodePort }}
+    {{- end }}
   selector:
     app: {{ $releaseName }}-{{ $chartName }}
-    release: {{ .Release.Name }}
-    run: {{ .Release.Name }}-nginx
+    release: {{ $releaseName }}
+    run: {{ $releaseName }}-nginx
+    {{- include "heights.selectorLabels" . | nindent 4 }}
 {{- end }}
