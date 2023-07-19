@@ -33,8 +33,8 @@ authentication:
     customHeaderName: ''
 
 env:
-  port: 80
-  targetPort: 8080
+  port: 8080
+  targetPort: 8000
   protocol: TCP
   logLevel: info
   logPrettyPrintEnabled: false
@@ -51,6 +51,35 @@ env:
   protoFileUrl: ''
   serviceVersion: ''
   maximumTilesPerRequest: 150
+
+resources:
+  enabled: true
+  value:
+    limits:
+      cpu: 400m
+      memory: 200Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+
+nginx:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: nginx
+    tag: merge
+  port: 8080
+  internalPort: 80
+  nodePort: 30001
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 400m
+        memory: 200Mi
+      requests:
+        cpu: 100m
+        memory: 200Mi
 
 opa:
   image: openpolicyagent/opa
@@ -82,16 +111,6 @@ envoy:
       requests:
         cpu: 100m
         memory: 200Mi
-
-resources:
-  enabled: true
-  value:
-    limits:
-      cpu: 400m
-      memory: 200Mi
-    requests:
-      cpu: 100m
-      memory: 200Mi
 
 route:
   enabled: true

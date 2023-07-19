@@ -74,13 +74,6 @@ spec:
             items:
             - key: "NGINX_ROOT_CONFIG"
               path: "nginx.conf"
-        {{- if .Values.logsFilebeat.enabled }}
-        - name: logs
-          emptyDir: {}
-        - name: config
-          configMap:
-            name: filebeat-config
-        {{- end }}
       containers:
         ## Nginx Deployment
         - name: {{ .Release.Name }}-nginx
@@ -100,10 +93,6 @@ spec:
             mountPath: "/etc/nginx/nginx.conf"
             subPath: nginx.conf
             readOnly: true
-          {{- if .Values.logsFilebeat.enabled }}
-          - name: logs
-            mountPath: {{ .Values.logsFilebeat.nginxMountPath }}
-          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.env.port }}
@@ -166,16 +155,5 @@ spec:
           resources:
             {{- toYaml .Values.opa.resources.value | nindent 12 }}
           {{- end }}
-        {{- end }}
-        {{- if .Values.logsFilebeat.enabled }}
-        - name: filebeat
-          image: {{ .Values.logsFilebeat.filebeatImage }}
-          args: [ "-c", "/etc/filebeat.yml", "-e" ]
-          volumeMounts:
-            - name: logs
-              mountPath: {{ .Values.logsFilebeat.nginxMountPath }}
-            - name: config
-              mountPath: /etc/filebeat.yml
-              subPath: filebeat.yml
         {{- end }}
 {{- end }}
