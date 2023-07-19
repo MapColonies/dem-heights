@@ -128,13 +128,3 @@ Returns the tracing url from global if exists or from the chart's values
     {{- .Values.env.metrics.url -}}
 {{- end -}}
 {{- end -}}
-
-{{- if ne .Values.authentication.opa.customHeaderName "" -}}
-{{- $headerList = append $headerList .Values.authentication.opa.customHeaderName -}}
-{{- end -}}
-{{- $headerList = uniq $headerList -}}
-{{-  quote (join "," $headerList) -}}
-{{- else -}}
-{{- .Values.authentication.opa.customHeaderName | quote -}}
-{{- end -}}
-{{- end -}}
