@@ -38,7 +38,7 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
-    this.serverInstance.use('/heights', this.heightsRouter);
+    this.serverInstance.use('/', this.heightsRouter);
     this.buildDocsRoutes();
   }
 
