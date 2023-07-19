@@ -10,7 +10,7 @@ metadata:
     environment: {{ .Values.environment }}
     release: {{ .Release.Name }}
 data:
-  NGINX_CONFIG: {{ tpl (.Files.Get "config/nginx.conf") . | quote }}
-  NGINX_ROOT_CONFIG: {{ .Files.Get "config/nginx_root.conf" | quote }}
-  JWT_JS: {{ .Files.Get "config/jwt.js" | quote }}
+  default.conf: {{ tpl (.Files.Get "config/default.conf") . | quote }}
+  nginx.conf: {{ .Files.Get "config/nginx.conf" | quote }}
+  jwt.js: {{ .Files.Get "config/jwt.js" | quote }}
 {{- end }}

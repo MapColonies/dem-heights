@@ -60,19 +60,19 @@ spec:
           configMap:
             name: {{ .Release.Name  }}-nginx-configmap
             items:
-            - key: "JWT_JS"
+            - key: "jwt.js"
               path: "jwt.js"
-        - name: nginx-config
+        - name: nginx-custom-config
           configMap:
             name: {{ .Release.Name }}-nginx-configmap
             items:
-            - key: "NGINX_CONFIG"
-              path: "nginx.conf"
+            - key: "default.conf"
+              path: "default.conf"
         - name: nginx-root-config
           configMap:
             name: {{ .Release.Name }}-nginx-configmap
             items:
-            - key: "NGINX_ROOT_CONFIG"
+            - key: "nginx.conf"
               path: "nginx.conf"
       containers:
         ## Nginx Deployment
@@ -83,14 +83,15 @@ spec:
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           volumeMounts:
           - name: jwt-js
-            mountPath: "/etc/nginx/jwt.js"
+            mountPath: /etc/nginx/jwt.js
             subPath: jwt.js
             readOnly: true
-          - name: nginx-config
-            mountPath: "/etc/nginx/conf.d"
+          - name: nginx-custom-config
+            mountPath: /etc/nginx/conf.d/default.conf
+            subPath: default.conf
             readOnly: true
           - name: nginx-root-config
-            mountPath: "/etc/nginx/nginx.conf"
+            mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
             readOnly: true
           ports:
@@ -115,13 +116,13 @@ spec:
         - name: envoy
           image: "{{ .Values.envoy.image }}:{{ .Values.envoy.imageTag }}"
           volumeMounts:
-          - readOnly: true
+          - name: proxy-config
             mountPath: /config
-            name: proxy-config
-          - name: jwt-public-keys
             readOnly: true
+          - name: jwt-public-keys
             mountPath: /keys/mapColonies.jwks
             subPath: mapColonies.jwks
+            readOnly: true
           args:
           - "envoy"
           - "--config-path"
@@ -137,9 +138,9 @@ spec:
         - name: opa
           image: "{{ .Values.opa.image }}:{{ .Values.opa.imageTag }}"
           volumeMounts:
-          - readOnly: true
+          - name: opa-policy
             mountPath: /policy
-            name: opa-policy
+            readOnly: true
           args:
           - "run"
           - "--server"
@@ -155,5 +156,17 @@ spec:
           resources:
             {{- toYaml .Values.opa.resources.value | nindent 12 }}
           {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health?plugins
+              port: 8282
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health?plugins
+              port: 8282
+            initialDelaySeconds: 5
+            periodSeconds: 30
         {{- end }}
 {{- end }}
