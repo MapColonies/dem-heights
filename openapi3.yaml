@@ -7,7 +7,7 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 paths:
-  /heights/points:
+  /points:
     post:
       operationId: pointsHeight
       tags:
