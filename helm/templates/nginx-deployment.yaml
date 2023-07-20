@@ -110,7 +110,7 @@ spec:
             initialDelaySeconds: {{ .Values.initialDelaySeconds }}
             httpGet:
               path: /liveness
-              port: {{ .Values.env.targetPort }}
+              port: {{ .Values.nginx.port }}
           # readinessProbe:
           #   initialDelaySeconds: {{ .Values.initialDelaySeconds }}
           #   httpGet:
