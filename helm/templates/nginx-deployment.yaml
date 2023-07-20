@@ -111,11 +111,11 @@ spec:
             httpGet:
               path: /liveness
               port: {{ .Values.nginx.port }}
-          # readinessProbe:
-          #   initialDelaySeconds: {{ .Values.initialDelaySeconds }}
-          #   httpGet:
-          #     path: /liveness
-          #     port: {{ .Values.env.port }}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
+            httpGet:
+              path: /liveness
+              port: {{ .Values.env.port }}
           {{- if .Values.nginx.resources.enabled }}
           resources:
             {{- toYaml .Values.nginx.resources.value | nindent 12 }}
@@ -164,17 +164,17 @@ spec:
           resources:
             {{- toYaml .Values.opa.resources.value | nindent 12 }}
           {{- end }}
-          # livenessProbe:
-          #   httpGet:
-          #     path: /health?plugins
-          #     port: 8282
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 30
-          # readinessProbe:
-          #   httpGet:
-          #     path: /health?plugins
-          #     port: 8282
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /health?plugins
+              port: 8282
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health?plugins
+              port: 8282
+            initialDelaySeconds: 5
+            periodSeconds: 30
         {{- end }}
 {{- end }}
