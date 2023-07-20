@@ -21,7 +21,7 @@ spec:
     targetPort: {{ $targetPort }}
   to:
     kind: Service
-    name: {{ $serviceName }}
+    name: {{ $serviceName }}-nginx
   {{- if .Values.route.https }}
   tls:
     termination: edge
