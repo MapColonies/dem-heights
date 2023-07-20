@@ -56,9 +56,30 @@ spec:
           secret:
             secretName: {{ .Values.authentication.jwtPublicKeySecretName }}
         {{- end }}
+        - name: nginx-jwt-js
+          configMap:
+            name: {{ .Release.Name }}-nginx-configmap
+            items:
+            - key: jwt.js
+              path: jwt.js
+        - name: nginx-log-format-conf
+          configMap:
+            name: {{ .Release.Name }}-nginx-configmap
+            items:
+            - key: log_format.conf
+              path: log_format.conf
         - name: nginx-custom-conf
           configMap:
             name: {{ .Release.Name }}-nginx-configmap
+            items:
+            - key: default.conf
+              path: default.conf
+        - name: nginx-root-conf
+          configMap:
+            name: {{ .Release.Name }}-nginx-configmap
+            items:
+            - key: nginx.conf
+              path: nginx.conf
       containers:
         ## Nginx Deployment
         - name: {{ .Release.Name }}-nginx
@@ -70,16 +91,15 @@ spec:
             - sleep
             - infinity
           volumeMounts:
-          - name: nginx-custom-conf
+          - name: nginx-jwt-js
             mountPath: /etc/nginx/jwt.js
             subPath: jwt.js
-          - name: nginx-custom-conf
+          - name: nginx-log-format-conf
             mountPath: /etc/nginx/log_format.conf
             subPath: log_format.conf
           - name: nginx-custom-conf
-            mountPath: /etc/nginx/conf.d/
-            subPath: default.conf
-          - name: nginx-custom-conf
+            mountPath: /etc/nginx/conf.d
+          - name: nginx-root-conf
             mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
           ports:
