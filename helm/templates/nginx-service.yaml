@@ -12,7 +12,7 @@ metadata:
     component: nginx-service
     environment: {{ .Values.environment }}
     release: {{ $releaseName }}
-    # {{- include "heights.labels" . | nindent 4 }}
+    {{- include "heights.labels" . | nindent 4 }}
 spec:
   # In case cloudProavider=azure
   {{- if eq $cloudProviderFlavor "azure" }}
@@ -40,5 +40,5 @@ spec:
     app: {{ $releaseName }}-{{ $chartName }}
     release: {{ $releaseName }}
     run: {{ $releaseName }}-nginx
-    #{{- include "heights.selectorLabels" . | nindent 4 }}
+    {{- include "heights.selectorLabels" . | nindent 4 }}
 {{- end }}
