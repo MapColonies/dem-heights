@@ -66,9 +66,9 @@ spec:
           image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ .tag }}
           {{- end }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
-          # command:
-          #   - sleep
-          #   - infinity
+          command:
+            - sleep
+            - infinity
           volumeMounts:
           - name: nginx-custom-conf
             mountPath: /etc/nginx/jwt.js
