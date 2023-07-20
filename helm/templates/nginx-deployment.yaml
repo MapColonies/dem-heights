@@ -59,25 +59,25 @@ spec:
         - name: nginx-jwt-js
           configMap:
             name: {{ .Release.Name }}-nginx-configmap
-            items:
+          items:
             - key: jwt.js
               path: jwt.js
         - name: nginx-log-format-conf
           configMap:
             name: {{ .Release.Name }}-nginx-configmap
-            items:
+          items:
             - key: log_format.conf
               path: log_format.conf
         - name: nginx-custom-conf
           configMap:
             name: {{ .Release.Name }}-nginx-configmap
-            items:
+          items:
             - key: default.conf
               path: default.conf
         - name: nginx-root-conf
           configMap:
             name: {{ .Release.Name }}-nginx-configmap
-            items:
+          items:
             - key: nginx.conf
               path: nginx.conf
       containers:
