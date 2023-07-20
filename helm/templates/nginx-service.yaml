@@ -29,7 +29,7 @@ spec:
       protocol: {{ .Values.env.protocol }}
     {{- if .Values.authentication.opa.enabled }}
     - name: external
-      port: {{ .Values.nginx.port }}
+      port: 80
       targetPort: {{ .Values.envoy.port }}
       protocol: {{ .Values.env.protocol }}
     {{- end }}
