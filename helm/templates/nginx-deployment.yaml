@@ -12,7 +12,7 @@ metadata:
 {{- end }}
   labels:
     app: {{ .Release.Name }}-{{ $chartName }}
-    component: nginx-deployment
+    component: heights-nginx-deployment
     environment: {{ .Values.environment }}
     release: {{ .Release.Name }}
 spec:
