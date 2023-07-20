@@ -111,11 +111,11 @@ spec:
             httpGet:
               path: /liveness
               port: {{ .Values.env.port }}
-          readinessProbe:
-            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
-            httpGet:
-              path: /liveness
-              port: {{ .Values.env.port }}
+          # readinessProbe:
+          #   initialDelaySeconds: {{ .Values.initialDelaySeconds }}
+          #   httpGet:
+          #     path: /liveness
+          #     port: {{ .Values.env.port }}
           {{- if .Values.nginx.resources.enabled }}
           resources:
             {{- toYaml .Values.nginx.resources.value | nindent 12 }}
