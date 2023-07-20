@@ -119,7 +119,6 @@ export class HeightsManager {
           this.logger.debug({
             msg: `No terrain to sample these positions.`,
             positions: JSON.stringify(batch.positions),
-            outsideOfROIPointsNumber: batch.positions.length,
             pointsNumber: positionsArr.length,
             location: '[HeightsManager] [samplePositionsHeights]',
             ...reqCtx,
