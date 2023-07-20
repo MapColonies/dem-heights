@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/MapColonies/dem-heights/compare/v1.1.1...v1.2.0) (2023-07-20)
+
+
+### Features
+
+* nginx ([15ce3d7](https://github.com/MapColonies/dem-heights/commit/15ce3d7bb4e81dede7057b5d3028ccd2107601ba))
+
+
+### Bug Fixes
+
+* deployment ([d280719](https://github.com/MapColonies/dem-heights/commit/d280719f8fa88b802a6f590b785eba12cd389ca5))
+* missing log format file ([2754f3e](https://github.com/MapColonies/dem-heights/commit/2754f3e9bbc448b204325f6d8f38db1f8c93a1ce))
+* nginx conf ([d0a1be5](https://github.com/MapColonies/dem-heights/commit/d0a1be5aed97f701ddd291095a80e1d125792c60))
+* port ([1ec92b3](https://github.com/MapColonies/dem-heights/commit/1ec92b3e8f1d2cae663ce42ff33520c5328fb338))
+* revert allowed headers ([2dc131e](https://github.com/MapColonies/dem-heights/commit/2dc131e25300e4a10810d0c7c25a39ba4ed1ac4f))
+* service ([d6b9483](https://github.com/MapColonies/dem-heights/commit/d6b9483014e09a7a8e0d4fc962de661d85b0bc60))
+* shorten path duplicated heights ([6422344](https://github.com/MapColonies/dem-heights/commit/64223448b06bc9225227fb3efdbde04b6891154b))
+
 ### [1.1.1](https://github.com/MapColonies/dem-heights/compare/v1.1.0...v1.1.1) (2023-07-18)
 
 
