@@ -87,8 +87,7 @@ export class HeightsManager {
 
     const { optimizedCluster: sampleTerrainClusteredPositions, totalRequests } = cartographicArrayClusteringForHeightRequests(
       positionsWithProviders,
-      MAX_REQ_PER_BATCH,
-      this.logger
+      MAX_REQ_PER_BATCH
     );
 
     const clusteringEnd = performance.now();
@@ -118,7 +117,8 @@ export class HeightsManager {
         if (batch.providerKey === null) {
           this.logger.debug({
             msg: `No terrain to sample these positions.`,
-            positions: JSON.stringify(batch.positions),
+            positionsOutsideOfProviders: JSON.stringify(batch.positions),
+            positionsOutsideOfProvidersCount: batch.positions.length,
             pointsNumber: positionsArr.length,
             location: '[HeightsManager] [samplePositionsHeights]',
             ...reqCtx,
