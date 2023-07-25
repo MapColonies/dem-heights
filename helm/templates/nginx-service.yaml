@@ -32,9 +32,9 @@ spec:
       targetPort: {{ .Values.envoy.port }}
       protocol: {{ .Values.env.protocol }}
     {{- end }}
-    {{- if eq $cloudProviderFlavor "minikube" }}
-    nodePort: {{ .Values.nginx.nodePort }}
-    {{- end }}
+      {{- if eq $cloudProviderFlavor "minikube" }}
+      nodePort: {{ .Values.nginx.nodePort }}
+      {{- end }}
   selector:
     app: {{ .Release.Name }}-{{ $chartName }}
     release: {{ .Release.Name }}
