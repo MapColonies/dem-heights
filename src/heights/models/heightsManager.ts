@@ -41,10 +41,20 @@ export class HeightsManager {
     excludeFields: AdditionalFieldsEnum[] = [],
     reqCtx?: Record<string, unknown>
   ): Promise<PosWithHeight[]> {
+    const MAXIMUM_TILES_PER_REQUEST = this.config.has('maximumTilesPerRequest') ? this.config.get<number>('maximumTilesPerRequest') : undefined;
+
     this.logger.info({ msg: 'Getting points heights', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
 
     if (points.length === 0) {
+      this.logger.error({ msg: 'Points array is empty.', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
       throw this.commonErrors.EMPTY_POSITIONS_ARRAY;
+    }
+
+    // Decided to limit number of POINTS in order to points(API) behave consistantly
+    // POINT <===> TILE
+    if (typeof MAXIMUM_TILES_PER_REQUEST !== 'undefined' && points.length > MAXIMUM_TILES_PER_REQUEST) {
+      this.logger.error({ msg: 'Too many points', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+      throw this.commonErrors.TOO_MANY_POINTS_ERROR;
     }
 
     const timeStart = performance.now();
@@ -53,8 +63,8 @@ export class HeightsManager {
 
     const timeEnd = performance.now();
 
-    this.logger.debug({ timeToResponse: timeEnd - timeStart, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
-    this.logger.debug({ totalRequests: result.totalRequests, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+    this.logger.info({ timeToResponse: timeEnd - timeStart, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+    this.logger.info({ totalRequests: result.totalRequests, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
 
     return result.positions;
   }
@@ -75,7 +85,7 @@ export class HeightsManager {
 
     const attachProviderEnd = performance.now();
 
-    this.logger.debug({
+    this.logger.info({
       attachProviderTime: attachProviderEnd - attachProviderStart,
       pointsNumber: positionsArr.length,
       location: '[HeightsManager] [samplePositionsHeights]',
@@ -92,7 +102,7 @@ export class HeightsManager {
 
     const clusteringEnd = performance.now();
 
-    this.logger.debug({
+    this.logger.info({
       clusteringTime: clusteringEnd - clusteringStart,
       pointsNumber: positionsArr.length,
       location: '[HeightsManager] [samplePositionsHeights]',
@@ -100,6 +110,12 @@ export class HeightsManager {
     });
 
     if (typeof MAXIMUM_TILES_PER_REQUEST !== 'undefined' && totalRequests > MAXIMUM_TILES_PER_REQUEST) {
+      this.logger.error({
+        msg: 'Points density is too low to compute.',
+        totalRequests: totalRequests,
+        location: '[HeightsManager] [samplePositionsHeights]',
+        ...reqCtx,
+      });
       throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
     }
 
@@ -115,7 +131,7 @@ export class HeightsManager {
         const samplingStart = performance.now();
 
         if (batch.providerKey === null) {
-          this.logger.debug({
+          this.logger.info({
             msg: `No terrain to sample these positions.`,
             positionsOutsideOfProviders: JSON.stringify(batch.positions),
             positionsOutsideOfProvidersCount: batch.positions.length,
@@ -143,7 +159,7 @@ export class HeightsManager {
 
         const samplingEnd = performance.now();
 
-        this.logger.debug({
+        this.logger.info({
           terrainSamplingTime: samplingEnd - samplingStart,
           providerId: batch.providerKey,
           pointsNumber: positionsArr.length,

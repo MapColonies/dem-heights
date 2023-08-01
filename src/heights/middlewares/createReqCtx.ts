@@ -5,7 +5,7 @@ import type { GetHeightsHandler } from '../controllers/heightsController';
 
 export const createReqCtxMiddleware: (logger: Logger) => GetHeightsHandler = (logger) => {
   return (req, res, next) => {
-    logger.debug({ msg: 'Generating Request ID', location: '[createReqCtxMiddleware]' });
+    logger.info({ msg: 'Generating Request ID', location: '[createReqCtxMiddleware]' });
 
     const reqId = v4();
     res.locals.reqCtx = {

@@ -17,7 +17,7 @@ export const positionResAsDegreesMiddleware: (logger: Logger) => GetHeightsHandl
 
     const endTime = performance.now();
 
-    logger.debug({
+    logger.info({
       convertToDegreesTime: endTime - startTime,
       pointsNumber: posArray.length,
       location: '[positionResAsDegreesMiddleware]',
