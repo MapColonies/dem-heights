@@ -18,7 +18,7 @@ export const decodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
       posArray = req.body.positions;
 
       const endTime = performance.now();
-      logger.debug({
+      logger.info({
         protobufDecodeTime: endTime - startTime,
         pointsNumber: posArray.length,
         location: '[decodeProtobufMiddleware]',

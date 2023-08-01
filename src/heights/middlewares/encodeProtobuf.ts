@@ -14,7 +14,7 @@ export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
 
       const endTime = performance.now();
 
-      logger.debug({
+      logger.info({
         protobufEncodeTime: endTime - startTime,
         pointsNumber: posArray.length,
         location: '[encodeProtobufMiddleware]',

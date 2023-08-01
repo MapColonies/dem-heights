@@ -13,6 +13,7 @@ export interface HttpErrorWithCode extends HttpError {
 }
 
 export enum CommonErrorCodes {
+  TOO_MANY_POINTS_ERROR = 'TOO_MANY_POINTS_ERROR',
   POINTS_DENSITY_TOO_LOW_ERROR = 'POINTS_DENSITY_TOO_LOW_ERROR',
   GENERAL_SERVER_ERROR = 'GENERAL_SERVER_ERROR',
   EMPTY_POSITIONS_ARRAY = 'EMPTY_POSITIONS_ARRAY',
@@ -34,6 +35,14 @@ export class CommonErrors {
    * A class to contain all of the service's common errors
    */
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
+
+  public get TOO_MANY_POINTS_ERROR(): HttpErrorWithCode {
+    const err = new Error(`Too many points.`) as HttpErrorWithCode;
+    err.status = httpStatusCodes.BAD_REQUEST;
+    err.errorCode = CommonErrorCodes.TOO_MANY_POINTS_ERROR;
+
+    return err;
+  }
 
   public get POINTS_DENSITY_TOO_LOW_ERROR(): HttpErrorWithCode {
     const err = new Error(`Points density is too low to compute.`) as HttpErrorWithCode;
