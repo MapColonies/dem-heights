@@ -195,7 +195,7 @@ describe('heights', function () {
 
         expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('errorCode');
-        expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR);
+        expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.TOO_MANY_POINTS_ERROR);
       });
 
       it('Should return 400 status code with an empty positions error if positions array is empty', async function () {

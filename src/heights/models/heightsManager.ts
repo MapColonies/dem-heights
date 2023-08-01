@@ -110,7 +110,12 @@ export class HeightsManager {
     });
 
     if (typeof MAXIMUM_TILES_PER_REQUEST !== 'undefined' && totalRequests > MAXIMUM_TILES_PER_REQUEST) {
-      this.logger.error({ msg: 'Points density is too low to compute.', totalRequests: totalRequests, location: '[HeightsManager] [samplePositionsHeights]', ...reqCtx });
+      this.logger.error({
+        msg: 'Points density is too low to compute.',
+        totalRequests: totalRequests,
+        location: '[HeightsManager] [samplePositionsHeights]',
+        ...reqCtx,
+      });
       throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
     }
 

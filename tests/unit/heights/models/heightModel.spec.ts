@@ -164,10 +164,10 @@ describe('Get Heights model', function () {
       });
     });
 
-    it('Should throw low density error for 150+ requests (As configured)', async function () {
+    it('Should throw too many points error for 150+ points (As configured)', async function () {
       await expect(heightsManager.getPoints(mockJsonDataLowDensity.positions, TerrainTypes.MIXED)).rejects.toHaveProperty(
         'errorCode',
-        CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR
+        CommonErrorCodes.TOO_MANY_POINTS_ERROR
       );
     });
 
