@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: dem-heights
   description: map-colonies service for extracting elevations from DTM/DSM geotiffs
-  version: 1.2.3
+  version: 1.2.4
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT

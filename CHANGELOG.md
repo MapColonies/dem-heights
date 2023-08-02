@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.4](https://github.com/MapColonies/dem-heights/compare/v1.2.3...v1.2.4) (2023-08-02)
+
+
+### Bug Fixes
+
+* limit points not request ([a494bcd](https://github.com/MapColonies/dem-heights/commit/a494bcd749127dcd52ac34846f1036383c2e2eb4))
+* node port ([2c9f950](https://github.com/MapColonies/dem-heights/commit/2c9f950d28138fd8303dc459e246aca6b41fb444))
+* tests ([de2e39c](https://github.com/MapColonies/dem-heights/commit/de2e39cd455f5b15de9cf948d6f0db241d5d0804))
+* upstream logs ([64e6b1b](https://github.com/MapColonies/dem-heights/commit/64e6b1b93934d463286c73ec8df51df6e3d74dc1))
+
 ### [1.2.3](https://github.com/MapColonies/dem-heights/compare/v1.2.2...v1.2.3) (2023-07-23)
 
 
