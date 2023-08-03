@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.5](https://github.com/MapColonies/dem-heights/compare/v1.2.4...v1.2.5) (2023-08-03)
+
+
+### Bug Fixes
+
+* add validation middleware ([c5bcd1d](https://github.com/MapColonies/dem-heights/commit/c5bcd1d9cb4d74a98803815e91475f6d262e130e))
+
 ### [1.2.4](https://github.com/MapColonies/dem-heights/compare/v1.2.3...v1.2.4) (2023-08-02)
 
 
