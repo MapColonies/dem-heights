@@ -3,12 +3,15 @@ import { Cartographic } from 'cesium';
 import { NextFunction, Request, Response } from 'express';
 import { container } from 'tsyringe';
 import { isUuid } from 'uuidv4';
+import { CommonErrors } from '../../../../src/common/commonErrors';
 import { SERVICES } from '../../../../src/common/constants';
+import { IConfig } from '../../../../src/common/interfaces';
 import { GetHeightsHandler, GetHeightsPointsRequest } from '../../../../src/heights/controllers/heightsController';
 import { PosWithHeight } from '../../../../src/heights/interfaces';
 import { createReqCtxMiddleware } from '../../../../src/heights/middlewares/createReqCtx';
 import { positionResAsDegreesMiddleware } from '../../../../src/heights/middlewares/dataToDegrees';
 import { convertReqPositionToRadiansMiddleware } from '../../../../src/heights/middlewares/dataToRadians';
+import { validateRequestMiddleware } from '../../../../src/heights/middlewares/validateRequest';
 import { registerTestValues } from '../../../configurations/testContainerConfig';
 
 describe('Get heights middlewares', function () {
@@ -16,17 +19,23 @@ describe('Get heights middlewares', function () {
   let mockResponse: Response;
   let mockNext: NextFunction;
   let logger: Logger;
+  let config: IConfig;
+  let commonErrors: CommonErrors;
   let reqCtxMiddleware: GetHeightsHandler;
   let dataToRadiansMiddleware: GetHeightsHandler;
   let dataToDegreesMiddleware: GetHeightsHandler;
+  let reqValidateMiddleware: GetHeightsHandler;
 
   beforeAll(async function () {
     await registerTestValues(false);
     logger = container.resolve(SERVICES.LOGGER);
+    config = container.resolve(SERVICES.CONFIG);
+    commonErrors = container.resolve(CommonErrors);
 
     reqCtxMiddleware = createReqCtxMiddleware(logger);
     dataToRadiansMiddleware = convertReqPositionToRadiansMiddleware(logger);
     dataToDegreesMiddleware = positionResAsDegreesMiddleware(logger);
+    reqValidateMiddleware = validateRequestMiddleware(config, logger, commonErrors);
   });
 
   describe('Create request id middleware', function () {
@@ -102,6 +111,37 @@ describe('Get heights middlewares', function () {
       dataToDegreesMiddleware(mockRequest, mockResponse, mockNext);
 
       expect((mockResponse.locals.positions as PosWithHeight[])[0]).toEqual(expectedResponseInDegrees);
+    });
+  });
+
+  describe('Validate request middleware', function () {
+    beforeEach(function () {
+      mockResponse = { locals: {} } as unknown as Response;
+
+      mockNext = jest.fn();
+    });
+
+    it('Should throw EMPTY_POSITIONS_ARRAY exception', function () {
+      mockRequest = { body: { positions: [] } } as unknown as Request;
+      expect(() => {
+        // @ts-ignore
+        reqValidateMiddleware(mockRequest, mockResponse, mockNext);
+      }).toThrow(commonErrors.EMPTY_POSITIONS_ARRAY);
+    });
+
+    it('Should throw TOO_MANY_POINTS_ERROR exception', function () {
+      mockRequest = {
+        body: {
+          positions: Array(255).fill({
+            longitude: 86.82918540404042,
+            latitude: 27.888257,
+          }),
+        },
+      } as unknown as Request;
+      expect(() => {
+        // @ts-ignore
+        reqValidateMiddleware(mockRequest, mockResponse, mockNext);
+      }).toThrow(commonErrors.TOO_MANY_POINTS_ERROR);
     });
   });
 });

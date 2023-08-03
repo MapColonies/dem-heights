@@ -6,14 +6,19 @@ import { HeightsController } from '../controllers/heightsController';
 import { convertReqPositionToRadiansMiddleware } from '../middlewares/dataToRadians';
 import { positionResAsDegreesMiddleware } from '../middlewares/dataToDegrees';
 import { POS_WITH_HEIGHT_PROTO_REQUEST, POS_WITH_HEIGHT_PROTO_RESPONSE } from '../../containerConfig';
+import { createReqCtxMiddleware } from '../middlewares/createReqCtx';
 import { encodeProtobufMiddleware } from '../middlewares/encodeProtobuf';
 import { decodeProtobufMiddleware } from '../middlewares/decodeProtobuf';
+import { validateRequestMiddleware } from '../middlewares/validateRequest';
 import { SERVICES } from '../../common/constants';
-import { createReqCtxMiddleware } from '../middlewares/createReqCtx';
+import { IConfig } from '../../common/interfaces';
+import { CommonErrors } from '../../common/commonErrors';
 
 const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const router = Router();
   const controller = dependencyContainer.resolve(HeightsController);
+  const config = dependencyContainer.resolve<IConfig>(SERVICES.CONFIG);
+  const commonErrors = dependencyContainer.resolve(CommonErrors);
   const posWithHeightProtoRequest = dependencyContainer.resolve<protobuf.Type>(POS_WITH_HEIGHT_PROTO_REQUEST);
   const posWithHeightProtoResponse = dependencyContainer.resolve<protobuf.Type>(POS_WITH_HEIGHT_PROTO_RESPONSE);
 
@@ -23,6 +28,7 @@ const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
     '/points',
     createReqCtxMiddleware(logger),
     decodeProtobufMiddleware(posWithHeightProtoRequest, logger),
+    validateRequestMiddleware(config, logger, commonErrors),
     convertReqPositionToRadiansMiddleware(logger),
     controller.getPoints,
     positionResAsDegreesMiddleware(logger),

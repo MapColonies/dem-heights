@@ -46,15 +46,7 @@ export class HeightsManager {
     this.logger.info({ msg: 'Getting points heights', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
 
     if (points.length === 0) {
-      this.logger.error({ msg: 'Points array is empty.', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
-      throw this.commonErrors.EMPTY_POSITIONS_ARRAY;
-    }
-
-    // Decided to limit number of POINTS in order to points(API) behave consistantly
-    // POINT <===> TILE
-    if (typeof MAXIMUM_TILES_PER_REQUEST !== 'undefined' && points.length > MAXIMUM_TILES_PER_REQUEST) {
-      this.logger.error({ msg: 'Too many points', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
-      throw this.commonErrors.TOO_MANY_POINTS_ERROR;
+      return [];
     }
 
     const timeStart = performance.now();
