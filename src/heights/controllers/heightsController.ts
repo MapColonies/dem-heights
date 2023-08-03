@@ -30,10 +30,6 @@ export class HeightsController {
       const reqCtx = res.locals.reqCtx as Record<string, unknown>;
       const DEFAULT_TERRAIN_TYPE = TerrainTypes.MIXED;
 
-      if (userInput.positions.length === 0) {
-        throw this.commonErrors.EMPTY_POSITIONS_ARRAY;
-      }
-
       const heights = await this.manager.getPoints(
         userInput.positions,
         userInput.productType ?? DEFAULT_TERRAIN_TYPE,
