@@ -1,4 +1,4 @@
-import { Cartographic, Math as CesiumMath, sampleTerrainMostDetailed } from 'cesium';
+import { Cartographic, Math as CesiumMath, RequestScheduler, sampleTerrainMostDetailed } from 'cesium';
 import { Polygon } from 'geojson';
 import { Feature } from '@turf/turf';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
@@ -163,6 +163,12 @@ export class HeightsManager {
       });
 
     finalPositionsWithHeights.push(...(results as PosWithHeight[][]).flat());
+
+    // CESIUM without involving a VIEWER(visualization) behaves differently and doesn't manage a REQUESTS cleanup
+    // Full EXPLANATOIN is here: https://github.com/CesiumGS/cesium/issues/7670
+    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    RequestScheduler.update();
 
     return { positions: finalPositionsWithHeights, totalRequests };
   }
