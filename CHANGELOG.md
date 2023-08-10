@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.6](https://github.com/MapColonies/dem-heights/compare/v1.2.5...v1.2.6) (2023-08-10)
+
+
+### Bug Fixes
+
+* commas ([4eebdf2](https://github.com/MapColonies/dem-heights/commit/4eebdf272d7a5608b28ac6fe34d3f3c42368aec1))
+* manually trigger clean up ([93dd60c](https://github.com/MapColonies/dem-heights/commit/93dd60c22a05949249bb51069811abe3bbeb9654))
+
 ### [1.2.5](https://github.com/MapColonies/dem-heights/compare/v1.2.4...v1.2.5) (2023-08-03)
 
 
