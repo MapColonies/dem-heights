@@ -54,7 +54,7 @@
     "@opentelemetry/api-metrics": "0.23.0",
     "@opentelemetry/instrumentation-express": "0.23.0",
     "@opentelemetry/instrumentation-http": "0.23.0",
-    "@supercharge/promise-pool": "^2.4.0",
+    "@supercharge/promise-pool": "^3.0.0",
     "@turf/bbox": "^6.5.0",
     "@turf/boolean-point-in-polygon": "^6.5.0",
     "@turf/point-grid": "^6.5.0",
