@@ -6,9 +6,11 @@ import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from '../interfaces
 import { CommonErrors } from '../../common/commonErrors';
 
 export interface GetHeightsPointsRequest {
-  positions: Cartographic[];
-  productType?: TerrainTypes;
-  excludeFields?: AdditionalFieldsEnum[];
+    positions: Cartographic[];
+    radiansToOriginalPositionsMap: Map<string, string>;
+    productType?: TerrainTypes;
+    excludeFields?: AdditionalFieldsEnum[];
+
 }
 
 export interface GetHeightsPointsResponse {
