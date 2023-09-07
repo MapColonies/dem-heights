@@ -10,11 +10,11 @@ export const convertReqPositionToRadiansMiddleware: (logger: Logger) => GetHeigh
 
     const positions = req.body.positions.map((pos) => {
       const radiansPosition = Cartographic.fromDegrees(pos.longitude, pos.latitude);
-      
+
       // Populating the dictionary between the original requested positions and the radians we work with internally.
       // Key is "longitude;latitude"
       radiansToOriginalPositionsMap.set(`${radiansPosition.longitude};${radiansPosition.latitude}`, `${pos.longitude};${pos.latitude}`);
-      
+
       return radiansPosition;
     });
 

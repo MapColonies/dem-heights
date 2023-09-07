@@ -44,7 +44,11 @@ describe('Get heights middlewares', function () {
         locals: {},
       } as Response;
 
-      mockRequest = {} as Request;
+      mockRequest = {
+        body: {
+          radiansToOriginalPositionsMap: new Map(),
+        },
+      } as Request;
 
       mockNext = jest.fn();
     });
@@ -74,6 +78,9 @@ describe('Get heights middlewares', function () {
       mockRequest = {
         body: {
           positions: [position],
+          radiansToOriginalPositionsMap: new Map([
+            [`${expectedResponseInRadians.longitude};${expectedResponseInRadians.latitude}`, `${position.longitude};${position.latitude}`],
+          ]),
         },
       } as Request;
 
@@ -101,7 +108,16 @@ describe('Get heights middlewares', function () {
         },
       } as unknown as Response;
 
-      mockRequest = {} as Request;
+      mockRequest = {
+        body: {
+          radiansToOriginalPositionsMap: new Map([
+            [
+              `${positionInRadians.longitude};${positionInRadians.latitude}`,
+              `${expectedResponseInDegrees.longitude};${expectedResponseInDegrees.latitude}`,
+            ],
+          ]),
+        },
+      } as Request;
 
       mockNext = jest.fn();
     });

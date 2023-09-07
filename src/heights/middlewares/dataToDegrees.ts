@@ -1,27 +1,25 @@
-import { Logger } from "@map-colonies/js-logger";
-import { Cartographic, Math } from "cesium";
-import type { GetHeightsHandler } from "../controllers/heightsController";
-import { PosWithHeight } from "../interfaces";
+import { Logger } from '@map-colonies/js-logger';
+import { Cartographic, Math } from 'cesium';
+import type { GetHeightsHandler } from '../controllers/heightsController';
+import { PosWithHeight } from '../interfaces';
 
 export const positionResAsDegreesMiddleware: (logger: Logger) => GetHeightsHandler = (logger) => {
-    return (req, res, next) => {
-        const startTime = performance.now();
-        const posArray = res.locals.positions as PosWithHeight[];
-        const radiansToOriginalPositionsMap = req.body.radiansToOriginalPositionsMap;
+  return (req, res, next) => {
+    const startTime = performance.now();
+    const posArray = res.locals.positions as PosWithHeight[];
+    const radiansToOriginalPositionsMap = req.body.radiansToOriginalPositionsMap;
 
-        const posInDegrees = posArray.map(
-            ({ latitude, longitude, ...other }) => {
-                // Using the original position requested.
-                const originalPositionKey = `${longitude};${latitude}`; 
-                const [originalLongitude, originalLatitude] = radiansToOriginalPositionsMap.get(originalPositionKey)?.split(';') ?? [];
+    const posInDegrees = posArray.map(({ latitude, longitude, ...other }) => {
+      // Using the original position requested.
+      const originalPositionKey = `${longitude};${latitude}`;
+      const [originalLongitude, originalLatitude] = radiansToOriginalPositionsMap.get(originalPositionKey)?.split(';') ?? [];
 
-                return {
-                    latitude: Number(originalLatitude),
-                    longitude: Number(originalLongitude),
-                    ...other
-                };
-            }
-        );
+      return {
+        latitude: Number(originalLatitude),
+        longitude: Number(originalLongitude),
+        ...other,
+      };
+    });
 
     const endTime = performance.now();
 
