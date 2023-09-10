@@ -7,6 +7,7 @@ import { CommonErrors } from '../../common/commonErrors';
 
 export interface GetHeightsPointsRequest {
   positions: Cartographic[];
+  radiansToOriginalPositionsMap: Map<string, string>;
   productType?: TerrainTypes;
   excludeFields?: AdditionalFieldsEnum[];
 }
