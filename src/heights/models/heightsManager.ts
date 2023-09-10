@@ -122,6 +122,14 @@ export class HeightsManager {
       .process(async (batch) => {
         const samplingStart = performance.now();
 
+        function sleep(ms: number) {
+          return new Promise((resolve) => {
+            setTimeout(resolve, ms);
+          });
+        }
+
+        await sleep(30000);
+
         if (batch.providerKey === null) {
           this.logger.info({
             msg: `No terrain to sample these positions.`,
