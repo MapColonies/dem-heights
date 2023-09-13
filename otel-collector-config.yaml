@@ -1,0 +1,30 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+
+exporters:
+  prometheus:
+    endpoint: '0.0.0.0:8889'
+    namespace: promexample
+  logging:
+  zipkin:
+    endpoint: 'http://zipkin-all-in-one:9411/api/v2/spans'
+
+processors:
+  batch:
+
+extensions:
+  health_check:
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging, zipkin]
+    metrics:
+      receivers: [otlp]
+      processors: []
+      exporters: [logging, prometheus]

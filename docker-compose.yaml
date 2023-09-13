@@ -1,37 +1,37 @@
 version: '3'
 services:
-  # # Zipkin
-  # zipkin-all-in-one:
-  #   image: openzipkin/zipkin:latest
-  #   ports:
-  #     - '9411:9411'
+  # Zipkin
+  zipkin-all-in-one:
+    image: openzipkin/zipkin:latest
+    ports:
+      - '9411:9411'
 
-  # # Collector
-  # otel-collector:
-  #   image: otel/opentelemetry-collector:0.50.0
-  #   command: ['--config=/etc/otel-collector-config.yaml']
-  #   volumes:
-  #     - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-  #   ports:
-  #     - '4318:4318'
-  #   depends_on:
-  #     - zipkin-all-in-one
+  # Collector
+  otel-collector:
+    image: otel/opentelemetry-collector:0.50.0
+    command: ['--config=/etc/otel-collector-config.yaml']
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - '4318:4318'
+    depends_on:
+      - zipkin-all-in-one
 
-  # prometheus:
-  #   container_name: prometheus
-  #   image: prom/prometheus:latest
-  #   volumes:
-  #     - ./prometheus.yaml:/etc/prometheus/prometheus.yml
-  #   ports:
-  #     - '9090:9090'
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - '9090:9090'
 
-  # grafana:
-  #   container_name: grafana
-  #   image: grafana/grafana
-  #   ports:
-  #     - '3000:3000'
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    ports:
+      - '3000:3000'
 
-  service:
+  server:
     container_name: dem-heights-container
     build: .
     ports:
