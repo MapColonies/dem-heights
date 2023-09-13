@@ -1,11 +1,11 @@
 import path from 'path';
 import config from 'config';
-import { logMethod } from '@map-colonies/telemetry';
+import { getOtelMixin } from '@map-colonies/telemetry';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import pino from 'pino';
 import { Metrics } from '@map-colonies/telemetry';
-import { trace } from '@opentelemetry/api';
+import { trace, metrics as OtelMetrics } from '@opentelemetry/api';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import protobuf from 'protobufjs';
 import { SERVICES, SERVICE_NAME } from './common/constants';
@@ -33,10 +33,10 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   );
 
   // @ts-expect-error the signature is wrong
-  const logger = jsLogger({ ...loggerConfig, prettyPrint: false, hooks: { logMethod }, timestamp: pino.stdTimeFunctions.isoTime });
+  const logger = jsLogger({ ...loggerConfig, prettyPrint: false, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
 
-  const metrics = new Metrics(SERVICE_NAME);
-  const meter = metrics.start();
+  const metrics = new Metrics();
+  metrics.start();
 
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
@@ -52,7 +52,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     { token: SERVICES.CONFIG, provider: { useValue: config } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
-    { token: SERVICES.METER, provider: { useValue: meter } },
+    { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
     { token: CATALOG_RECORDS_MAP, provider: { useValue: catalogRecordsMap } },
     { token: POS_WITH_HEIGHT_PROTO_RESPONSE, provider: { useValue: posWithHeightProtoResponse } },
     { token: DEM_TERRAIN_CACHE_MANAGER, provider: { useValue: demTerrainCacheManager } },

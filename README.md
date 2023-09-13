@@ -2,36 +2,36 @@
 
 This is a repo for extracting elevation info in a given location/position.
 
-data repo:
+Data repo:
 
 https://github.com/MapColonies/dem-heights-data
 
-## Run Locally
+## Run locally
 
-Clone the project:
-
-```bash
-
-git clone https://link-to-project
-
-```
-
-Go to the project directory:
+Clone the project
 
 ```bash
 
-cd my-project
+git clone https://github.com/MapColonies/dem-heights.git
 
 ```
 
-Install dependencies:
+Go to project directory
+
+```bash
+
+cd dem-heights
+
+```
+
+Install dependencies
 
 ```bash
 
 npm install
 
 ```
-Install git hooks:
+Install git hooks
 
 ```bash
 
@@ -39,10 +39,44 @@ npx husky install
 
 ```
 
-Start the server:
+Start the server
 
 ```bash
 
 npm start
+
+```
+
+## Run via docker
+
+Start container
+
+```bash
+
+docker-compose up -d
+
+```
+
+Get inside container
+
+```bash
+
+docker container exec -it dem-heights-container /bin/bash
+
+```
+
+See logs
+
+```bash
+
+docker container logs --follow dem-heights-container
+
+```
+
+Stop container
+
+```bash
+
+docker-compose down
 
 ```

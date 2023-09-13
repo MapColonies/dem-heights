@@ -5,6 +5,8 @@ import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
 import { inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
+import httpLogger from '@map-colonies/express-access-log-middleware';
+import { defaultMetricsMiddleware, getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
 import { SERVICES } from './common/constants';
 import { IConfig } from './common/interfaces';
 import { HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
@@ -43,9 +45,9 @@ export class ServerBuilder {
   }
 
   private registerPreRoutesMiddleware(): void {
-    // This was commented because we don't need the logs for req and res.
     // @ts-ignore
-    // this.serverInstance.use(httpLogger({ logger: this.logger }));
+    this.serverInstance.use(httpLogger({ logger: this.logger }));
+    this.serverInstance.use('/metrics', defaultMetricsMiddleware());
 
     if (this.config.get<boolean>('server.response.compression.enabled')) {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
@@ -53,6 +55,7 @@ export class ServerBuilder {
 
     this.serverInstance.use(bodyParser.raw({ type: 'application/octet-stream', limit: '5mb' }));
     this.serverInstance.use(bodyParser.json(this.config.get<bodyParser.Options>('server.request.payload')));
+    this.serverInstance.use(getTraceContexHeaderMiddleware());
 
     const ignorePathRegex = new RegExp(`^${this.config.get<string>('openapiConfig.basePath')}/.*`, 'i');
     const apiSpecPath = this.config.get<string>('openapiConfig.filePath');
