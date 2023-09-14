@@ -1,17 +1,18 @@
 import { Cartographic, Math as CesiumMath, RequestScheduler, sampleTerrainMostDetailed } from 'cesium';
 import { Polygon } from 'geojson';
+import client from 'prom-client';
+import { container, inject, injectable } from 'tsyringe';
 import { Feature } from '@turf/turf';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
-import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import PromisePool from '@supercharge/promise-pool/dist';
-import { container, inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { SERVICES } from '../../common/constants';
-import { cartographicArrayClusteringForHeightRequests } from '../utilities';
-import { AdditionalFieldsEnum, PosWithHeight, PosWithTerrainProvider, TerrainTypes } from '../interfaces';
-import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerConfig';
-import { IConfig } from '../../common/interfaces';
+import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { CommonErrors } from '../../common/commonErrors';
+import { SERVICES } from '../../common/constants';
+import { IConfig } from '../../common/interfaces';
+import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerConfig';
+import { AdditionalFieldsEnum, PosWithHeight, PosWithTerrainProvider, TerrainTypes } from '../interfaces';
+import { cartographicArrayClusteringForHeightRequests } from '../utilities';
 import DEMTerrainCacheManager from './DEMTerrainCacheManager';
 
 export interface ICoordinates {
@@ -29,11 +30,33 @@ export class HeightsManager {
   private readonly catalogRecordsMap = container.resolve<Record<string, PycswDemCatalogRecord>>(CATALOG_RECORDS_MAP);
   private readonly terrainProviders = this.demTerrainCacheManager.terrainProviders;
 
+  //metrics
+  // private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
+  // private readonly createJobTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType' | 'successCreatingJobTask'>;
+
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(CommonErrors) private readonly commonErrors: CommonErrors,
-    @inject(SERVICES.CONFIG) private readonly config: IConfig
-  ) {}
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
+  ) {
+    // if (registry !== undefined) {
+    //   this.requestCreateLayerCounter = new client.Counter({
+    //     name: 'create_layer_requests_total',
+    //     help: 'The total number of all create layer requests',
+    //     labelNames: ['requestType', 'jobType'] as const,
+    //     registers: [registry],
+    //   });
+
+    //   this.createJobTasksHistogram = new client.Histogram({
+    //     name: 'layer_creation_job_tasks_duration_seconds',
+    //     help: 'create layer and store duration time (seconds) by job type (new or update) including the tasks generating',
+    //     buckets: config.get<number[]>('telemetry.metrics.buckets'),
+    //     labelNames: ['requestType', 'jobType', 'taskType', 'successCreatingJobTask'] as const,
+    //     registers: [registry],
+    //   });
+    // }
+  }
 
   public async getPoints(
     points: Cartographic[],

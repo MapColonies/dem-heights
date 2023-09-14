@@ -22,14 +22,14 @@ export type GetHeightsHandler = RequestHandler<undefined, GetHeightsPointsRespon
 
 @injectable()
 export class HeightsController {
-  private readonly createdResourceCounter: BoundCounter;
+  // private readonly createdResourceCounter: BoundCounter;
   
   public constructor(
     @inject(HeightsManager) private readonly manager: HeightsManager,
     @inject(CommonErrors) private readonly commonErrors: CommonErrors,
-    @inject(SERVICES.METER) private readonly meter: Meter
+    // @inject(SERVICES.METER) private readonly meter: Meter
   ) {
-    this.createdResourceCounter = meter.createCounter('heights_request');
+    // this.createdResourceCounter = meter.createCounter('heights_request');
   }
 
   public getPoints: GetHeightsHandler = async (req, res, next) => {

@@ -19,6 +19,7 @@ data:
   {{ if .Values.env.metrics.enabled }}
   TELEMETRY_METRICS_ENABLED: {{ $metricsEnabled }}
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
+  TELEMETRY_METRICS_BUCKETS: {{ .Values.env.metrics.buckets | toJson | quote }}
   {{ end }}
   TERRAIN_PROVIDERS_TOKEN: {{ .Values.env.terrainProvidersToken | quote }}
   DEM_CATALOG_RECORDS: {{ .Values.env.demCatalogRecords | quote }}

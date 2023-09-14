@@ -42,10 +42,29 @@ env:
   requestPayloadLimit: 1mb
   tracing:
     enabled: false
-    url: http://localhost:55681/v1/trace
+    url: http://otel-collector:4318/v1/traces
   metrics:
-    enabled: false
-    url: http://localhost:55681/v1/metrics
+    enabled: true
+    url: http://otel-collector:4318/v1/metrics
+    prometheus:
+      scrape: true
+      port: 8000
+    buckets:
+    - 0.005
+    - 0.01
+    - 0.025
+    - 0.05
+    - 0.1
+    - 0.25
+    - 0.5
+    - 1
+    - 2.5
+    - 5
+    - 10
+    - 15
+    - 50
+    - 250
+    - 500
   terrainProvidersToken: ''
   demCatalogRecords: []
   protoFileUrl: ''
