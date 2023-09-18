@@ -1,11 +1,9 @@
 import { RequestHandler } from 'express';
 import { Cartographic } from 'cesium';
 import { injectable, inject } from 'tsyringe';
-import { BoundCounter, Meter } from '@opentelemetry/api-metrics';
 import { HeightsManager } from '../models/heightsManager';
 import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from '../interfaces';
 import { CommonErrors } from '../../common/commonErrors';
-import { SERVICES } from '../../common/constants';
 
 export interface GetHeightsPointsRequest {
   positions: Cartographic[];
@@ -22,14 +20,11 @@ export type GetHeightsHandler = RequestHandler<undefined, GetHeightsPointsRespon
 
 @injectable()
 export class HeightsController {
-  // private readonly createdResourceCounter: BoundCounter;
   
   public constructor(
     @inject(HeightsManager) private readonly manager: HeightsManager,
-    @inject(CommonErrors) private readonly commonErrors: CommonErrors,
-    // @inject(SERVICES.METER) private readonly meter: Meter
+    @inject(CommonErrors) private readonly commonErrors: CommonErrors
   ) {
-    // this.createdResourceCounter = meter.createCounter('heights_request');
   }
 
   public getPoints: GetHeightsHandler = async (req, res, next) => {
