@@ -1,16 +1,17 @@
-import express, { Router } from 'express';
 import bodyParser from 'body-parser';
 import compression from 'compression';
-import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
+import express, { Router } from 'express';
 import { middleware as OpenApiMiddleware } from 'express-openapi-validator';
+import { Registry } from 'prom-client';
 import { inject, injectable } from 'tsyringe';
-import { Logger } from '@map-colonies/js-logger';
 import httpLogger from '@map-colonies/express-access-log-middleware';
-import { defaultMetricsMiddleware, getTraceContexHeaderMiddleware } from '@map-colonies/telemetry';
-import { SERVICES } from './common/constants';
+import { Logger } from '@map-colonies/js-logger';
+import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
+import { getTraceContexHeaderMiddleware, metricsMiddleware } from '@map-colonies/telemetry';
 import { IConfig } from './common/interfaces';
-import { HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
 import { CommonErrors } from './common/commonErrors';
+import { SERVICES } from './common/constants';
+import { HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
 
 @injectable()
 export class ServerBuilder {
@@ -20,7 +21,8 @@ export class ServerBuilder {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(HEIGHTS_ROUTER_SYMBOL) private readonly heightsRouter: Router,
-    @inject(CommonErrors) private readonly commonErrors: CommonErrors
+    @inject(CommonErrors) private readonly commonErrors: CommonErrors,
+    @inject(SERVICES.METRICS_REGISTRY) private readonly metricsRegistry?: Registry
   ) {
     this.serverInstance = express();
   }
@@ -45,10 +47,12 @@ export class ServerBuilder {
   }
 
   private registerPreRoutesMiddleware(): void {
-    // @ts-ignore
+    if (this.metricsRegistry) {
+      this.serverInstance.use('/metrics', metricsMiddleware(this.metricsRegistry));
+    }
+    
     this.serverInstance.use(httpLogger({ logger: this.logger }));
-    this.serverInstance.use('/metrics', defaultMetricsMiddleware());
-
+    
     if (this.config.get<boolean>('server.response.compression.enabled')) {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
     }

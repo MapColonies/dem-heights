@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import fs from 'fs';
+import { Cartesian2, Cartographic, CesiumTerrainProvider } from 'cesium';
 import path from 'path';
-import jsLogger from '@map-colonies/js-logger';
-import { Cartesian2, Cartographic } from 'cesium';
-import { CesiumTerrainProvider } from 'cesium';
 import { Application } from 'express';
+import fs from 'fs';
 import httpStatusCodes from 'http-status-codes';
+import jsLogger from '@map-colonies/js-logger';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { GetHeightsPointsRequest, GetHeightsPointsResponse } from '../../../src/heights/controllers/heightsController';
@@ -35,35 +34,34 @@ describe('heights', function () {
     updateDate: new Date().toISOString(),
   } as PosWithHeight;
 
-  describe('Given valid params', function () {
-    beforeAll(async function () {
-      cesiumTerrainProviderFromUrlSpy = jest.spyOn(CesiumTerrainProvider, 'fromUrl');
+  beforeAll(async function () {
+    cesiumTerrainProviderFromUrlSpy = jest.spyOn(CesiumTerrainProvider, 'fromUrl');
 
-      cesiumTerrainProviderFromUrlSpy.mockReturnValue({
-        availability: {
-          available: true,
-          computeMaximumLevelAtPosition: () => {
-            return 13;
-          },
+    cesiumTerrainProviderFromUrlSpy.mockReturnValue({
+      availability: {
+        available: true,
+        computeMaximumLevelAtPosition: () => {
+          return 13;
         },
-        tilingScheme: {
-          positionToTileXY: () => {
-            // Always a maximum of 3 "Tile requests"
-
-            const xys = [new Cartesian2(1, 2), new Cartesian2(3, 4), new Cartesian2(5, 6)];
-            const randomXy = Math.floor(Math.random() * xys.length);
-
-            return xys[randomXy];
-          },
+      },
+      tilingScheme: {
+        positionToTileXY: (position: Cartographic) => {
+          // Making sure there are no overlapping tiles for any of the given positions, 
+          // so that each position is a "request"
+          // (Assuming unique positions)
+          return new Cartesian2(position.latitude, position.longitude);
         },
-      });
-
-      const app = await getApp({
-        override: [{ token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } }],
-      });
-      requestSender = new HeightsRequestSender(app as Application);
+      },
     });
 
+    const app = await getApp({
+      override: [{ token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } }],
+    });
+
+    requestSender = new HeightsRequestSender(app as Application);
+  });
+  
+  describe('Given valid params', function () {
     describe('Get points height (JSON)', function () {
       it('should return 200 status code and points heights for basic usage', async function () {
         const response = await requestSender.getPoints(mockJsonData);
@@ -164,31 +162,6 @@ describe('heights', function () {
   });
 
   describe('Given invalid params', function () {
-    beforeAll(async function () {
-      cesiumTerrainProviderFromUrlSpy = jest.spyOn(CesiumTerrainProvider, 'fromUrl');
-
-      cesiumTerrainProviderFromUrlSpy.mockReturnValue({
-        availability: {
-          available: true,
-          computeMaximumLevelAtPosition: () => {
-            return 13;
-          },
-        },
-        tilingScheme: {
-          positionToTileXY: (position: Cartographic) => {
-            // Making sure there is no tiles overlapping for any position. so that each position is a "request". (Assuming unique positions)
-            return new Cartesian2(position.latitude, position.longitude);
-          },
-        },
-      });
-
-      const app = await getApp({
-        override: [{ token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } }],
-      });
-
-      requestSender = new HeightsRequestSender(app as Application);
-    });
-
     describe('Get points height (JSON)', function () {
       it('Should return 400 status code with low density error for 150+ requests (As configured)', async function () {
         const response = await requestSender.getPoints(mockJsonDataLowDensity);
