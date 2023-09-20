@@ -49,6 +49,7 @@ export class ServerBuilder {
   private registerPreRoutesMiddleware(): void {
     if (this.metricsRegistry) {
       this.serverInstance.use('/metrics', metricsMiddleware(this.metricsRegistry));
+      // this.serverInstance.use(collectMetricsExpressMiddleware({ collectNodeMetrics: true, collectServiceVersion: true, register: this.metricsRegistry, labels: { meow: 'a' } }));
     }
     
     this.serverInstance.use(httpLogger({ logger: this.logger }));
@@ -79,3 +80,7 @@ export class ServerBuilder {
     // this.serverInstance.use(getErrorHandlerMiddleware());
   }
 }
+function collectMetricsExpressMiddleware(arg0: { collectNodeMetrics: boolean; collectServiceVersion: boolean; register: any; labels: { meow: string; }; }): any {
+  throw new Error('Function not implemented.');
+}
+
