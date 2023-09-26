@@ -38,8 +38,8 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, prettyPrint: false, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
 
-  const metrics = new Metrics();
-  metrics.start();
+  // const metrics = new Metrics();
+  // metrics.start();
 
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
@@ -80,7 +80,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       provider: {
         useValue: {
           useValue: async (): Promise<void> => {
-            await Promise.all([tracing.stop(), metrics.stop()]);
+            await Promise.all([tracing.stop()/*, metrics.stop()*/]);
           },
         },
       },

@@ -4,7 +4,7 @@ services:
   zipkin-all-in-one:
     image: openzipkin/zipkin:latest
     ports:
-      - '9411:9411'
+      - 9411:9411
 
   # Collector
   otel-collector:
@@ -13,7 +13,7 @@ services:
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - '4318:4318'
+      - 4318:4318
     depends_on:
       - zipkin-all-in-one
 
@@ -23,13 +23,13 @@ services:
     volumes:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yml
     ports:
-      - '9090:9090'
+      - 9090:9090
 
   grafana:
     container_name: grafana
     image: grafana/grafana
     ports:
-      - '3000:3000'
+      - 3000:3000
 
   server:
     container_name: dem-heights-container
