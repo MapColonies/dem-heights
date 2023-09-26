@@ -4,8 +4,8 @@ global:
 scrape_configs:
   - job_name: otel-collector
     static_configs:
-      - targets: ['otel-collector:8889']
-      - targets: ['otel-collector:8888']
+      - targets: [otel-collector:8889]
+      - targets: [otel-collector:8888]
   - job_name: server
     static_configs:
-      - targets: ['server:8000/metrics']
+      - targets: [server:8000]

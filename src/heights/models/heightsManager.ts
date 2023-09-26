@@ -26,13 +26,16 @@ export interface IHeightModel {
 
 @injectable()
 export class HeightsManager {
+  private runningRequests = 0;
+
   private readonly demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
   private readonly catalogRecordsMap = container.resolve<Record<string, PycswDemCatalogRecord>>(CATALOG_RECORDS_MAP);
   private readonly terrainProviders = this.demTerrainCacheManager.terrainProviders;
 
-  //metrics
-  // private readonly requestCreateLayerCounter?: client.Counter<'requestType' | 'jobType'>;
-  // private readonly createJobTasksHistogram?: client.Histogram<'requestType' | 'jobType' | 'taskType' | 'successCreatingJobTask'>;
+  private readonly elevationsRequestsCounter?: client.Counter<'pointsNumber'>;
+  private readonly successElevationsRequestsCounter?: client.Counter<'pointsNumber'>;
+  private readonly failedElevationsRequestsCounter?: client.Counter<'pointsNumber'>;
+  private readonly elevationsRequestsHistogram?: client.Histogram<'pointsNumber' | 'success'>;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -40,22 +43,46 @@ export class HeightsManager {
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
-    // if (registry !== undefined) {
-    //   this.requestCreateLayerCounter = new client.Counter({
-    //     name: 'create_layer_requests_total',
-    //     help: 'The total number of all create layer requests',
-    //     labelNames: ['requestType', 'jobType'] as const,
-    //     registers: [registry],
-    //   });
+    if (registry !== undefined) {
+      const self = this;
+      new client.Gauge({
+        name: 'current_elevations_requests_count',
+        help: 'The number of currently running elevations requests',
+        collect(): void {
+          this.set(self.runningRequests);
+        },
+        registers: [registry],
+      });
 
-    //   this.createJobTasksHistogram = new client.Histogram({
-    //     name: 'layer_creation_job_tasks_duration_seconds',
-    //     help: 'create layer and store duration time (seconds) by job type (new or update) including the tasks generating',
-    //     buckets: config.get<number[]>('telemetry.metrics.buckets'),
-    //     labelNames: ['requestType', 'jobType', 'taskType', 'successCreatingJobTask'] as const,
-    //     registers: [registry],
-    //   });
-    // }
+      this.elevationsRequestsCounter = new client.Counter({
+        name: 'elevations_requests_total',
+        help: 'The total number of elevations requests',
+        labelNames: ['pointsNumber'] as const,
+        registers: [registry],
+      });
+
+      this.successElevationsRequestsCounter = new client.Counter({
+        name: 'success_elevations_requests_total',
+        help: 'The total number of success elevations requests',
+        labelNames: ['pointsNumber'] as const,
+        registers: [registry],
+      });
+
+      this.failedElevationsRequestsCounter = new client.Counter({
+        name: 'failed_elevations_requests_total',
+        help: 'The total number of failed elevations requests',
+        labelNames: ['pointsNumber'] as const,
+        registers: [registry],
+      });
+
+      this.elevationsRequestsHistogram = new client.Histogram({
+        name: 'elevations_requests_duration_seconds',
+        help: 'Request duration time (seconds) by number of points',
+        buckets: config.get<number[]>('telemetry.metrics.buckets'),
+        labelNames: ['pointsNumber', 'success'] as const,
+        registers: [registry],
+      });
+    }
   }
 
   public async getPoints(
@@ -64,22 +91,41 @@ export class HeightsManager {
     excludeFields: AdditionalFieldsEnum[] = [],
     reqCtx?: Record<string, unknown>
   ): Promise<PosWithHeight[]> {
-    const MAXIMUM_TILES_PER_REQUEST = this.config.has('maximumTilesPerRequest') ? this.config.get<number>('maximumTilesPerRequest') : undefined;
-
     this.logger.info({ msg: 'Getting points heights', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
 
+    this.runningRequests++;
+    this.elevationsRequestsCounter?.inc({ pointsNumber: points.length });
+
     if (points.length === 0) {
+      this.runningRequests--;
+      this.failedElevationsRequestsCounter?.inc({ pointsNumber: points.length });
       return [];
     }
 
+
     const timeStart = performance.now();
+    const fetchTimerEnd = this.elevationsRequestsHistogram?.startTimer({ pointsNumber: points.length });
 
-    const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqCtx);
+    let result = { positions: [] as PosWithHeight[], totalRequests: -1 };
+    
+    try {
+      result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqCtx);
+    } catch (e) {
+      if (fetchTimerEnd) {
+        fetchTimerEnd({ success: 'false' });
+      }
+    }
 
+    if (fetchTimerEnd) {
+      fetchTimerEnd({ success: 'true' });
+    }
     const timeEnd = performance.now();
 
     this.logger.info({ timeToResponse: timeEnd - timeStart, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
     this.logger.info({ totalRequests: result.totalRequests, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+
+    this.runningRequests--;
+    this.successElevationsRequestsCounter?.inc({ pointsNumber: points.length });
 
     return result.positions;
   }
