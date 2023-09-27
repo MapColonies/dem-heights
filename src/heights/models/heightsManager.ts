@@ -33,8 +33,8 @@ export class HeightsManager {
   private readonly terrainProviders = this.demTerrainCacheManager.terrainProviders;
 
   private readonly elevationsRequestsCounter?: client.Counter<'pointsNumber'>;
-  private readonly successElevationsRequestsCounter?: client.Counter<'pointsNumber'>;
-  private readonly failedElevationsRequestsCounter?: client.Counter<'pointsNumber'>;
+  private readonly elevationsSuccessRequestsCounter?: client.Counter<'pointsNumber'>;
+  private readonly elevationsErrorRequestsCounter?: client.Counter<'pointsNumber'>;
   private readonly elevationsRequestsHistogram?: client.Histogram<'pointsNumber' | 'success'>;
 
   public constructor(
@@ -46,7 +46,7 @@ export class HeightsManager {
     if (registry !== undefined) {
       const self = this;
       new client.Gauge({
-        name: 'current_elevations_requests_count',
+        name: 'elevations_current_requests_count',
         help: 'The number of currently running elevations requests',
         collect(): void {
           this.set(self.runningRequests);
@@ -61,15 +61,15 @@ export class HeightsManager {
         registers: [registry],
       });
 
-      this.successElevationsRequestsCounter = new client.Counter({
-        name: 'success_elevations_requests_total',
+      this.elevationsSuccessRequestsCounter = new client.Counter({
+        name: 'elevations_success_requests_total',
         help: 'The total number of success elevations requests',
         labelNames: ['pointsNumber'] as const,
         registers: [registry],
       });
 
-      this.failedElevationsRequestsCounter = new client.Counter({
-        name: 'failed_elevations_requests_total',
+      this.elevationsErrorRequestsCounter = new client.Counter({
+        name: 'elevations_error_requests_total',
         help: 'The total number of failed elevations requests',
         labelNames: ['pointsNumber'] as const,
         registers: [registry],
@@ -98,7 +98,7 @@ export class HeightsManager {
 
     if (points.length === 0) {
       this.runningRequests--;
-      this.failedElevationsRequestsCounter?.inc({ pointsNumber: points.length });
+      this.elevationsErrorRequestsCounter?.inc({ pointsNumber: points.length });
       return [];
     }
 
@@ -125,7 +125,7 @@ export class HeightsManager {
     this.logger.info({ totalRequests: result.totalRequests, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
 
     this.runningRequests--;
-    this.successElevationsRequestsCounter?.inc({ pointsNumber: points.length });
+    this.elevationsSuccessRequestsCounter?.inc({ pointsNumber: points.length });
 
     return result.positions;
   }

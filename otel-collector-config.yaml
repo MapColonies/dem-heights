@@ -2,23 +2,26 @@ receivers:
   otlp:
     protocols:
       http:
-
+      grpc:
 exporters:
   prometheus:
     endpoint: '0.0.0.0:8889'
     namespace: promexample
+    const_labels:
+      label1: value1
   logging:
   zipkin:
     endpoint: 'http://zipkin-all-in-one:9411/api/v2/spans'
-
 processors:
   batch:
-
 extensions:
   health_check:
-
+  pprof:
+    endpoint: :1888
+  zpages:
+    endpoint: :55679
 service:
-  extensions: [health_check]
+  extensions: [pprof, zpages, health_check]
   pipelines:
     traces:
       receivers: [otlp]
@@ -26,5 +29,5 @@ service:
       exporters: [logging, zipkin]
     metrics:
       receivers: [otlp]
-      processors: []
+      processors: [batch]
       exporters: [logging, prometheus]

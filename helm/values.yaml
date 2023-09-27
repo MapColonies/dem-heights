@@ -41,7 +41,7 @@ env:
   responseCompressionEnabled: true
   requestPayloadLimit: 1mb
   tracing:
-    enabled: false
+    enabled: true
     url: http://otel-collector:4318/v1/traces
   metrics:
     enabled: true

@@ -10,8 +10,13 @@
       "level": "info",
       "prettyPrint": false
     },
+    "tracing": {
+      "enabled": true,
+      "url": "http://localhost:4318/v1/trace"
+    },
     "metrics": {
       "enabled": true,
+      "url": "http://localhost:4318/v1/metrics",
       "buckets": [1, 10, 50, 100, 150, 250]
     }
   },

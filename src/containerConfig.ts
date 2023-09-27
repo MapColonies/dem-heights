@@ -36,7 +36,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   );
 
   // @ts-expect-error the signature is wrong
-  const logger = jsLogger({ ...loggerConfig, prettyPrint: false, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
+  const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
 
   // const metrics = new Metrics();
   // metrics.start();
