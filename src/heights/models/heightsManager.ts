@@ -176,6 +176,7 @@ export class HeightsManager {
         ...reqCtx,
       });
       this.runningRequests--;
+      this.elevationsErrorRequestsCounter?.inc({ pointsNumber: positionsArr.length });
       throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
     }
 
