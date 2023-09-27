@@ -39,12 +39,20 @@ npx husky install
 
 ```
 
-Start the server
+Start
 
 ```bash
 
 npm start
 
+```
+
+Or:
+
+Start with telemetry enabled
+
+```bash
+TELEMETRY_TRACING_ENABLED=true TELEMETRY_TRACING_URL=http://localhost:4318/v1/trace TELEMETRY_METRICS_ENABLED=true TELEMETRY_METRICS_URL=http://localhost:4318/v1/metrics npm start
 ```
 
 ## Run via docker
