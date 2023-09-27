@@ -1,5 +1,5 @@
-import { Logger } from '@map-colonies/js-logger';
 import { Cartographic } from 'cesium';
+import { Logger } from '@map-colonies/js-logger';
 import type { GetHeightsHandler } from '../controllers/heightsController';
 
 export const convertReqPositionToRadiansMiddleware: (logger: Logger) => GetHeightsHandler = (logger) => {

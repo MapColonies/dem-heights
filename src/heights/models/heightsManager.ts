@@ -35,7 +35,7 @@ export class HeightsManager {
   private readonly elevationsRequestsCounter?: client.Counter<'pointsNumber'>;
   private readonly elevationsSuccessRequestsCounter?: client.Counter<'pointsNumber'>;
   private readonly elevationsErrorRequestsCounter?: client.Counter<'pointsNumber'>;
-  private readonly elevationsRequestsHistogram?: client.Histogram<'pointsNumber' | 'success'>;
+  private readonly elevationsRequestsHistogram?: client.Histogram<'pointsNumber'>;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -78,8 +78,8 @@ export class HeightsManager {
       this.elevationsRequestsHistogram = new client.Histogram({
         name: 'elevations_requests_duration_seconds',
         help: 'Request duration time (seconds) by number of points',
-        buckets: config.get<number[]>('telemetry.metrics.buckets'),
-        labelNames: ['pointsNumber', 'success'] as const,
+        // buckets: config.get<number[]>('telemetry.metrics.buckets'),
+        labelNames: ['pointsNumber'] as const,
         registers: [registry],
       });
     }
@@ -91,7 +91,12 @@ export class HeightsManager {
     excludeFields: AdditionalFieldsEnum[] = [],
     reqCtx?: Record<string, unknown>
   ): Promise<PosWithHeight[]> {
-    this.logger.info({ msg: 'Getting points heights', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+
+    this.logger.info({
+      pointsNumber: points.length,
+      location: '[HeightsManager] [getPoints]',
+      ...reqCtx
+    });
 
     this.runningRequests++;
     this.elevationsRequestsCounter?.inc({ pointsNumber: points.length });
@@ -102,32 +107,25 @@ export class HeightsManager {
       return [];
     }
 
-
-    const timeStart = performance.now();
     const fetchTimerEnd = this.elevationsRequestsHistogram?.startTimer({ pointsNumber: points.length });
-
-    let result = { positions: [] as PosWithHeight[], totalRequests: -1 };
     
-    try {
-      result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqCtx);
-    } catch (e) {
-      if (fetchTimerEnd) {
-        fetchTimerEnd({ success: 'false' });
-      }
-    }
+    const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqCtx);
 
     if (fetchTimerEnd) {
-      fetchTimerEnd({ success: 'true' });
+      fetchTimerEnd();
     }
-    const timeEnd = performance.now();
 
-    this.logger.info({ timeToResponse: timeEnd - timeStart, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
-    this.logger.info({ totalRequests: result.totalRequests, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+    this.logger.info({
+      totalRequests: result.totalRequests,
+      pointsNumber: points.length,
+      location: '[HeightsManager] [getPoints]',
+      ...reqCtx
+    });
 
     this.runningRequests--;
     this.elevationsSuccessRequestsCounter?.inc({ pointsNumber: points.length });
-
     return result.positions;
+
   }
 
   private async samplePositionsHeights(
@@ -177,6 +175,7 @@ export class HeightsManager {
         location: '[HeightsManager] [samplePositionsHeights]',
         ...reqCtx,
       });
+      this.runningRequests--;
       throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
     }
 
@@ -209,7 +208,7 @@ export class HeightsManager {
 
         const positionsWithHeights = await sampleTerrainMostDetailed(provider, batch.positions);
 
-        // attach additional info on top of each position returned via the catalog record.
+        // Attach additional info on top of each position returned via the catalog record.
         positionsWithHeights.forEach((pos) => {
           for (const field of additionalFields) {
             if (!excludeFields.includes(field) && typeof qmeshRecord[field] !== 'undefined') {
@@ -233,7 +232,7 @@ export class HeightsManager {
 
     finalPositionsWithHeights.push(...(results as PosWithHeight[][]).flat());
 
-    // CESIUM without involving a VIEWER(visualization) behaves differently and doesn't manage a REQUESTS cleanup
+    // CESIUM without involving a VIEWER (visualization) behaves differently and doesn't manage a REQUESTS cleanup
     // Full EXPLANATOIN is here: https://github.com/CesiumGS/cesium/issues/7670
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -243,38 +242,36 @@ export class HeightsManager {
   }
 
   private attachTerrainProviderToPositions(positions: Cartographic[], requestedProductType: TerrainTypes): PosWithTerrainProvider[] {
-    /**
-     * Filter terrain providers by requested product type.
-     * Filter terrain providers by footprint point intersection.
-     * Sort by highest resolution (Lower is better).
-     * Attach first to the point
+    /*
+     * Filter terrain providers by requested product type
+     * Filter terrain providers by footprint point intersection
+     * Sort by highest resolution (Lower is better)
+     * Attach to the point the (first) provider with highest resolution
      */
 
     return positions.map((position) => {
       const terrainProvidersEntries = Object.entries(this.terrainProviders);
 
-      // Filter terrain providers by requested product type if not MIXED.
+      // Filter terrain providers by requested product type if not MIXED
       const productTypeFilteredTerrains =
         requestedProductType !== TerrainTypes.MIXED
           ? terrainProvidersEntries.filter(([terrainKey]) => {
               const qmeshRecord = this.catalogRecordsMap[terrainKey];
-
               return qmeshRecord.productType?.includes(requestedProductType);
             })
           : terrainProvidersEntries;
 
-      // Filter terrain providers by footprint point intersection.
+      // Filter terrain providers by footprint point intersection
       const terrainsFilterByFootprint = productTypeFilteredTerrains.filter(([terrainKey]) => {
         const qmeshRecord = this.catalogRecordsMap[terrainKey];
         const isPointInFootprint = booleanPointInPolygon(
           [CesiumMath.toDegrees(position.longitude), CesiumMath.toDegrees(position.latitude)],
           qmeshRecord.footprint as Feature<Polygon>
         );
-
         return isPointInFootprint;
       });
 
-      // Sort by highest resolution (Lower is better).
+      // Sort by highest resolution (Lower is better)
       const sortedTerrainsByResolution = terrainsFilterByFootprint.sort(([terrainAKey], [terrainBKey]) => {
         const A_BEFORE_B = -1;
         const B_BEFORE_A = 1;
@@ -285,7 +282,6 @@ export class HeightsManager {
         switch (true) {
           case (qmeshRecordA.resolutionMeter as number) < (qmeshRecordB.resolutionMeter as number):
             return A_BEFORE_B;
-
           case (qmeshRecordA.resolutionMeter as number) > (qmeshRecordB.resolutionMeter as number):
             return B_BEFORE_A;
           default:
@@ -300,7 +296,7 @@ export class HeightsManager {
         } as PosWithTerrainProvider;
       }
 
-      // Attach first to the point
+      // Attach to the point the (first) provider with highest resolution
       const [terrainKey, provider] = sortedTerrainsByResolution[0];
 
       return {
