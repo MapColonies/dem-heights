@@ -5,10 +5,10 @@ import client from 'prom-client';
 import protobuf from 'protobufjs';
 import { instanceCachingFactory } from 'tsyringe';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
-import { trace, metrics as OtelMetrics } from '@opentelemetry/api';
+import { trace } from '@opentelemetry/api';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
-import { getOtelMixin, Metrics } from '@map-colonies/telemetry';
+import { getOtelMixin } from '@map-colonies/telemetry';
 import { SERVICES, SERVICE_NAME } from './common/constants';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
 import { IConfig } from './common/interfaces';
@@ -38,9 +38,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
 
-  // const metrics = new Metrics();
-  // metrics.start();
-
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
 
@@ -55,7 +52,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     { token: SERVICES.CONFIG, provider: { useValue: config } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
-    // { token: SERVICES.METER, provider: { useValue: OtelMetrics.getMeterProvider().getMeter(SERVICE_NAME) } },
     {
       token: SERVICES.METRICS_REGISTRY,
       provider: {
@@ -80,7 +76,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       provider: {
         useValue: {
           useValue: async (): Promise<void> => {
-            await Promise.all([tracing.stop()/*, metrics.stop()*/]);
+            await Promise.all([tracing.stop()]);
           },
         },
       },
