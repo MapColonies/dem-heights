@@ -2,11 +2,11 @@ import { Cartographic, Math as CesiumMath, RequestScheduler, sampleTerrainMostDe
 import { Polygon } from 'geojson';
 import client from 'prom-client';
 import { container, inject, injectable } from 'tsyringe';
-import { Feature } from '@turf/turf';
-import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
-import PromisePool from '@supercharge/promise-pool/dist';
 import { Logger } from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
+import PromisePool from '@supercharge/promise-pool/dist';
+import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+import { Feature } from '@turf/turf';
 import { CommonErrors } from '../../common/commonErrors';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
@@ -35,7 +35,6 @@ export class HeightsManager {
   private readonly elevationsRequestsCounter?: client.Counter<'pointsNumber'>;
   private readonly elevationsSuccessRequestsCounter?: client.Counter<'pointsNumber'>;
   private readonly elevationsErrorRequestsCounter?: client.Counter<'pointsNumber'>;
-  private readonly elevationsRequestsHistogram?: client.Histogram<'pointsNumber'>;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -47,7 +46,7 @@ export class HeightsManager {
       const self = this;
       new client.Gauge({
         name: 'elevations_current_requests_count',
-        help: 'The number of currently running elevations requests',
+        help: 'Currently running elevations requests',
         collect(): void {
           this.set(self.runningRequests);
         },
@@ -56,29 +55,21 @@ export class HeightsManager {
 
       this.elevationsRequestsCounter = new client.Counter({
         name: 'elevations_requests_total',
-        help: 'The total number of elevations requests',
+        help: 'Total elevations requests',
         labelNames: ['pointsNumber'] as const,
         registers: [registry],
       });
 
       this.elevationsSuccessRequestsCounter = new client.Counter({
         name: 'elevations_success_requests_total',
-        help: 'The total number of success elevations requests',
+        help: 'Success elevations requests',
         labelNames: ['pointsNumber'] as const,
         registers: [registry],
       });
 
       this.elevationsErrorRequestsCounter = new client.Counter({
         name: 'elevations_error_requests_total',
-        help: 'The total number of failed elevations requests',
-        labelNames: ['pointsNumber'] as const,
-        registers: [registry],
-      });
-
-      this.elevationsRequestsHistogram = new client.Histogram({
-        name: 'elevations_requests_duration_seconds',
-        help: 'Request duration time (seconds) by number of points',
-        // buckets: config.get<number[]>('telemetry.metrics.buckets'),
+        help: 'Failed elevations requests',
         labelNames: ['pointsNumber'] as const,
         registers: [registry],
       });
@@ -107,13 +98,7 @@ export class HeightsManager {
       return [];
     }
 
-    const fetchTimerEnd = this.elevationsRequestsHistogram?.startTimer({ pointsNumber: points.length });
-    
     const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqCtx);
-
-    if (fetchTimerEnd) {
-      fetchTimerEnd();
-    }
 
     this.logger.info({
       totalRequests: result.totalRequests,

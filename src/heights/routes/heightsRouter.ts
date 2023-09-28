@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { FactoryFunction } from 'tsyringe';
+import client from 'prom-client';
 import protobuf from 'protobufjs';
+import { FactoryFunction } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { CommonErrors } from '../../common/commonErrors';
 import { SERVICES } from '../../common/constants';
@@ -21,13 +22,13 @@ const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const commonErrors = dependencyContainer.resolve(CommonErrors);
   const posWithHeightProtoRequest = dependencyContainer.resolve<protobuf.Type>(POS_WITH_HEIGHT_PROTO_REQUEST);
   const posWithHeightProtoResponse = dependencyContainer.resolve<protobuf.Type>(POS_WITH_HEIGHT_PROTO_RESPONSE);
-
+  const registry = dependencyContainer.resolve<client.Registry>(SERVICES.METRICS_REGISTRY);
   const logger = dependencyContainer.resolve<Logger>(SERVICES.LOGGER);
 
   router.post(
     '/points',
     createReqCtxMiddleware(logger),
-    decodeProtobufMiddleware(posWithHeightProtoRequest, logger),
+    decodeProtobufMiddleware(posWithHeightProtoRequest, logger, registry),
     validateRequestMiddleware(config, logger, commonErrors),
     convertReqPositionToRadiansMiddleware(logger),
     controller.getPoints,

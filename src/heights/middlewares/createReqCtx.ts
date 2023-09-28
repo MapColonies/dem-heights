@@ -1,5 +1,5 @@
-import { v4 } from 'uuid';
 import { get } from 'lodash';
+import { v4 } from 'uuid';
 import { Logger } from '@map-colonies/js-logger';
 import type { GetHeightsHandler } from '../controllers/heightsController';
 
