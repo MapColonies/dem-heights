@@ -7,7 +7,7 @@ import { inject, injectable } from 'tsyringe';
 import httpLogger from '@map-colonies/express-access-log-middleware';
 import { Logger } from '@map-colonies/js-logger';
 import { OpenapiViewerRouter, OpenapiRouterConfig } from '@map-colonies/openapi-express-viewer';
-import { getTraceContexHeaderMiddleware, metricsMiddleware } from '@map-colonies/telemetry';
+import { getTraceContexHeaderMiddleware, collectMetricsExpressMiddleware } from '@map-colonies/telemetry';
 import { IConfig } from './common/interfaces';
 import { CommonErrors } from './common/commonErrors';
 import { SERVICES } from './common/constants';
@@ -22,7 +22,7 @@ export class ServerBuilder {
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(HEIGHTS_ROUTER_SYMBOL) private readonly heightsRouter: Router,
     @inject(CommonErrors) private readonly commonErrors: CommonErrors,
-    @inject(SERVICES.METRICS_REGISTRY) private readonly metricsRegistry?: Registry
+    @inject(SERVICES.METRICS_REGISTRY) private readonly registry?: Registry
   ) {
     this.serverInstance = express();
   }
@@ -47,9 +47,9 @@ export class ServerBuilder {
   }
 
   private registerPreRoutesMiddleware(): void {
-    if (this.metricsRegistry) {
-      this.serverInstance.use('/metrics', metricsMiddleware(this.metricsRegistry));
-      // this.serverInstance.use(collectMetricsExpressMiddleware({ collectNodeMetrics: true, collectServiceVersion: true, register: this.metricsRegistry, labels: { meow: 'a' } }));
+    if (this.registry) {
+      // this.serverInstance.use('/metrics', metricsMiddleware(this.registry));
+      this.serverInstance.use(collectMetricsExpressMiddleware({ collectNodeMetrics: true, collectServiceVersion: true, registry: this.registry, labels: { meow: 'a' } }));
     }
     
     this.serverInstance.use(httpLogger({ logger: this.logger }));
@@ -80,7 +80,3 @@ export class ServerBuilder {
     // this.serverInstance.use(getErrorHandlerMiddleware());
   }
 }
-function collectMetricsExpressMiddleware(arg0: { collectNodeMetrics: boolean; collectServiceVersion: boolean; register: any; labels: { meow: string; }; }): any {
-  throw new Error('Function not implemented.');
-}
-

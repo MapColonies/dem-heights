@@ -60,6 +60,8 @@ Or:
 Debug with telemetry enabled
 
 ```bash
+cd dist
+
 TELEMETRY_TRACING_ENABLED=true TELEMETRY_TRACING_URL=http://localhost:4318/v1/trace TELEMETRY_METRICS_ENABLED=true TELEMETRY_METRICS_URL=http://localhost:4318/v1/metrics node --inspect index.js
 ```
 

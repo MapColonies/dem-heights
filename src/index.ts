@@ -5,10 +5,9 @@ import { createServer } from 'http';
 import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
 import { container } from 'tsyringe';
-import config from 'config';
-import { DEFAULT_SERVER_PORT, SERVICES } from './common/constants';
-
 import { getApp } from './app';
+import { DEFAULT_SERVER_PORT, SERVICES } from './common/constants';
+import config from 'config';
 
 const port: number = config.get<number>('server.port') || DEFAULT_SERVER_PORT;
 
