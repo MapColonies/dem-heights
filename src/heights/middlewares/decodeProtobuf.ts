@@ -1,10 +1,8 @@
-import client from 'prom-client';
 import protobuf from 'protobufjs';
 import { Logger } from '@map-colonies/js-logger';
 import { GetHeightsHandler, GetHeightsPointsRequest } from '../controllers/heightsController';
-import { PosWithHeight } from '../interfaces';
 
-export const decodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Logger, registry: client.Registry) => GetHeightsHandler = (protobufClass, logger, registry) => {
+export const decodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Logger) => GetHeightsHandler = (protobufClass, logger) => {
   return (req, res, next) => {
     // Check if payload is a binary data
     if (req.headers['content-type'] === 'application/octet-stream') {

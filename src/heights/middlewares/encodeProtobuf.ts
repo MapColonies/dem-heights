@@ -1,7 +1,7 @@
 import protobuf from 'protobufjs';
 import { Logger } from '@map-colonies/js-logger';
-import { PosWithHeight } from '../interfaces';
 import { GetHeightsHandler } from '../controllers/heightsController';
+import { PosWithHeight } from '../interfaces';
 
 export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Logger) => GetHeightsHandler = (protobufClass, logger) => {
   return (req, res) => {
