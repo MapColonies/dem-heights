@@ -39,7 +39,15 @@ npx husky install
 
 ```
 
-Prometheus:
+`Start`
+
+```bash
+
+npm start
+
+```
+
+Or:
 
 ```bash
 
@@ -51,33 +59,19 @@ http://localhost:9090
 
 ```
 
-Grafana:
-
 ```bash
 
 docker container run --rm --name grafana --net host -p 3000:3000 grafana/grafana-oss
 
 ```
 
-Start
-
-```bash
-
-npm start
-
-```
-
-Or:
-
-Start with telemetry enabled
+`Start with telemetry`
 
 ```bash
 TELEMETRY_TRACING_ENABLED=true TELEMETRY_TRACING_URL=http://localhost:4318/v1/traces TELEMETRY_METRICS_ENABLED=true TELEMETRY_METRICS_URL=http://localhost:4318/v1/metrics npm start
 ```
 
-Or:
-
-Debug with telemetry enabled
+`Debug with telemetry`
 
 ```bash
 cd dist
