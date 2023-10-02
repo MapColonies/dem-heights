@@ -51,9 +51,9 @@ export class ServerBuilder {
       // this.serverInstance.use('/metrics', metricsMiddleware(this.registry));
       this.serverInstance.use(collectMetricsExpressMiddleware({ collectNodeMetrics: true, collectServiceVersion: true, registry: this.registry }));
     }
-    
+
     this.serverInstance.use(httpLogger({ logger: this.logger }));
-    
+
     if (this.config.get<boolean>('server.response.compression.enabled')) {
       this.serverInstance.use(compression(this.config.get<compression.CompressionFilter>('server.response.compression.options')));
     }

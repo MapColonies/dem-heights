@@ -1,5 +1,5 @@
-import config from 'config';
 import path from 'path';
+import config from 'config';
 import pino from 'pino';
 import client from 'prom-client';
 import protobuf from 'protobufjs';

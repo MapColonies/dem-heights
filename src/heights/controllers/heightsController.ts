@@ -20,12 +20,10 @@ export type GetHeightsHandler = RequestHandler<undefined, GetHeightsPointsRespon
 
 @injectable()
 export class HeightsController {
-  
   public constructor(
     @inject(HeightsManager) private readonly manager: HeightsManager,
     @inject(CommonErrors) private readonly commonErrors: CommonErrors
-  ) {
-  }
+  ) {}
 
   public getPoints: GetHeightsHandler = async (req, res, next) => {
     try {

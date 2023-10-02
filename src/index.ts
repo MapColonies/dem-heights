@@ -3,12 +3,12 @@
 import 'reflect-metadata';
 // import './common/tracing';
 import { createServer } from 'http';
+import { container } from 'tsyringe';
 import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
-import { container } from 'tsyringe';
+import config from 'config';
 import { getApp } from './app';
 import { DEFAULT_SERVER_PORT, SERVICES } from './common/constants';
-import config from 'config';
 
 const port: number = config.get<number>('server.port') || DEFAULT_SERVER_PORT;
 

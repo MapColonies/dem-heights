@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { Cartesian2, Cartographic, CesiumTerrainProvider } from 'cesium';
 import path from 'path';
-import { Application } from 'express';
 import fs from 'fs';
+import { Cartesian2, Cartographic, CesiumTerrainProvider } from 'cesium';
+import { Application } from 'express';
 import httpStatusCodes from 'http-status-codes';
 import jsLogger from '@map-colonies/js-logger';
 import { getApp } from '../../../src/app';
@@ -46,7 +46,7 @@ describe('heights', function () {
       },
       tilingScheme: {
         positionToTileXY: (position: Cartographic) => {
-          // Making sure there are no overlapping tiles for any of the given positions, 
+          // Making sure there are no overlapping tiles for any of the given positions,
           // so that each position is a "request"
           // (Assuming unique positions)
           return new Cartesian2(position.latitude, position.longitude);
@@ -60,7 +60,7 @@ describe('heights', function () {
 
     requestSender = new HeightsRequestSender(app as Application);
   });
-  
+
   describe('Given valid params', function () {
     describe('Get points height (JSON)', function () {
       it('should return 200 status code and points heights for basic usage', async function () {

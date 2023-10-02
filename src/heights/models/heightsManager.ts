@@ -82,11 +82,10 @@ export class HeightsManager {
     excludeFields: AdditionalFieldsEnum[] = [],
     reqCtx?: Record<string, unknown>
   ): Promise<PosWithHeight[]> {
-
     this.logger.info({
       pointsNumber: points.length,
       location: '[HeightsManager] [getPoints]',
-      ...reqCtx
+      ...reqCtx,
     });
 
     this.runningRequests++;
@@ -104,13 +103,12 @@ export class HeightsManager {
       totalRequests: result.totalRequests,
       pointsNumber: points.length,
       location: '[HeightsManager] [getPoints]',
-      ...reqCtx
+      ...reqCtx,
     });
 
     this.runningRequests--;
     this.elevationsSuccessRequestsCounter?.inc({ pointsNumber: points.length });
     return result.positions;
-
   }
 
   private async samplePositionsHeights(

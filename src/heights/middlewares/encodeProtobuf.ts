@@ -6,7 +6,7 @@ import { PosWithHeight } from '../interfaces';
 export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Logger) => GetHeightsHandler = (protobufClass, logger) => {
   return (req, res) => {
     const posArray = res.locals.positions as PosWithHeight[];
-    
+
     // We should return data the same way its requested.
     if (req.headers['content-type'] === 'application/octet-stream') {
       const startTime = performance.now();
