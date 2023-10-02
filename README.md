@@ -39,6 +39,26 @@ npx husky install
 
 ```
 
+Prometheus:
+
+```bash
+
+docker container run --rm --name prometheus --net host -p 9090:9090 -v /temp/prometheus.yaml:/etc/prometheus/prometheus.yml prom/prometheus
+
+http://localhost:9090
+
+{job="server"} -> Execute
+
+```
+
+Grafana:
+
+```bash
+
+docker container run --rm --name grafana --net host -p 3000:3000 grafana/grafana-oss
+
+```
+
 Start
 
 ```bash
