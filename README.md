@@ -2,36 +2,36 @@
 
 This is a repo for extracting elevation info in a given location/position.
 
-data repo:
+Data repo:
 
 https://github.com/MapColonies/dem-heights-data
 
-## Run Locally
+## Run locally
 
-Clone the project:
-
-```bash
-
-git clone https://link-to-project
-
-```
-
-Go to the project directory:
+Clone the project
 
 ```bash
 
-cd my-project
+git clone https://github.com/MapColonies/dem-heights.git
 
 ```
 
-Install dependencies:
+Go to project directory
+
+```bash
+
+cd dem-heights
+
+```
+
+Install dependencies
 
 ```bash
 
 npm install
 
 ```
-Install git hooks:
+Install git hooks
 
 ```bash
 
@@ -39,10 +39,76 @@ npx husky install
 
 ```
 
-Start the server:
+`Start`
 
 ```bash
 
 npm start
+
+```
+
+Or:
+
+```bash
+
+docker container run --rm --name prometheus --net host -p 9090:9090 -v /temp/prometheus.yaml:/etc/prometheus/prometheus.yml prom/prometheus
+
+http://localhost:9090
+
+{job="server"} -> Execute
+
+```
+
+```bash
+
+docker container run --rm --name grafana --net host -p 3000:3000 grafana/grafana-oss
+
+```
+
+`Start with telemetry`
+
+```bash
+TELEMETRY_TRACING_ENABLED=true TELEMETRY_TRACING_URL=http://localhost:4318/v1/traces TELEMETRY_METRICS_ENABLED=true TELEMETRY_METRICS_URL=http://localhost:4318/v1/metrics npm start
+```
+
+`Debug with telemetry`
+
+```bash
+cd dist
+
+TELEMETRY_TRACING_ENABLED=true TELEMETRY_TRACING_URL=http://localhost:4318/v1/traces TELEMETRY_METRICS_ENABLED=true TELEMETRY_METRICS_URL=http://localhost:4318/v1/metrics node --inspect index.js
+```
+
+## Run via docker
+
+Start container
+
+```bash
+
+docker-compose up -d
+
+```
+
+Get inside container
+
+```bash
+
+docker container exec -it dem-heights-container /bin/bash
+
+```
+
+See logs
+
+```bash
+
+docker container logs --follow dem-heights-container
+
+```
+
+Stop container
+
+```bash
+
+docker-compose down
 
 ```

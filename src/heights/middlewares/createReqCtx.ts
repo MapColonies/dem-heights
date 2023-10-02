@@ -1,17 +1,25 @@
-import { Logger } from '@map-colonies/js-logger';
-import { v4 } from 'uuid';
 import { get } from 'lodash';
+import { v4 } from 'uuid';
+import { Logger } from '@map-colonies/js-logger';
 import type { GetHeightsHandler } from '../controllers/heightsController';
 
 export const createReqCtxMiddleware: (logger: Logger) => GetHeightsHandler = (logger) => {
   return (req, res, next) => {
-    logger.info({ msg: 'Generating Request ID', location: '[createReqCtxMiddleware]' });
+    res.locals.start = performance.now();
 
     const reqId = v4();
+
     res.locals.reqCtx = {
       reqId,
       customerName: get(req, `headers['x-sub']`),
     };
+
+    logger.info({
+      msg: 'Start',
+      location: '[createReqCtxMiddleware]',
+      ...res.locals.reqCtx,
+    });
+
     next();
   };
 };

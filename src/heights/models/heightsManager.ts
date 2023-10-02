@@ -1,17 +1,18 @@
 import { Cartographic, Math as CesiumMath, RequestScheduler, sampleTerrainMostDetailed } from 'cesium';
 import { Polygon } from 'geojson';
-import { Feature } from '@turf/turf';
-import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
-import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
-import PromisePool from '@supercharge/promise-pool/dist';
+import client from 'prom-client';
 import { container, inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { SERVICES } from '../../common/constants';
-import { cartographicArrayClusteringForHeightRequests } from '../utilities';
-import { AdditionalFieldsEnum, PosWithHeight, PosWithTerrainProvider, TerrainTypes } from '../interfaces';
-import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerConfig';
-import { IConfig } from '../../common/interfaces';
+import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
+import PromisePool from '@supercharge/promise-pool/dist';
+import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+import { Feature } from '@turf/turf';
 import { CommonErrors } from '../../common/commonErrors';
+import { SERVICES } from '../../common/constants';
+import { IConfig } from '../../common/interfaces';
+import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerConfig';
+import { AdditionalFieldsEnum, PosWithHeight, PosWithTerrainProvider, TerrainTypes } from '../interfaces';
+import { cartographicArrayClusteringForHeightRequests } from '../utilities';
 import DEMTerrainCacheManager from './DEMTerrainCacheManager';
 
 export interface ICoordinates {
@@ -25,15 +26,55 @@ export interface IHeightModel {
 
 @injectable()
 export class HeightsManager {
+  private runningRequests = 0;
+
   private readonly demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
   private readonly catalogRecordsMap = container.resolve<Record<string, PycswDemCatalogRecord>>(CATALOG_RECORDS_MAP);
   private readonly terrainProviders = this.demTerrainCacheManager.terrainProviders;
 
+  private readonly elevationsRequestsCounter?: client.Counter<'pointsNumber'>;
+  private readonly elevationsSuccessRequestsCounter?: client.Counter<'pointsNumber'>;
+  private readonly elevationsErrorRequestsCounter?: client.Counter<'pointsNumber'>;
+
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(CommonErrors) private readonly commonErrors: CommonErrors,
-    @inject(SERVICES.CONFIG) private readonly config: IConfig
-  ) {}
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
+  ) {
+    if (registry !== undefined) {
+      const self = this;
+      new client.Gauge({
+        name: 'elevations_current_requests_count',
+        help: 'Currently running elevations requests',
+        collect(): void {
+          this.set(self.runningRequests);
+        },
+        registers: [registry],
+      });
+
+      this.elevationsRequestsCounter = new client.Counter({
+        name: 'elevations_requests_total',
+        help: 'Total elevations requests',
+        labelNames: ['pointsNumber'] as const,
+        registers: [registry],
+      });
+
+      this.elevationsSuccessRequestsCounter = new client.Counter({
+        name: 'elevations_success_requests_total',
+        help: 'Success elevations requests',
+        labelNames: ['pointsNumber'] as const,
+        registers: [registry],
+      });
+
+      this.elevationsErrorRequestsCounter = new client.Counter({
+        name: 'elevations_error_requests_total',
+        help: 'Failed elevations requests',
+        labelNames: ['pointsNumber'] as const,
+        registers: [registry],
+      });
+    }
+  }
 
   public async getPoints(
     points: Cartographic[],
@@ -41,23 +82,32 @@ export class HeightsManager {
     excludeFields: AdditionalFieldsEnum[] = [],
     reqCtx?: Record<string, unknown>
   ): Promise<PosWithHeight[]> {
-    const MAXIMUM_TILES_PER_REQUEST = this.config.has('maximumTilesPerRequest') ? this.config.get<number>('maximumTilesPerRequest') : undefined;
+    this.logger.info({
+      pointsNumber: points.length,
+      location: '[HeightsManager] [getPoints]',
+      ...reqCtx,
+    });
 
-    this.logger.info({ msg: 'Getting points heights', pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+    this.runningRequests++;
+    this.elevationsRequestsCounter?.inc({ pointsNumber: points.length });
 
     if (points.length === 0) {
+      this.runningRequests--;
+      this.elevationsErrorRequestsCounter?.inc({ pointsNumber: points.length });
       return [];
     }
 
-    const timeStart = performance.now();
-
     const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqCtx);
 
-    const timeEnd = performance.now();
+    this.logger.info({
+      totalRequests: result.totalRequests,
+      pointsNumber: points.length,
+      location: '[HeightsManager] [getPoints]',
+      ...reqCtx,
+    });
 
-    this.logger.info({ timeToResponse: timeEnd - timeStart, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
-    this.logger.info({ totalRequests: result.totalRequests, pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
-
+    this.runningRequests--;
+    this.elevationsSuccessRequestsCounter?.inc({ pointsNumber: points.length });
     return result.positions;
   }
 
@@ -108,6 +158,8 @@ export class HeightsManager {
         location: '[HeightsManager] [samplePositionsHeights]',
         ...reqCtx,
       });
+      this.runningRequests--;
+      this.elevationsErrorRequestsCounter?.inc({ pointsNumber: positionsArr.length });
       throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
     }
 
@@ -140,7 +192,7 @@ export class HeightsManager {
 
         const positionsWithHeights = await sampleTerrainMostDetailed(provider, batch.positions);
 
-        // attach additional info on top of each position returned via the catalog record.
+        // Attach additional info on top of each position returned via the catalog record.
         positionsWithHeights.forEach((pos) => {
           for (const field of additionalFields) {
             if (!excludeFields.includes(field) && typeof qmeshRecord[field] !== 'undefined') {
@@ -164,7 +216,7 @@ export class HeightsManager {
 
     finalPositionsWithHeights.push(...(results as PosWithHeight[][]).flat());
 
-    // CESIUM without involving a VIEWER(visualization) behaves differently and doesn't manage a REQUESTS cleanup
+    // CESIUM without involving a VIEWER (visualization) behaves differently and doesn't manage a REQUESTS cleanup
     // Full EXPLANATOIN is here: https://github.com/CesiumGS/cesium/issues/7670
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -174,38 +226,36 @@ export class HeightsManager {
   }
 
   private attachTerrainProviderToPositions(positions: Cartographic[], requestedProductType: TerrainTypes): PosWithTerrainProvider[] {
-    /**
-     * Filter terrain providers by requested product type.
-     * Filter terrain providers by footprint point intersection.
-     * Sort by highest resolution (Lower is better).
-     * Attach first to the point
+    /*
+     * Filter terrain providers by requested product type
+     * Filter terrain providers by footprint point intersection
+     * Sort by highest resolution (Lower is better)
+     * Attach to the point the (first) provider with highest resolution
      */
 
     return positions.map((position) => {
       const terrainProvidersEntries = Object.entries(this.terrainProviders);
 
-      // Filter terrain providers by requested product type if not MIXED.
+      // Filter terrain providers by requested product type if not MIXED
       const productTypeFilteredTerrains =
         requestedProductType !== TerrainTypes.MIXED
           ? terrainProvidersEntries.filter(([terrainKey]) => {
               const qmeshRecord = this.catalogRecordsMap[terrainKey];
-
               return qmeshRecord.productType?.includes(requestedProductType);
             })
           : terrainProvidersEntries;
 
-      // Filter terrain providers by footprint point intersection.
+      // Filter terrain providers by footprint point intersection
       const terrainsFilterByFootprint = productTypeFilteredTerrains.filter(([terrainKey]) => {
         const qmeshRecord = this.catalogRecordsMap[terrainKey];
         const isPointInFootprint = booleanPointInPolygon(
           [CesiumMath.toDegrees(position.longitude), CesiumMath.toDegrees(position.latitude)],
           qmeshRecord.footprint as Feature<Polygon>
         );
-
         return isPointInFootprint;
       });
 
-      // Sort by highest resolution (Lower is better).
+      // Sort by highest resolution (Lower is better)
       const sortedTerrainsByResolution = terrainsFilterByFootprint.sort(([terrainAKey], [terrainBKey]) => {
         const A_BEFORE_B = -1;
         const B_BEFORE_A = 1;
@@ -216,7 +266,6 @@ export class HeightsManager {
         switch (true) {
           case (qmeshRecordA.resolutionMeter as number) < (qmeshRecordB.resolutionMeter as number):
             return A_BEFORE_B;
-
           case (qmeshRecordA.resolutionMeter as number) > (qmeshRecordB.resolutionMeter as number):
             return B_BEFORE_A;
           default:
@@ -231,7 +280,7 @@ export class HeightsManager {
         } as PosWithTerrainProvider;
       }
 
-      // Attach first to the point
+      // Attach to the point the (first) provider with highest resolution
       const [terrainKey, provider] = sortedTerrainsByResolution[0];
 
       return {

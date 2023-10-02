@@ -1,5 +1,4 @@
 import { Logger } from '@map-colonies/js-logger';
-import { Cartographic, Math } from 'cesium';
 import type { GetHeightsHandler } from '../controllers/heightsController';
 import { PosWithHeight } from '../interfaces';
 

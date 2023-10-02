@@ -1,18 +1,18 @@
 import { Router } from 'express';
-import { FactoryFunction } from 'tsyringe';
 import protobuf from 'protobufjs';
+import { FactoryFunction } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { HeightsController } from '../controllers/heightsController';
-import { convertReqPositionToRadiansMiddleware } from '../middlewares/dataToRadians';
-import { positionResAsDegreesMiddleware } from '../middlewares/dataToDegrees';
-import { POS_WITH_HEIGHT_PROTO_REQUEST, POS_WITH_HEIGHT_PROTO_RESPONSE } from '../../containerConfig';
-import { createReqCtxMiddleware } from '../middlewares/createReqCtx';
-import { encodeProtobufMiddleware } from '../middlewares/encodeProtobuf';
-import { decodeProtobufMiddleware } from '../middlewares/decodeProtobuf';
-import { validateRequestMiddleware } from '../middlewares/validateRequest';
+import { CommonErrors } from '../../common/commonErrors';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
-import { CommonErrors } from '../../common/commonErrors';
+import { POS_WITH_HEIGHT_PROTO_REQUEST, POS_WITH_HEIGHT_PROTO_RESPONSE } from '../../containerConfig';
+import { HeightsController } from '../controllers/heightsController';
+import { createReqCtxMiddleware } from '../middlewares/createReqCtx';
+import { positionResAsDegreesMiddleware } from '../middlewares/dataToDegrees';
+import { convertReqPositionToRadiansMiddleware } from '../middlewares/dataToRadians';
+import { decodeProtobufMiddleware } from '../middlewares/decodeProtobuf';
+import { encodeProtobufMiddleware } from '../middlewares/encodeProtobuf';
+import { validateRequestMiddleware } from '../middlewares/validateRequest';
 
 const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const router = Router();
@@ -21,7 +21,6 @@ const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const commonErrors = dependencyContainer.resolve(CommonErrors);
   const posWithHeightProtoRequest = dependencyContainer.resolve<protobuf.Type>(POS_WITH_HEIGHT_PROTO_REQUEST);
   const posWithHeightProtoResponse = dependencyContainer.resolve<protobuf.Type>(POS_WITH_HEIGHT_PROTO_RESPONSE);
-
   const logger = dependencyContainer.resolve<Logger>(SERVICES.LOGGER);
 
   router.post(

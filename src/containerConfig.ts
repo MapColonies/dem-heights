@@ -1,20 +1,23 @@
 import path from 'path';
 import config from 'config';
-import { logMethod } from '@map-colonies/telemetry';
-import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
-import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
 import pino from 'pino';
-import { Metrics } from '@map-colonies/telemetry';
-import { trace } from '@opentelemetry/api';
-import { DependencyContainer } from 'tsyringe/dist/typings/types';
+import client from 'prom-client';
 import protobuf from 'protobufjs';
+import { instanceCachingFactory } from 'tsyringe';
+import { DependencyContainer } from 'tsyringe/dist/typings/types';
+import { trace } from '@opentelemetry/api';
+import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
+import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
+import { getOtelMixin } from '@map-colonies/telemetry';
 import { SERVICES, SERVICE_NAME } from './common/constants';
-import { tracing } from './common/tracing';
-import { heightsRouterFactory, HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
+import { IConfig } from './common/interfaces';
+import { tracing } from './common/tracing';
 import DEMTerrainCacheManager from './heights/models/DEMTerrainCacheManager';
+import { heightsRouterFactory, HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
 
 const PROTO_FILE = './proto/posWithHeight.proto';
+
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
   useChild?: boolean;
@@ -33,10 +36,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   );
 
   // @ts-expect-error the signature is wrong
-  const logger = jsLogger({ ...loggerConfig, prettyPrint: false, hooks: { logMethod }, timestamp: pino.stdTimeFunctions.isoTime });
-
-  const metrics = new Metrics(SERVICE_NAME);
-  const meter = metrics.start();
+  const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
 
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
@@ -52,7 +52,20 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     { token: SERVICES.CONFIG, provider: { useValue: config } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
     { token: SERVICES.TRACER, provider: { useValue: tracer } },
-    { token: SERVICES.METER, provider: { useValue: meter } },
+    {
+      token: SERVICES.METRICS_REGISTRY,
+      provider: {
+        useFactory: instanceCachingFactory((container) => {
+          const config = container.resolve<IConfig>(SERVICES.CONFIG);
+          if (config.get<boolean>('telemetry.metrics.enabled')) {
+            client.register.setDefaultLabels({
+              app: SERVICE_NAME,
+            });
+            return client.register;
+          }
+        }),
+      },
+    },
     { token: CATALOG_RECORDS_MAP, provider: { useValue: catalogRecordsMap } },
     { token: POS_WITH_HEIGHT_PROTO_RESPONSE, provider: { useValue: posWithHeightProtoResponse } },
     { token: DEM_TERRAIN_CACHE_MANAGER, provider: { useValue: demTerrainCacheManager } },
@@ -63,7 +76,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       provider: {
         useValue: {
           useValue: async (): Promise<void> => {
-            await Promise.all([tracing.stop(), metrics.stop()]);
+            await Promise.all([tracing.stop()]);
           },
         },
       },

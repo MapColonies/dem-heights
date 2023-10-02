@@ -1,5 +1,5 @@
-import { Logger } from '@map-colonies/js-logger';
 import { Cartographic } from 'cesium';
+import { Logger } from '@map-colonies/js-logger';
 import type { GetHeightsHandler } from '../controllers/heightsController';
 
 export const convertReqPositionToRadiansMiddleware: (logger: Logger) => GetHeightsHandler = (logger) => {
@@ -20,11 +20,11 @@ export const convertReqPositionToRadiansMiddleware: (logger: Logger) => GetHeigh
 
     const endTime = performance.now();
 
-    logger.debug({
+    logger.info({
       convertToRadiansTime: endTime - startTime,
       pointsNumber: posArray.length,
       location: '[convertReqPositionToRadiansMiddleware]',
-      reqId: res.locals.reqId as string,
+      ...res.locals.reqCtx,
     });
 
     req.body = { ...req.body, radiansToOriginalPositionsMap, positions };

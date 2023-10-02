@@ -14,13 +14,23 @@
       }
     },
     "tracing": {
-      "enabled": "TELEMETRY_TRACING_ENABLED",
+      "enabled": {
+        "__name": "TELEMETRY_TRACING_ENABLED",
+        "__format": "boolean"
+      },
       "url": "TELEMETRY_TRACING_URL"
     },
     "metrics": {
-      "enabled": "TELEMETRY_METRICS_ENABLED",
+      "enabled": {
+        "__name": "TELEMETRY_METRICS_ENABLED",
+        "__format": "boolean"
+      },
       "url": "TELEMETRY_METRICS_URL",
-      "interval": "TELEMETRY_METRICS_INTERVAL"
+      "interval": "TELEMETRY_METRICS_INTERVAL",
+      "buckets": {
+        "__name": "TELEMETRY_METRICS_BUCKETS",
+        "__format": "json"
+      }
     }
   },
   "server": {
