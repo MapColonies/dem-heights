@@ -49,7 +49,7 @@ export class ServerBuilder {
   private registerPreRoutesMiddleware(): void {
     if (this.registry) {
       // this.serverInstance.use('/metrics', metricsMiddleware(this.registry));
-      this.serverInstance.use(collectMetricsExpressMiddleware({ collectNodeMetrics: true, collectServiceVersion: true, registry: this.registry, labels: { meow: 'a' } }));
+      this.serverInstance.use(collectMetricsExpressMiddleware({ collectNodeMetrics: true, collectServiceVersion: true, registry: this.registry }));
     }
     
     this.serverInstance.use(httpLogger({ logger: this.logger }));
