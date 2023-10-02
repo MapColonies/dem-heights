@@ -6,8 +6,6 @@ import { PosWithHeight } from '../interfaces';
 
 export const decodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Logger, registry: client.Registry) => GetHeightsHandler = (protobufClass, logger, registry) => {
   return (req, res, next) => {
-    let posArray: PosWithHeight[];
-
     // Check if payload is a binary data
     if (req.headers['content-type'] === 'application/octet-stream') {
       const startTime = performance.now();
@@ -16,7 +14,7 @@ export const decodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
       const reqUintArray = new Uint8Array(req.body as unknown as ArrayBufferLike);
       const decodedData = protobufClass.decode(reqUintArray);
       req.body = decodedData.toJSON() as GetHeightsPointsRequest;
-      posArray = req.body.positions;
+      const posArray = req.body.positions;
 
       const endTime = performance.now();
 
@@ -26,22 +24,6 @@ export const decodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
         location: '[decodeProtobufMiddleware]',
         ...res.locals.reqCtx,
       });
-    }
-
-    if (registry !== undefined) {
-      posArray = req.body.positions;
-
-      const elevationsRequestHistogram: client.Histogram<'pointsNumber'> = new client.Histogram({
-        name: 'elevations_request_duration_seconds',
-        help: 'Request duration time (seconds)',
-        // buckets: config.get<number[]>('telemetry.metrics.buckets'),
-        labelNames: ['pointsNumber'] as const,
-        registers: [registry],
-      });
-
-      const timerEnd = elevationsRequestHistogram?.startTimer({ pointsNumber: posArray.length });
-
-      res.locals.timerEnd = timerEnd;
     }
 
     next();

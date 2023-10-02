@@ -23,10 +23,6 @@ export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
         ...res.locals.reqCtx,
       });
 
-      if (res.locals.timerEnd) {
-        res.locals.timerEnd();
-      }
-
       res.send(encodedData);
       return;
     }
@@ -38,10 +34,6 @@ export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
       location: '[encodeProtobufMiddleware]',
       ...res.locals.reqCtx,
     });
-
-    if (res.locals.timerEnd) {
-      res.locals.timerEnd();
-    }
 
     res.send({ data: posArray });
   };
