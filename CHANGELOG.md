@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.2.7](https://github.com/MapColonies/dem-heights/compare/v1.2.6...v1.2.7) (2023-10-01)
+
+
+### Bug Fixes
+
+* coordinates conversion issue (MAPCO-3445) ([2e0f15e](https://github.com/MapColonies/dem-heights/commit/2e0f15e2695afabc1d87d113504328807fe467dc))
+* log format for splunk ([5ce0f6a](https://github.com/MapColonies/dem-heights/commit/5ce0f6a8318dd5c667a8ba2d7bf3f2df6b11ee89))
+* set upstream timeout value ([5aa5b6e](https://github.com/MapColonies/dem-heights/commit/5aa5b6e1fc34fc9d9240d28938149b2daa5bd2b5))
+* sync with metzuda ([b4fdd9b](https://github.com/MapColonies/dem-heights/commit/b4fdd9b757914f15d3c26ec4c0ad28cceecf3d6b))
+* tests and prettier ([0ef70ba](https://github.com/MapColonies/dem-heights/commit/0ef70ba89864ec823ee819e7cd7b5e07a7afdefc))
+* upstream timeout ([bc7aee9](https://github.com/MapColonies/dem-heights/commit/bc7aee9c296fb36ec1f56e8c608c83fdf95c877a))
+
 ### [1.2.6](https://github.com/MapColonies/dem-heights/compare/v1.2.5...v1.2.6) (2023-08-10)
 
 
