@@ -9,4 +9,4 @@ export const tracing = new Tracing([
     ignoreOutgoingUrls: IGNORED_OUTGOING_TRACE_ROUTES,
   }),
   new ExpressInstrumentation(),
-]);
+]/*, undefined, undefined, true*/);
