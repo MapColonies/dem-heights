@@ -13,11 +13,11 @@ data:
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
   LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
   {{ if .Values.env.tracing.enabled }}
-  TELEMETRY_TRACING_ENABLED: {{ $tracingEnabled }}
+  TELEMETRY_TRACING_ENABLED: {{ $tracingEnabled | quote }}
   TELEMETRY_TRACING_URL: {{ $tracingUrl }}
   {{ end }}
   {{ if .Values.env.metrics.enabled }}
-  TELEMETRY_METRICS_ENABLED: {{ $metricsEnabled }}
+  TELEMETRY_METRICS_ENABLED: {{ $metricsEnabled | quote }}
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   TELEMETRY_METRICS_BUCKETS: {{ .Values.env.metrics.buckets | toJson | quote }}
   {{ end }}
