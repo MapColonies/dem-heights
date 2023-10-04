@@ -32,9 +32,7 @@ export class HeightsManager {
   private readonly catalogRecordsMap = container.resolve<Record<string, PycswDemCatalogRecord>>(CATALOG_RECORDS_MAP);
   private readonly terrainProviders = this.demTerrainCacheManager.terrainProviders;
 
-  private readonly elevationsRequestsCounter?: client.Counter<'pointsNumber'>;
-  private readonly elevationsSuccessRequestsCounter?: client.Counter<'pointsNumber'>;
-  private readonly elevationsErrorRequestsCounter?: client.Counter<'pointsNumber'>;
+  private readonly elevationsRequestsCounter?: client.Counter<'points_number'>;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -56,21 +54,7 @@ export class HeightsManager {
       this.elevationsRequestsCounter = new client.Counter({
         name: 'elevations_requests_total',
         help: 'Total elevations requests',
-        labelNames: ['pointsNumber'] as const,
-        registers: [registry],
-      });
-
-      this.elevationsSuccessRequestsCounter = new client.Counter({
-        name: 'elevations_success_requests_total',
-        help: 'Success elevations requests',
-        labelNames: ['pointsNumber'] as const,
-        registers: [registry],
-      });
-
-      this.elevationsErrorRequestsCounter = new client.Counter({
-        name: 'elevations_error_requests_total',
-        help: 'Failed elevations requests',
-        labelNames: ['pointsNumber'] as const,
+        labelNames: ['points_number'] as const,
         registers: [registry],
       });
     }
@@ -89,11 +73,10 @@ export class HeightsManager {
     });
 
     this.runningRequests++;
-    this.elevationsRequestsCounter?.inc({ pointsNumber: points.length });
+    this.elevationsRequestsCounter?.inc({ points_number: points.length });
 
     if (points.length === 0) {
       this.runningRequests--;
-      this.elevationsErrorRequestsCounter?.inc({ pointsNumber: points.length });
       return [];
     }
 
@@ -107,7 +90,6 @@ export class HeightsManager {
     });
 
     this.runningRequests--;
-    this.elevationsSuccessRequestsCounter?.inc({ pointsNumber: points.length });
     return result.positions;
   }
 
@@ -159,7 +141,6 @@ export class HeightsManager {
         ...reqCtx,
       });
       this.runningRequests--;
-      this.elevationsErrorRequestsCounter?.inc({ pointsNumber: positionsArr.length });
       throw this.commonErrors.POINTS_DENSITY_TOO_LOW_ERROR;
     }
 
