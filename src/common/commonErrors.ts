@@ -37,7 +37,7 @@ export class CommonErrors {
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
 
   public get TOO_MANY_POINTS_ERROR(): HttpErrorWithCode {
-    const err = new Error(`Too many points.`) as HttpErrorWithCode;
+    const err = new Error(`Too many points`) as HttpErrorWithCode;
     err.status = httpStatusCodes.BAD_REQUEST;
     err.errorCode = CommonErrorCodes.TOO_MANY_POINTS_ERROR;
 
@@ -45,7 +45,7 @@ export class CommonErrors {
   }
 
   public get POINTS_DENSITY_TOO_LOW_ERROR(): HttpErrorWithCode {
-    const err = new Error(`Points density is too low to compute.`) as HttpErrorWithCode;
+    const err = new Error(`Points density is too low to compute`) as HttpErrorWithCode;
     err.status = httpStatusCodes.BAD_REQUEST;
     err.errorCode = CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR;
 
@@ -53,7 +53,7 @@ export class CommonErrors {
   }
 
   public get EMPTY_POSITIONS_ARRAY(): HttpErrorWithCode {
-    const err = new Error(`Request's positions array must not be empty.`) as HttpErrorWithCode;
+    const err = new Error(`Request's positions array must not be empty`) as HttpErrorWithCode;
     err.status = httpStatusCodes.BAD_REQUEST;
     err.errorCode = CommonErrorCodes.EMPTY_POSITIONS_ARRAY;
 
@@ -61,7 +61,7 @@ export class CommonErrors {
   }
 
   public GENERAL_SERVER_ERROR(e: Error): HttpErrorWithCode {
-    const err = new Error(`Sorry, something went wrong.`) as HttpErrorWithCode;
+    const err = new Error(`Sorry, something went wrong`) as HttpErrorWithCode;
 
     err.status = httpStatusCodes.INTERNAL_SERVER_ERROR;
     err.errorCode = CommonErrorCodes.GENERAL_SERVER_ERROR;

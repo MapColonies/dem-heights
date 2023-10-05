@@ -157,7 +157,7 @@ export class HeightsManager {
 
         if (batch.providerKey === null) {
           this.logger.info({
-            msg: `No terrain to sample these positions.`,
+            msg: `No terrain to sample these positions`,
             positionsOutsideOfProviders: JSON.stringify(batch.positions),
             positionsOutsideOfProvidersCount: batch.positions.length,
             pointsNumber: positionsArr.length,
