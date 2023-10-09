@@ -44,7 +44,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 0
       },
@@ -92,8 +92,8 @@
             "type": "prometheus",
             "uid": "fa7eeb57-1744-493c-8b39-194c176263b1"
           },
-          "editorMode": "builder",
-          "expr": "elevations_requests_total{service_name=\"dem-heights\", namespace=\"$namespace\", pod=\"$pod\"}",
+          "editorMode": "code",
+          "expr": "rate(elevations_requests_total{service_name=\"dem-heights\", namespace=\"$namespace\", pod=\"$pod\"}[$interval])",
           "instant": false,
           "legendFormat": "{{points_number}} points",
           "range": true,
@@ -162,7 +162,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 8
       },
@@ -435,7 +435,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 24
       },
@@ -831,10 +831,12 @@
         "current": {
           "selected": true,
           "text": [
-            "dem-int-heights-production-7745985d96-ccsvs"
+            "dem-int-heights-production-7745985d96-ccsvs",
+            "dem-int-heights-production-7745985d96-cf8rh"
           ],
           "value": [
-            "dem-int-heights-production-7745985d96-ccsvs"
+            "dem-int-heights-production-7745985d96-ccsvs",
+            "dem-int-heights-production-7745985d96-cf8rh"
           ]
         },
         "datasource": {
@@ -868,6 +870,6 @@
   "timezone": "",
   "title": "DEM - elevations",
   "uid": "c5efe438-1a8f-48d9-a256-21e3cdfe372e",
-  "version": 16,
+  "version": 17,
   "weekStart": ""
 }
