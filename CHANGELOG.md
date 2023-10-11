@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/MapColonies/dem-heights/compare/v1.2.7...v1.3.0) (2023-10-11)
+
+
+### Features
+
+* dashboard ([0f88c14](https://github.com/MapColonies/dem-heights/commit/0f88c1457fe0a022b5f561376bf2949d129ff9e9))
+* opentelemetry ([1bc1dfb](https://github.com/MapColonies/dem-heights/commit/1bc1dfbb00c5ae14a7687a7c74acb9aa28200a6e))
+* using Hermon's new middleware ([0ce1706](https://github.com/MapColonies/dem-heights/commit/0ce1706df12a6e94f336c8f10697fc337aed2fd1))
+
+
+### Bug Fixes
+
+* configmap ([5fe68ed](https://github.com/MapColonies/dem-heights/commit/5fe68edc70ae23c541f20a1dd78d5b4e292d50b3))
+* dashboard ([d79fb90](https://github.com/MapColonies/dem-heights/commit/d79fb90295ec78cf40017336b22ea5dcb262e24c))
+* ESLint ([a8ada87](https://github.com/MapColonies/dem-heights/commit/a8ada8755db821fb259021e8367352c4301e56bb))
+* fix ([ea33dd8](https://github.com/MapColonies/dem-heights/commit/ea33dd8e5141ca2c575fc56946a3757acd7b7d2a))
+* fix ([93ec1ca](https://github.com/MapColonies/dem-heights/commit/93ec1ca40d300a8590cee5109967262ec979db86))
+* fix ([f90db80](https://github.com/MapColonies/dem-heights/commit/f90db80a73df0bee8091dc9e5e79a17727e364ad))
+* fix ([e0d3268](https://github.com/MapColonies/dem-heights/commit/e0d3268886e546a07d318b37c3e214f17fcbfe1d))
+* histogram at higher level ([80ac6a4](https://github.com/MapColonies/dem-heights/commit/80ac6a44d6e306cf6da7c990edd4ad2ac9624cf4))
+* prometheus ([00fcae9](https://github.com/MapColonies/dem-heights/commit/00fcae9afc95a546e7539f31a3da22cc12409bd9))
+* revert back logger message ([04fb2ad](https://github.com/MapColonies/dem-heights/commit/04fb2ad41f485dee043856e497ff83d5c26d73fc))
+* timeToResponse ([347aafc](https://github.com/MapColonies/dem-heights/commit/347aafcac5e8ea3a85f715cd65d28fd82acd7e01))
+* tracing ([e07c942](https://github.com/MapColonies/dem-heights/commit/e07c942a92d91b42dac9d140372732a9196b4f5c))
+* unit and integration tests ([bca3899](https://github.com/MapColonies/dem-heights/commit/bca38990e840e201159e3e83c7f1c0f7cc983d37))
+* unnecessary counters ([8898ed4](https://github.com/MapColonies/dem-heights/commit/8898ed471b377f75c79474b6953bcedc96cb2eca))
+
 ### [1.2.7](https://github.com/MapColonies/dem-heights/compare/v1.2.6...v1.2.7) (2023-10-01)
 
 
