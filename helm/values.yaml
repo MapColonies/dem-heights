@@ -60,7 +60,7 @@ env:
   demCatalogRecords: []
   protoFileUrl: ''
   serviceVersion: ''
-  maximumTilesPerRequest: 150
+  maximumTilesPerRequest: 250
 
 resources:
   enabled: true
