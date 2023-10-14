@@ -30,7 +30,7 @@ authentication:
   jwtPublicKeySecretName: map-colonies-jwks
   opa:
     enabled: false
-    customHeaderName: ''
+    customHeaderName: x-api-key
 
 env:
   port: 8080
@@ -39,7 +39,7 @@ env:
   logLevel: info
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
-  requestPayloadLimit: 1mb
+  requestPayloadLimit: 8mb
   tracing:
     enabled: true
     url: http://otel-collector:4318/v1/traces
