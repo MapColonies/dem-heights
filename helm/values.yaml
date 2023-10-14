@@ -139,7 +139,7 @@ ingress:
     enabled: false
     useExternal: ''
   host:
-  path:
+  path: /dem-heights
   cors:
     enabled: true
     origin: '*'
