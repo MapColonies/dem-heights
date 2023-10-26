@@ -51,6 +51,7 @@
   },
   "terrainProvidersToken": "TERRAIN_PROVIDERS_TOKEN",
   "demCatalogRecords": "DEM_CATALOG_RECORDS",
+  "productMetadataFields": "productType,updateDate,resolutionMeter,absoluteAccuracyLEP90",
   "protoFileUrl": "PROTO_FILE_URL",
   "serviceVersion": "SERVICE_VERSION",
   "maximumTilesPerRequest": "MAXIMUM_TILES_PER_REQUEST"

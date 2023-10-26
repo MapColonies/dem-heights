@@ -24,6 +24,7 @@ export interface RegisterOptions {
 }
 
 export const CATALOG_RECORDS_MAP = Symbol('CATALOG_RECORDS_MAP');
+export const PRODUCT_METADATA_FIELDS = Symbol('PRODUCT_METADATA_FIELDS');
 export const POS_WITH_HEIGHT_PROTO_RESPONSE = Symbol('POS_WITH_HEIGHT_PROTO_RESPONSE');
 export const POS_WITH_HEIGHT_PROTO_REQUEST = Symbol('POS_WITH_HEIGHT_PROTO_REQUEST');
 export const DEM_TERRAIN_CACHE_MANAGER = Symbol('DEM_TERRAIN_CACHE_MANAGER');
@@ -34,6 +35,8 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   const catalogRecordsMap = Object.fromEntries(
     (JSON.parse(config.get<string>('demCatalogRecords')) as PycswDemCatalogRecord[]).map((record) => [record.id as string, record])
   );
+
+  const productMetadataFields = (config.get<string>('productMetadataFields')).split(',');
 
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
@@ -67,6 +70,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       },
     },
     { token: CATALOG_RECORDS_MAP, provider: { useValue: catalogRecordsMap } },
+    { token: PRODUCT_METADATA_FIELDS, provider: { useValue: productMetadataFields } },
     { token: POS_WITH_HEIGHT_PROTO_RESPONSE, provider: { useValue: posWithHeightProtoResponse } },
     { token: DEM_TERRAIN_CACHE_MANAGER, provider: { useValue: demTerrainCacheManager } },
     { token: POS_WITH_HEIGHT_PROTO_REQUEST, provider: { useValue: posWithHeightProtoRequest } },

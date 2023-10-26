@@ -6,16 +6,8 @@ export enum TerrainTypes {
   MIXED = 'MIXED',
 }
 
-export enum AdditionalFieldsEnum {
-  PRODUCT_TYPE = 'productType',
-  UPDATE_DATE = 'updateDate',
-  RESOLUTION_METER = 'resolutionMeter',
-}
-
 export interface PosWithHeight extends Cartographic {
-  updateDate?: string;
-  resolutionMeter?: number;
-  productType?: TerrainTypes;
+  productId: string;
 }
 
 export interface PosWithTerrainProvider extends Cartographic {

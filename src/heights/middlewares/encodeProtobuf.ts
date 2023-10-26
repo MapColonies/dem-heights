@@ -35,6 +35,9 @@ export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
       ...res.locals.reqCtx,
     });
 
-    res.send({ data: posArray });
+    res.send({
+       data: posArray,
+       ...res.locals.products
+    });
   };
 };

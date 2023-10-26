@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import path from 'path';
 import fs from 'fs';
+import config from 'config';
 import { Cartesian2, Cartographic, CesiumTerrainProvider } from 'cesium';
 import { Application } from 'express';
 import httpStatusCodes from 'http-status-codes';
@@ -8,7 +9,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
 import { GetHeightsPointsRequest, GetHeightsPointsResponse } from '../../../src/heights/controllers/heightsController';
-import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from '../../../src/heights/interfaces';
+import { PosWithHeight, TerrainTypes } from '../../../src/heights/interfaces';
 import mockJsonPoints, {
   emptyPositionsRequest,
   moreThen150RequestsPositions,
@@ -24,17 +25,18 @@ describe('heights', function () {
 
   let requestSender: HeightsRequestSender;
   let cesiumTerrainProviderFromUrlSpy: jest.SpyInstance;
+  let productMetadataFields: string[];
 
   const basicPositionResponse: PosWithHeight = {
     latitude: 0,
     longitude: 0,
     height: 0,
-    productType: TerrainTypes.DTM,
-    resolutionMeter: 0,
-    updateDate: new Date().toISOString(),
+    productId: 'dummy_product_id',
   } as PosWithHeight;
 
   beforeAll(async function () {
+    productMetadataFields = (config.get<string>('productMetadataFields')).split(',');
+
     cesiumTerrainProviderFromUrlSpy = jest.spyOn(CesiumTerrainProvider, 'fromUrl');
 
     cesiumTerrainProviderFromUrlSpy.mockReturnValue({
@@ -68,6 +70,7 @@ describe('heights', function () {
 
         expect(response.status).toBe(httpStatusCodes.OK);
         expect(response.body).toHaveProperty('data');
+        expect(response.body).toHaveProperty('products');
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
 
         const getHeightsResProperties = Object.keys(basicPositionResponse);
@@ -79,21 +82,21 @@ describe('heights', function () {
         }
       });
 
-      it('should return 200 status code and points heights with excluded fields', async function () {
+      it('should return 200 status code and points heights with products dictionary', async function () {
         const response = await requestSender.getPoints({
-          excludeFields: [AdditionalFieldsEnum.PRODUCT_TYPE, AdditionalFieldsEnum.UPDATE_DATE],
           ...mockJsonData,
         });
 
         expect(response.status).toBe(httpStatusCodes.OK);
         expect(response.body).toHaveProperty('data');
+        expect(response.body).toHaveProperty('products');
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
 
-        for (const position of (response.body as GetHeightsPointsResponse).data) {
-          expect(position[AdditionalFieldsEnum.PRODUCT_TYPE]).toBeUndefined();
-          expect(position[AdditionalFieldsEnum.UPDATE_DATE]).toBeUndefined();
-          expect(position[AdditionalFieldsEnum.RESOLUTION_METER]).toBeDefined();
-        }
+        Object.values(response.body.products as Record<string,Record<string,unknown>>).forEach(product =>{
+          productMetadataFields.forEach(field => {
+            expect(product[field]).toBeDefined();  
+          })
+        }) 
       });
 
       it('Should return 200 status code and the positions with null heights and no fields if no provider match for the request (Legit request)', async function () {
@@ -111,12 +114,7 @@ describe('heights', function () {
         for (const position of (response.body as GetHeightsPointsResponse).data) {
           expect(position.height).toBeNull();
 
-          const extraFields = Object.keys(AdditionalFieldsEnum);
-          for (const extraField of extraFields) {
-            const extraFieldFromEnum = AdditionalFieldsEnum[extraField as keyof typeof AdditionalFieldsEnum];
-
-            expect(position[extraFieldFromEnum]).toBeUndefined();
-          }
+          expect(position["productId"]).toBeUndefined();
         }
       });
 
@@ -133,15 +131,9 @@ describe('heights', function () {
         for (const position of (response.body as GetHeightsPointsResponse).data) {
           expect(position['latitude'] && position['longitude']).toBeDefined();
 
-          const extraFields = Object.keys(AdditionalFieldsEnum);
-
           const isNullHeight = (position.height as number | null) === null;
 
-          for (const extraField of extraFields) {
-            const extraFieldFromEnum = AdditionalFieldsEnum[extraField as keyof typeof AdditionalFieldsEnum];
-
-            expect(typeof position[extraFieldFromEnum] === 'undefined').toEqual(isNullHeight);
-          }
+          expect(typeof position['productId'] === 'undefined').toEqual(isNullHeight);
         }
       });
     });

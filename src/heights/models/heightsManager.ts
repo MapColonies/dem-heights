@@ -11,7 +11,7 @@ import { CommonErrors } from '../../common/commonErrors';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerConfig';
-import { AdditionalFieldsEnum, PosWithHeight, PosWithTerrainProvider, TerrainTypes } from '../interfaces';
+import { PosWithHeight, PosWithTerrainProvider, TerrainTypes } from '../interfaces';
 import { cartographicArrayClusteringForHeightRequests } from '../utilities';
 import DEMTerrainCacheManager from './DEMTerrainCacheManager';
 
@@ -63,7 +63,6 @@ export class HeightsManager {
   public async getPoints(
     points: Cartographic[],
     requestedProductType: TerrainTypes,
-    excludeFields: AdditionalFieldsEnum[] = [],
     reqCtx?: Record<string, unknown>
   ): Promise<PosWithHeight[]> {
     this.logger.info({
@@ -80,7 +79,7 @@ export class HeightsManager {
       return [];
     }
 
-    const result = await this.samplePositionsHeights(points, requestedProductType, excludeFields, reqCtx);
+    const result = await this.samplePositionsHeights(points, requestedProductType, reqCtx);
 
     this.logger.info({
       totalRequests: result.totalRequests,
@@ -96,7 +95,6 @@ export class HeightsManager {
   private async samplePositionsHeights(
     positionsArr: Cartographic[],
     requestedProductType: TerrainTypes,
-    excludeFields: AdditionalFieldsEnum[],
     reqCtx?: Record<string, unknown>
   ): Promise<{ positions: PosWithHeight[]; totalRequests: number }> {
     const MAX_REQ_PER_BATCH = 150;
@@ -146,8 +144,6 @@ export class HeightsManager {
 
     const finalPositionsWithHeights: PosWithHeight[] = [];
 
-    const additionalFields = Object.values(AdditionalFieldsEnum);
-
     // Terrain sampling batches
     const { results } = await PromisePool.for(sampleTerrainClusteredPositions)
       .withConcurrency(sampleTerrainClusteredPositions.length)
@@ -173,13 +169,9 @@ export class HeightsManager {
 
         const positionsWithHeights = await sampleTerrainMostDetailed(provider, batch.positions);
 
-        // Attach additional info on top of each position returned via the catalog record.
+        // Attach additional info on top of each position returned via the catalog record (productId added as ref to products dictionary metadata).
         positionsWithHeights.forEach((pos) => {
-          for (const field of additionalFields) {
-            if (!excludeFields.includes(field) && typeof qmeshRecord[field] !== 'undefined') {
-              (pos as unknown as Record<string, unknown>)[field] = qmeshRecord[field];
-            }
-          }
+            (pos as unknown as Record<string, unknown>)['productId'] = qmeshRecord['productId'];
         });
 
         const samplingEnd = performance.now();

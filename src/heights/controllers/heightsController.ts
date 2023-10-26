@@ -2,18 +2,18 @@ import { RequestHandler } from 'express';
 import { Cartographic } from 'cesium';
 import { injectable, inject } from 'tsyringe';
 import { HeightsManager } from '../models/heightsManager';
-import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from '../interfaces';
+import { PosWithHeight, TerrainTypes } from '../interfaces';
 import { CommonErrors } from '../../common/commonErrors';
 
 export interface GetHeightsPointsRequest {
   positions: Cartographic[];
   radiansToOriginalPositionsMap: Map<string, string>;
   productType?: TerrainTypes;
-  excludeFields?: AdditionalFieldsEnum[];
 }
 
 export interface GetHeightsPointsResponse {
   data: PosWithHeight[];
+  products: Record<string,unknown>
 }
 
 export type GetHeightsHandler = RequestHandler<undefined, GetHeightsPointsResponse | Uint8Array, GetHeightsPointsRequest>;
@@ -34,7 +34,6 @@ export class HeightsController {
       const heights = await this.manager.getPoints(
         userInput.positions,
         userInput.productType ?? DEFAULT_TERRAIN_TYPE,
-        userInput.excludeFields,
         reqCtx
       );
 
