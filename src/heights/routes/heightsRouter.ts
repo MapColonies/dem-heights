@@ -2,6 +2,7 @@ import { Router } from 'express';
 import protobuf from 'protobufjs';
 import { FactoryFunction } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
+import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { CommonErrors } from '../../common/commonErrors';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
@@ -14,7 +15,6 @@ import { decodeProtobufMiddleware } from '../middlewares/decodeProtobuf';
 import { encodeProtobufMiddleware } from '../middlewares/encodeProtobuf';
 import { validateRequestMiddleware } from '../middlewares/validateRequest';
 import { addProductsDictionaryMiddleware } from '../middlewares/addProductsDictionary';
-import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 
 const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const router = Router();

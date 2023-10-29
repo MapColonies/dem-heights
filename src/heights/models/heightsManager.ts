@@ -41,6 +41,7 @@ export class HeightsManager {
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
     if (registry !== undefined) {
+      // eslint-disable-next-line  @typescript-eslint/no-this-alias
       const self = this;
       new client.Gauge({
         name: 'elevations_current_requests_count',
@@ -68,6 +69,7 @@ export class HeightsManager {
     });
 
     this.runningRequests++;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     this.elevationsRequestsCounter?.inc({ points_number: points.length });
 
     if (points.length === 0) {

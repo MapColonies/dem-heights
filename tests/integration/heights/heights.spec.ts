@@ -92,7 +92,7 @@ describe('heights', function () {
         expect(response.body).toHaveProperty('products');
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
 
-        Object.values(response.body.products as Record<string, Record<string, unknown>>).forEach((product) => {
+        Object.values((response.body as GetHeightsPointsResponse).products as Record<string, Record<string, unknown>>).forEach((product) => {
           productMetadataFields.forEach((field) => {
             expect(product[field]).toBeDefined();
           });
