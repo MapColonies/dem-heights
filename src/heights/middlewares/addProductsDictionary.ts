@@ -33,7 +33,7 @@ export const addProductsDictionaryMiddleware: (logger: Logger, catalogRecordsMap
       location: '[addProductsDictionaryMiddleware]',
       ...res.locals.reqCtx,
     });
-    res.locals.products = productsDictionary;
+    res.locals.products = {...productsDictionary.products};
 
     next();
   };

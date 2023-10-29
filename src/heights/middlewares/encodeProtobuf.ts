@@ -37,7 +37,7 @@ export const encodeProtobufMiddleware: (protobufClass: protobuf.Type, logger: Lo
 
     res.send({
        data: posArray,
-       ...res.locals.products
+       products: res.locals.products
     });
   };
 };

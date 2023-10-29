@@ -163,7 +163,7 @@ describe('Get heights middlewares', function () {
       expect(mockResponse.locals.products).toBeDefined();
 
       
-      Object.values(mockResponse.locals.products.products as Record<string,Record<string,unknown>>).forEach((product) => {
+      Object.values(mockResponse.locals.products as Record<string,Record<string,unknown>>).forEach((product) => {
         productMetadataFields.forEach(field => {
           expect(product[field]).toBeDefined();
         });
