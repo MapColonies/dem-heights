@@ -1,8 +1,8 @@
 import { Logger } from '@map-colonies/js-logger';
+import { Cartographic } from 'cesium';
 import { CommonErrors } from '../../common/commonErrors';
 import { IConfig } from '../../common/interfaces';
 import { GetHeightsHandler } from '../controllers/heightsController';
-import { PosWithHeight } from '../interfaces';
 
 export const validateRequestMiddleware: (config: IConfig, logger: Logger, commonErrors: CommonErrors) => GetHeightsHandler = (
   config,
@@ -11,7 +11,7 @@ export const validateRequestMiddleware: (config: IConfig, logger: Logger, common
 ) => {
   return (req, res, next) => {
     const MAXIMUM_TILES_PER_REQUEST = config.has('maximumTilesPerRequest') ? config.get<number>('maximumTilesPerRequest') : undefined;
-    const points: PosWithHeight[] = req.body.positions;
+    const points: Cartographic[] = req.body.positions;
 
     if (points.length === 0) {
       logger.error({ msg: 'Points array is empty.', pointsNumber: points.length, location: '[validateRequestMiddleware]', ...res.locals.reqCtx });

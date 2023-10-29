@@ -7,7 +7,7 @@ import mockJsonPoints, {
   emptyPositionsRequest,
 } from '../../../../src/heights/MOCKS/mockData';
 import { GetHeightsPointsRequest } from '../../../../src/heights/controllers/heightsController';
-import { AdditionalFieldsEnum, PosWithHeight, TerrainTypes } from '../../../../src/heights/interfaces';
+import { PosWithHeight, TerrainTypes } from '../../../../src/heights/interfaces';
 import { registerTestValues } from '../../../configurations/testContainerConfig';
 import { CommonErrorCodes } from '../../../../src/common/commonErrors';
 
@@ -23,9 +23,7 @@ describe('Get Heights model', function () {
     latitude: 0,
     longitude: 0,
     height: 0,
-    productType: TerrainTypes.DTM,
-    resolutionMeter: 0,
-    updateDate: new Date().toISOString(),
+    productId: 'dummy_product_id',
   } as PosWithHeight;
 
   beforeAll(function () {
@@ -92,16 +90,13 @@ describe('Get Heights model', function () {
       }
     });
 
-    it('Should return positions with height and exclude fields if requested', async function () {
-      const excludeFields = [AdditionalFieldsEnum.UPDATE_DATE, AdditionalFieldsEnum.PRODUCT_TYPE];
-      const result = await heightsManager.getPoints(mockJsonData.positions, TerrainTypes.MIXED, excludeFields);
+    it('Should return positions with height and productId', async function () {
+      const result = await heightsManager.getPoints(mockJsonData.positions, TerrainTypes.MIXED);
 
       expect(result).toHaveLength(mockJsonData.positions.length);
 
       for (const position of result) {
-        expect(position[AdditionalFieldsEnum.PRODUCT_TYPE]).toBeUndefined();
-        expect(position[AdditionalFieldsEnum.UPDATE_DATE]).toBeUndefined();
-        expect(position[AdditionalFieldsEnum.RESOLUTION_METER]).toBeDefined();
+        expect(position['productId']).toBeDefined();
       }
     });
 
@@ -113,13 +108,7 @@ describe('Get Heights model', function () {
 
       for (const position of result) {
         expect(position.height).toBeNull();
-
-        const extraFields = Object.keys(AdditionalFieldsEnum);
-        for (const extraField of extraFields) {
-          const extraFieldFromEnum = AdditionalFieldsEnum[extraField as keyof typeof AdditionalFieldsEnum];
-
-          expect(position[extraFieldFromEnum]).toBeUndefined();
-        }
+        expect(position['productId']).toBeUndefined();
       }
     });
 
@@ -131,15 +120,9 @@ describe('Get Heights model', function () {
       for (const position of result) {
         expect(position['latitude'] && position['longitude']).toBeDefined();
 
-        const extraFields = Object.keys(AdditionalFieldsEnum);
-
         const isNullHeight = (position.height as number | null) === null;
 
-        for (const extraField of extraFields) {
-          const extraFieldFromEnum = AdditionalFieldsEnum[extraField as keyof typeof AdditionalFieldsEnum];
-
-          expect(typeof position[extraFieldFromEnum] === 'undefined').toEqual(isNullHeight);
-        }
+        expect(typeof position['productId'] === 'undefined').toEqual(isNullHeight);
       }
     });
   });

@@ -1,4 +1,5 @@
 import { Logger } from '@map-colonies/js-logger';
+import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { Cartographic } from 'cesium';
 import { NextFunction, Request, Response } from 'express';
 import { container } from 'tsyringe';
@@ -6,8 +7,10 @@ import { isUuid } from 'uuidv4';
 import { CommonErrors } from '../../../../src/common/commonErrors';
 import { SERVICES } from '../../../../src/common/constants';
 import { IConfig } from '../../../../src/common/interfaces';
+import { CATALOG_RECORDS_MAP, PRODUCT_METADATA_FIELDS } from '../../../../src/containerConfig';
 import { GetHeightsHandler, GetHeightsPointsRequest } from '../../../../src/heights/controllers/heightsController';
 import { PosWithHeight } from '../../../../src/heights/interfaces';
+import { addProductsDictionaryMiddleware } from '../../../../src/heights/middlewares/addProductsDictionary';
 import { createReqCtxMiddleware } from '../../../../src/heights/middlewares/createReqCtx';
 import { positionResAsDegreesMiddleware } from '../../../../src/heights/middlewares/dataToDegrees';
 import { convertReqPositionToRadiansMiddleware } from '../../../../src/heights/middlewares/dataToRadians';
@@ -25,6 +28,9 @@ describe('Get heights middlewares', function () {
   let dataToRadiansMiddleware: GetHeightsHandler;
   let dataToDegreesMiddleware: GetHeightsHandler;
   let reqValidateMiddleware: GetHeightsHandler;
+  let addProdDictionaryMiddleware: GetHeightsHandler;
+  let catalogRecordsMap: Record<string, PycswDemCatalogRecord>;
+  let productMetadataFields: string[];
 
   beforeAll(async function () {
     await registerTestValues(false);
@@ -32,10 +38,14 @@ describe('Get heights middlewares', function () {
     config = container.resolve(SERVICES.CONFIG);
     commonErrors = container.resolve(CommonErrors);
 
+    catalogRecordsMap = container.resolve(CATALOG_RECORDS_MAP);
+    productMetadataFields = container.resolve(PRODUCT_METADATA_FIELDS);
+
     reqCtxMiddleware = createReqCtxMiddleware(logger);
     dataToRadiansMiddleware = convertReqPositionToRadiansMiddleware(logger);
     dataToDegreesMiddleware = positionResAsDegreesMiddleware(logger);
     reqValidateMiddleware = validateRequestMiddleware(config, logger, commonErrors);
+    addProdDictionaryMiddleware = addProductsDictionaryMiddleware(logger, catalogRecordsMap, productMetadataFields);
   });
 
   describe('Create request id middleware', function () {
@@ -127,6 +137,35 @@ describe('Get heights middlewares', function () {
       dataToDegreesMiddleware(mockRequest, mockResponse, mockNext);
 
       expect((mockResponse.locals.positions as PosWithHeight[])[0]).toEqual(expectedResponseInDegrees);
+    });
+  });
+
+  describe('Add products dictionary', function () {
+    beforeEach(function () {
+      mockResponse = {
+        locals: {
+          positions: [],
+        },
+      } as unknown as Response;
+
+      mockRequest = {
+        body: {},
+      } as Request;
+
+      mockNext = jest.fn();
+    });
+
+    it('Should receive res.locals and attach back products dictionary', function () {
+      // @ts-ignore
+      addProdDictionaryMiddleware(mockRequest, mockResponse, mockNext);
+
+      expect(mockResponse.locals.products).toBeDefined();
+
+      Object.values(mockResponse.locals.products as Record<string, Record<string, unknown>>).forEach((product) => {
+        productMetadataFields.forEach((field) => {
+          expect(product[field]).toBeDefined();
+        });
+      });
     });
   });
 
