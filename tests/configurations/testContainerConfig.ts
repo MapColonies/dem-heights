@@ -18,7 +18,7 @@ async function registerTestValues(shouldInitTerrainProviders = true): Promise<vo
     (JSON.parse(config.get<string>('demCatalogRecords')) as PycswDemCatalogRecord[]).map((record) => [record.id as string, record])
   );
 
-  const productMetadataFields = (config.get<string>('productMetadataFields')).split(',');
+  const productMetadataFields = config.get<string>('productMetadataFields').split(',');
 
   container.register(SERVICES.CONFIG, { useValue: config });
   container.register(SERVICES.LOGGER, { useValue: jsLogger({ enabled: false }) });

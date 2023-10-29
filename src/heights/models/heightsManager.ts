@@ -60,11 +60,7 @@ export class HeightsManager {
     }
   }
 
-  public async getPoints(
-    points: Cartographic[],
-    requestedProductType: TerrainTypes,
-    reqCtx?: Record<string, unknown>
-  ): Promise<PosWithHeight[]> {
+  public async getPoints(points: Cartographic[], requestedProductType: TerrainTypes, reqCtx?: Record<string, unknown>): Promise<PosWithHeight[]> {
     this.logger.info({
       pointsNumber: points.length,
       location: '[HeightsManager] [getPoints]',
@@ -171,7 +167,7 @@ export class HeightsManager {
 
         // Attach additional info on top of each position returned via the catalog record (productId added as ref to products dictionary metadata).
         positionsWithHeights.forEach((pos) => {
-            (pos as unknown as Record<string, unknown>)['productId'] = qmeshRecord['productId'];
+          (pos as unknown as Record<string, unknown>)['productId'] = qmeshRecord['productId'];
         });
 
         const samplingEnd = performance.now();

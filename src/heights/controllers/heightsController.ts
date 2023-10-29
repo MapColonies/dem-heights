@@ -13,7 +13,7 @@ export interface GetHeightsPointsRequest {
 
 export interface GetHeightsPointsResponse {
   data: PosWithHeight[];
-  products: Record<string,unknown>
+  products: Record<string, unknown>;
 }
 
 export type GetHeightsHandler = RequestHandler<undefined, GetHeightsPointsResponse | Uint8Array, GetHeightsPointsRequest>;
@@ -31,11 +31,7 @@ export class HeightsController {
       const reqCtx = res.locals.reqCtx as Record<string, unknown>;
       const DEFAULT_TERRAIN_TYPE = TerrainTypes.MIXED;
 
-      const heights = await this.manager.getPoints(
-        userInput.positions,
-        userInput.productType ?? DEFAULT_TERRAIN_TYPE,
-        reqCtx
-      );
+      const heights = await this.manager.getPoints(userInput.positions, userInput.productType ?? DEFAULT_TERRAIN_TYPE, reqCtx);
 
       res.locals.positions = heights;
       next();

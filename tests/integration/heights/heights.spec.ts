@@ -35,7 +35,7 @@ describe('heights', function () {
   } as PosWithHeight;
 
   beforeAll(async function () {
-    productMetadataFields = (config.get<string>('productMetadataFields')).split(',');
+    productMetadataFields = config.get<string>('productMetadataFields').split(',');
 
     cesiumTerrainProviderFromUrlSpy = jest.spyOn(CesiumTerrainProvider, 'fromUrl');
 
@@ -92,11 +92,11 @@ describe('heights', function () {
         expect(response.body).toHaveProperty('products');
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
 
-        Object.values(response.body.products as Record<string,Record<string,unknown>>).forEach(product =>{
-          productMetadataFields.forEach(field => {
-            expect(product[field]).toBeDefined();  
-          })
-        }) 
+        Object.values(response.body.products as Record<string, Record<string, unknown>>).forEach((product) => {
+          productMetadataFields.forEach((field) => {
+            expect(product[field]).toBeDefined();
+          });
+        });
       });
 
       it('Should return 200 status code and the positions with null heights and no fields if no provider match for the request (Legit request)', async function () {
@@ -114,7 +114,7 @@ describe('heights', function () {
         for (const position of (response.body as GetHeightsPointsResponse).data) {
           expect(position.height).toBeNull();
 
-          expect(position["productId"]).toBeUndefined();
+          expect(position['productId']).toBeUndefined();
         }
       });
 

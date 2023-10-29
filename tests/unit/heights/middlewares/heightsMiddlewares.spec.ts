@@ -29,9 +29,8 @@ describe('Get heights middlewares', function () {
   let dataToDegreesMiddleware: GetHeightsHandler;
   let reqValidateMiddleware: GetHeightsHandler;
   let addProdDictionaryMiddleware: GetHeightsHandler;
-  let catalogRecordsMap:  Record<string, PycswDemCatalogRecord>;
+  let catalogRecordsMap: Record<string, PycswDemCatalogRecord>;
   let productMetadataFields: string[];
-  
 
   beforeAll(async function () {
     await registerTestValues(false);
@@ -162,13 +161,11 @@ describe('Get heights middlewares', function () {
 
       expect(mockResponse.locals.products).toBeDefined();
 
-      
-      Object.values(mockResponse.locals.products as Record<string,Record<string,unknown>>).forEach((product) => {
-        productMetadataFields.forEach(field => {
+      Object.values(mockResponse.locals.products as Record<string, Record<string, unknown>>).forEach((product) => {
+        productMetadataFields.forEach((field) => {
           expect(product[field]).toBeDefined();
         });
       });
-
     });
   });
 

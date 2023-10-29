@@ -96,7 +96,7 @@ describe('Get Heights model', function () {
       expect(result).toHaveLength(mockJsonData.positions.length);
 
       for (const position of result) {
-        expect(position["productId"]).toBeDefined();
+        expect(position['productId']).toBeDefined();
       }
     });
 
@@ -121,9 +121,8 @@ describe('Get Heights model', function () {
         expect(position['latitude'] && position['longitude']).toBeDefined();
 
         const isNullHeight = (position.height as number | null) === null;
-        
-        expect(typeof position['productId'] === 'undefined').toEqual(isNullHeight);
 
+        expect(typeof position['productId'] === 'undefined').toEqual(isNullHeight);
       }
     });
   });
