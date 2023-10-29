@@ -1,6 +1,6 @@
 {
   "name": "dem-heights",
-  "version": "1.2.7",
+  "version": "2.0.0",
   "description": "Fetch heights at given positions (longitude,latitude)",
   "main": "./src/index.ts",
   "scripts": {

@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.0.0](https://github.com/MapColonies/dem-heights/compare/v1.2.7...v2.0.0) (2023-10-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* api changed to work with productid
+
+### Features
+
+* api changed to work with productid ([b1b936a](https://github.com/MapColonies/dem-heights/commit/b1b936acf3c5daec45c1ac7e9d5aeb4d88910b8d))
+* dashboard ([0f88c14](https://github.com/MapColonies/dem-heights/commit/0f88c1457fe0a022b5f561376bf2949d129ff9e9))
+* opentelemetry ([1bc1dfb](https://github.com/MapColonies/dem-heights/commit/1bc1dfbb00c5ae14a7687a7c74acb9aa28200a6e))
+* productid for each point and products dictionary ([a954fba](https://github.com/MapColonies/dem-heights/commit/a954fba569a84367e67fd368df9c2d168f826f3d))
+* using Hermon's new middleware ([0ce1706](https://github.com/MapColonies/dem-heights/commit/0ce1706df12a6e94f336c8f10697fc337aed2fd1))
+
+
+### Bug Fixes
+
+* 250 ([6d5e757](https://github.com/MapColonies/dem-heights/commit/6d5e7577f5865246cd5c8088c5e7b4250056383a))
+* configmap ([5fe68ed](https://github.com/MapColonies/dem-heights/commit/5fe68edc70ae23c541f20a1dd78d5b4e292d50b3))
+* dashboard ([d79fb90](https://github.com/MapColonies/dem-heights/commit/d79fb90295ec78cf40017336b22ea5dcb262e24c))
+* double products nested object ([80f98c7](https://github.com/MapColonies/dem-heights/commit/80f98c743be799ddd3b3b080da07ae55c5f3a73c))
+* ESLint ([a8ada87](https://github.com/MapColonies/dem-heights/commit/a8ada8755db821fb259021e8367352c4301e56bb))
+* fix ([25123e0](https://github.com/MapColonies/dem-heights/commit/25123e0fc2e0bdd908bbc2a818e7cc3b77e9348d))
+* fix ([ea33dd8](https://github.com/MapColonies/dem-heights/commit/ea33dd8e5141ca2c575fc56946a3757acd7b7d2a))
+* fix ([93ec1ca](https://github.com/MapColonies/dem-heights/commit/93ec1ca40d300a8590cee5109967262ec979db86))
+* fix ([f90db80](https://github.com/MapColonies/dem-heights/commit/f90db80a73df0bee8091dc9e5e79a17727e364ad))
+* fix ([e0d3268](https://github.com/MapColonies/dem-heights/commit/e0d3268886e546a07d318b37c3e214f17fcbfe1d))
+* histogram at higher level ([80ac6a4](https://github.com/MapColonies/dem-heights/commit/80ac6a44d6e306cf6da7c990edd4ad2ac9624cf4))
+* ingress ([1770d7d](https://github.com/MapColonies/dem-heights/commit/1770d7d475fd97577a89513f327b023038738d03))
+* prometheus ([00fcae9](https://github.com/MapColonies/dem-heights/commit/00fcae9afc95a546e7539f31a3da22cc12409bd9))
+* revert back logger message ([04fb2ad](https://github.com/MapColonies/dem-heights/commit/04fb2ad41f485dee043856e497ff83d5c26d73fc))
+* route path ([2801630](https://github.com/MapColonies/dem-heights/commit/28016305e4e906d5854620dbcfc09d90c0bab7a5))
+* timeToResponse ([347aafc](https://github.com/MapColonies/dem-heights/commit/347aafcac5e8ea3a85f715cd65d28fd82acd7e01))
+* tracing ([e07c942](https://github.com/MapColonies/dem-heights/commit/e07c942a92d91b42dac9d140372732a9196b4f5c))
+* unit and integration tests ([bca3899](https://github.com/MapColonies/dem-heights/commit/bca38990e840e201159e3e83c7f1c0f7cc983d37))
+* unnecessary counters ([8898ed4](https://github.com/MapColonies/dem-heights/commit/8898ed471b377f75c79474b6953bcedc96cb2eca))
+
 ### [1.2.7](https://github.com/MapColonies/dem-heights/compare/v1.2.6...v1.2.7) (2023-10-01)
 
 
