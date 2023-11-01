@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.2](https://github.com/MapColonies/dem-heights/compare/v2.0.1...v2.0.2) (2023-11-01)
+
+
+### Bug Fixes
+
+* use x-client-id instead of x-sub ([2412e37](https://github.com/MapColonies/dem-heights/commit/2412e37d5a7e69842aaa4798fdce0e405167030f))
+
 ## [2.0.0](https://github.com/MapColonies/dem-heights/compare/v1.2.7...v2.0.0) (2023-10-29)
 
 
