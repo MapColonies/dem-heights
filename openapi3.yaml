@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: dem-heights
   description: map-colonies service for extracting elevations from DTM/DSM geotiffs
-  version: 2.0.3
+  version: 2.0.4
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -25,7 +25,7 @@ paths:
                   longitude: 35.21339666666667
                 - latitude: 32.80775333333333
                   longitude: 35.22673
-              productType: 'MIXED'
+              productType: MIXED
           application/octet-stream:
             schema:
               type: string
@@ -42,22 +42,22 @@ paths:
                   - latitude: 32.80775333333333
                     longitude: 35.21339666666667
                     height: 221.09576574778345
-                    productId: 'first_Product'
+                    productId: first_Product
                   - latitude: 32.80775333333333
                     longitude: 35.22673
                     height: 141.7940749310484
-                    productId: 'second_Product'
+                    productId: second_Product
                 products:
                   first_Product:
-                    productType: 'QUANTIZED_MESH_DTM_BEST'
+                    productType: QUANTIZED_MESH_DTM_BEST
                     updateDate: '2023-05-08T17:44:01.000Z'
                     resolutionMeter: 30
-                    absoluteAccuracyLEP90: 9e-7
+                    absoluteAccuracyLEP90: 9.e-7
                   second_Product:
-                    productType: 'QUANTIZED_MESH_DTM_BEST'
+                    productType: QUANTIZED_MESH_DTM_BEST
                     updateDate: '2023-05-08T17:44:01.000Z'
                     resolutionMeter: 100
-                    absoluteAccuracyLEP90: 9e-7
+                    absoluteAccuracyLEP90: 9.e-7
             application/octet-stream:
               schema:
                 type: string

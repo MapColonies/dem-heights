@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.4](https://github.com/MapColonies/dem-heights/compare/v2.0.3...v2.0.4) (2024-01-18)
+
+
+### Bug Fixes
+
+* openapi exmaples ([254e0b5](https://github.com/MapColonies/dem-heights/commit/254e0b5956af611497a0f11683486655a23de965))
+
 ### [2.0.3](https://github.com/MapColonies/dem-heights/compare/v2.0.2...v2.0.3) (2024-01-18)
 
 
