@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.3](https://github.com/MapColonies/dem-heights/compare/v2.0.2...v2.0.3) (2024-01-18)
+
+
+### Bug Fixes
+
+* cors ([3d2bd31](https://github.com/MapColonies/dem-heights/commit/3d2bd31bc0ba963e3c5319b261e503c47afb8e5f))
+* dashboard ([7b6fb61](https://github.com/MapColonies/dem-heights/commit/7b6fb61abc23a578cbb3fbb070820d17852385c7))
+* invalid log format when empty values for numeric fields ([ae122d3](https://github.com/MapColonies/dem-heights/commit/ae122d35aa8d111930a2f0dc48c0e3d4f56d69ca))
+* update-date comparison ([9c64d46](https://github.com/MapColonies/dem-heights/commit/9c64d46c4d0a98c34afd4fbcbc12a4ce0330e213))
+
 ### [2.0.2](https://github.com/MapColonies/dem-heights/compare/v2.0.1...v2.0.2) (2023-11-01)
 
 
