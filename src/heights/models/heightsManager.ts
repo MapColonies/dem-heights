@@ -234,6 +234,9 @@ export class HeightsManager {
         const qmeshRecordA = this.catalogRecordsMap[terrainAKey];
         const qmeshRecordB = this.catalogRecordsMap[terrainBKey];
 
+        let dateB = null,
+          dateA = null;
+
         switch (true) {
           case (qmeshRecordA.resolutionMeter as number) < (qmeshRecordB.resolutionMeter as number):
             return A_BEFORE_B;
@@ -241,7 +244,9 @@ export class HeightsManager {
             return B_BEFORE_A;
           default:
             // Equal resolutions, compare update date
-            return (qmeshRecordB.updateDate as Date).getTime() - (qmeshRecordA.updateDate as Date).getTime();
+            dateB = new Date(qmeshRecordB.updateDate as string | number | Date);
+            dateA = new Date(qmeshRecordA.updateDate as string | number | Date);
+            return dateB.getTime() - dateA.getTime();
         }
       });
 

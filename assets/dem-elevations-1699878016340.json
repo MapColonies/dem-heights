@@ -209,12 +209,7 @@
             },
             "mode": "reduceRow",
             "reduce": {
-              "include": [
-                "1 points",
-                "100 points",
-                "250 points",
-                "50 points"
-              ],
+              "include": ["1 points", "100 points", "250 points", "50 points"],
               "reducer": "sum"
             }
           }
@@ -317,9 +312,7 @@
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true,
@@ -352,12 +345,7 @@
             },
             "mode": "reduceRow",
             "reduce": {
-              "include": [
-                "1 points",
-                "100 points",
-                "250 points",
-                "50 points"
-              ],
+              "include": ["1 points", "100 points", "250 points", "50 points"],
               "reducer": "sum"
             }
           }
@@ -365,12 +353,7 @@
         {
           "id": "reduce",
           "options": {
-            "reducers": [
-              "max",
-              "lastNotNull",
-              "firstNotNull",
-              "diff"
-            ]
+            "reducers": ["max", "lastNotNull", "firstNotNull", "diff"]
           }
         }
       ],
@@ -537,9 +520,7 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
+          "calcs": ["mean"],
           "fields": "",
           "values": false
         },
@@ -626,9 +607,7 @@
       "options": {
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -689,9 +668,7 @@
       "options": {
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -720,10 +697,7 @@
   "refresh": "",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [
-    "dem-heights",
-    "node.js"
-  ],
+  "tags": ["dem-heights", "node.js"],
   "templating": {
     "list": [
       {
