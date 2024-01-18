@@ -241,7 +241,9 @@ export class HeightsManager {
             return B_BEFORE_A;
           default:
             // Equal resolutions, compare update date
-            return (qmeshRecordB.updateDate as Date).getTime() - (qmeshRecordA.updateDate as Date).getTime();
+            const dateB = new Date(qmeshRecordB.updateDate as string|number|Date);
+            const dateA = new Date(qmeshRecordA.updateDate as string|number|Date);
+            return dateB.getTime() - dateA.getTime();
         }
       });
 
