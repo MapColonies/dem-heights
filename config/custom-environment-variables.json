@@ -49,8 +49,18 @@
       }
     }
   },
-  "terrainProvidersToken": "TERRAIN_PROVIDERS_TOKEN",
-  "demCatalogRecords": "DEM_CATALOG_RECORDS",
+  "accessToken": {
+    "attributeName": "ACCESS_TOKEN_ATTRIBUTE_NAME",
+    "injectionType": "ACCESS_TOKEN_INJECTION_TYPE",
+    "tokenValue": "ACCESS_TOKEN_TOKEN_VALUE"
+  },
+  "csw": {
+    "url": "CSW_DEM_URL"
+  },
+  "s3Gateway": {
+    "url": "S3_GATEWAY_DEM_URL"
+  },
+  "synchRecordsInterval": "SYNCH_RECORDS_INTERVAL",
   "productMetadataFields": "productType,updateDate,resolutionMeter,absoluteAccuracyLEP90",
   "protoFileUrl": "PROTO_FILE_URL",
   "serviceVersion": "SERVICE_VERSION",

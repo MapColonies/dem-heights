@@ -3,7 +3,6 @@ import { Polygon } from 'geojson';
 import client from 'prom-client';
 import { container, inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
-import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import PromisePool from '@supercharge/promise-pool/dist';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { Feature } from '@turf/turf';
@@ -14,6 +13,7 @@ import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerC
 import { PosWithHeight, PosWithTerrainProvider, TerrainTypes } from '../interfaces';
 import { cartographicArrayClusteringForHeightRequests } from '../utilities';
 import DEMTerrainCacheManager from './DEMTerrainCacheManager';
+import { CatalogRecords } from './catalogRecords';
 
 export interface ICoordinates {
   longitude: string;
@@ -28,9 +28,13 @@ export interface IHeightModel {
 export class HeightsManager {
   private runningRequests = 0;
 
-  private readonly demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
-  private readonly catalogRecordsMap = container.resolve<Record<string, PycswDemCatalogRecord>>(CATALOG_RECORDS_MAP);
-  private readonly terrainProviders = this.demTerrainCacheManager.terrainProviders;
+  private get catalogRecordsMap() {
+    return container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP).getValue();
+  }
+
+  private get terrainProviders() {
+    return container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER).terrainProviders;
+  }
 
   private readonly elevationsRequestsCounter?: client.Counter<'points_number'>;
 

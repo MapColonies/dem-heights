@@ -15,6 +15,7 @@ import { createReqCtxMiddleware } from '../../../../src/heights/middlewares/crea
 import { positionResAsDegreesMiddleware } from '../../../../src/heights/middlewares/dataToDegrees';
 import { convertReqPositionToRadiansMiddleware } from '../../../../src/heights/middlewares/dataToRadians';
 import { validateRequestMiddleware } from '../../../../src/heights/middlewares/validateRequest';
+import { CatalogRecords } from '../../../../src/heights/models/catalogRecords';
 import { registerTestValues } from '../../../configurations/testContainerConfig';
 
 describe('Get heights middlewares', function () {
@@ -29,7 +30,6 @@ describe('Get heights middlewares', function () {
   let dataToDegreesMiddleware: GetHeightsHandler;
   let reqValidateMiddleware: GetHeightsHandler;
   let addProdDictionaryMiddleware: GetHeightsHandler;
-  let catalogRecordsMap: Record<string, PycswDemCatalogRecord>;
   let productMetadataFields: string[];
 
   beforeAll(async function () {
@@ -38,14 +38,13 @@ describe('Get heights middlewares', function () {
     config = container.resolve(SERVICES.CONFIG);
     commonErrors = container.resolve(CommonErrors);
 
-    catalogRecordsMap = container.resolve(CATALOG_RECORDS_MAP);
     productMetadataFields = container.resolve(PRODUCT_METADATA_FIELDS);
 
     reqCtxMiddleware = createReqCtxMiddleware(logger);
     dataToRadiansMiddleware = convertReqPositionToRadiansMiddleware(logger);
     dataToDegreesMiddleware = positionResAsDegreesMiddleware(logger);
     reqValidateMiddleware = validateRequestMiddleware(config, logger, commonErrors);
-    addProdDictionaryMiddleware = addProductsDictionaryMiddleware(logger, catalogRecordsMap, productMetadataFields);
+    addProdDictionaryMiddleware = addProductsDictionaryMiddleware(logger, productMetadataFields);
   });
 
   describe('Create request id middleware', function () {

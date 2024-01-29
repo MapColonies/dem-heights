@@ -9,7 +9,8 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "lib": ["webworker"],
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "tests"]

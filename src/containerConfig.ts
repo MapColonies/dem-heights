@@ -3,7 +3,7 @@ import config from 'config';
 import pino from 'pino';
 import client from 'prom-client';
 import protobuf from 'protobufjs';
-import { instanceCachingFactory } from 'tsyringe';
+import { instanceCachingFactory, container, Lifecycle } from 'tsyringe';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { trace } from '@opentelemetry/api';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
@@ -15,6 +15,10 @@ import { IConfig } from './common/interfaces';
 import { tracing } from './common/tracing';
 import DEMTerrainCacheManager from './heights/models/DEMTerrainCacheManager';
 import { heightsRouterFactory, HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
+
+import { Worker } from 'worker_threads';
+import { CatalogRecords } from './heights/models/catalogRecords';
+import { isSame } from './heights/utilities';
 
 const PROTO_FILE = './proto/posWithHeight.proto';
 
@@ -31,21 +35,66 @@ export const DEM_TERRAIN_CACHE_MANAGER = Symbol('DEM_TERRAIN_CACHE_MANAGER');
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
+  // @ts-expect-error the signature is wrong
+  const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
+  
+  const initCSWWorker = () =>{
+    const worker = new Worker('./workerCatalogRecords.js');
+  
+    // Listen for updates from the worker
+    worker.on('message',async (event: any) => {
+      const data = event;
+  
+      switch (data.action) {
+        case 'updateValue':
+          const catalogRecordsServiceInstance = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP);
+          const demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
+    
+          if (!isSame(data.value, Object.values(catalogRecordsServiceInstance.getValue()))){
+            catalogRecordsServiceInstance.setValue(Object.fromEntries(
+              (data.value as PycswDemCatalogRecord[]).map((record) => [record.id as string, record])
+            ));
+            await demTerrainCacheManager.initTerrainProviders(data.value);
 
-  const catalogRecordsMap = Object.fromEntries(
-    (JSON.parse(config.get<string>('demCatalogRecords')) as PycswDemCatalogRecord[]).map((record) => [record.id as string, record])
-  );
+            logger.info({
+              msg: `CatalogRecords UPDATED - ${data.value.length} records fetched`,
+              location: '[registerExternalValues]',
+            });
+          }
+          break;
+        case 'error':
+            logger.error({
+              msg: `FETCH CatalogRecords ERROR`,
+              ...data.value,
+              location: '[registerExternalValues]',
+            });
+          break;
+      }
+    });
+  
+    worker.on('error',(event: any) => {
+      logger.error({
+        msg: `CatalogRecords ERROR`,
+        ...event,
+        location: '[registerExternalValues]',
+      });
+    });
+  
+    worker.on('exit',(event: any) => {
+      logger.error({
+        msg: `CatalogRecords EXIT`,
+        ...event,
+        location: '[registerExternalValues]',
+      });
+    });
+  };
+
+  initCSWWorker();
 
   const productMetadataFields = config.get<string>('productMetadataFields').split(',');
 
-  // @ts-expect-error the signature is wrong
-  const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
-
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
-
-  const demTerrainCacheManager = new DEMTerrainCacheManager(config);
-  await demTerrainCacheManager.initTerrainProviders();
 
   const posWithHeightProtoRoot = await protobuf.load(path.resolve(__dirname, PROTO_FILE));
   const posWithHeightProtoResponse = posWithHeightProtoRoot.lookupType('posWithHeightPackage.PosWithHeightResponse');
@@ -69,10 +118,10 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         }),
       },
     },
-    { token: CATALOG_RECORDS_MAP, provider: { useValue: catalogRecordsMap } },
+    { token: CATALOG_RECORDS_MAP, provider: { useClass: CatalogRecords }, options: { lifecycle: Lifecycle.Singleton } },
     { token: PRODUCT_METADATA_FIELDS, provider: { useValue: productMetadataFields } },
     { token: POS_WITH_HEIGHT_PROTO_RESPONSE, provider: { useValue: posWithHeightProtoResponse } },
-    { token: DEM_TERRAIN_CACHE_MANAGER, provider: { useValue: demTerrainCacheManager } },
+    { token: DEM_TERRAIN_CACHE_MANAGER, provider: { useClass: DEMTerrainCacheManager }, options: { lifecycle: Lifecycle.Singleton } },
     { token: POS_WITH_HEIGHT_PROTO_REQUEST, provider: { useValue: posWithHeightProtoRequest } },
     { token: HEIGHTS_ROUTER_SYMBOL, provider: { useFactory: heightsRouterFactory } },
     {
