@@ -53,7 +53,7 @@ await (async function updateValuePeriodically(): Promise<void> {
 })();
 
 export interface WorkerEvent {
- action: 'updateValue' | 'error';
- // eslint-disable-next-line
- value: any;
+  action: 'updateValue' | 'error';
+  // eslint-disable-next-line
+  value: any;
 }
