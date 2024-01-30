@@ -46,7 +46,5 @@ export const requestHandlerWithToken = async (url: string, method: string, param
 };
 
 export const requestExecutor = async (service: IService, method: string, params: AxiosRequestConfig): Promise<AxiosResponse> => {
-  return service.exposureType === 'ROUTE'
-    ? requestHandlerWithToken(service.url, method, params)
-    : requestHandler(service.url, method, params);
+  return service.exposureType === 'ROUTE' ? requestHandlerWithToken(service.url, method, params) : requestHandler(service.url, method, params);
 };

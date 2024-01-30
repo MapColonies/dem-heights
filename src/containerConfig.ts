@@ -38,26 +38,24 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
-  
-  const initCSWWorker = (): void =>{
+
+  const initCSWWorker = (): void => {
     const worker = new Worker('./workerCatalogRecords.js');
-  
+
     // Listen for updates from the worker
     // eslint-disable-next-line
-    worker.on('message',async (event: WorkerEvent) => {
+    worker.on('message', async (event: WorkerEvent) => {
       const data = event;
       const dataValue = data.value as PycswDemCatalogRecord[];
       let catalogRecordsServiceInstance, demTerrainCacheManager;
-  
+
       switch (data.action) {
         case 'updateValue':
           catalogRecordsServiceInstance = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP);
           demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
-    
-          if (!isSame(dataValue, Object.values(catalogRecordsServiceInstance.getValue()))){
-            catalogRecordsServiceInstance.setValue(Object.fromEntries(
-              (dataValue).map((record) => [record.id as string, record])
-            ));
+
+          if (!isSame(dataValue, Object.values(catalogRecordsServiceInstance.getValue()))) {
+            catalogRecordsServiceInstance.setValue(Object.fromEntries(dataValue.map((record) => [record.id as string, record])));
             await demTerrainCacheManager.initTerrainProviders(dataValue);
 
             logger.info({
@@ -67,24 +65,24 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
           }
           break;
         case 'error':
-            logger.error({
-              msg: `FETCH CatalogRecords ERROR`,
-              ...dataValue,
-              location: '[registerExternalValues]',
-            });
+          logger.error({
+            msg: `FETCH CatalogRecords ERROR`,
+            ...dataValue,
+            location: '[registerExternalValues]',
+          });
           break;
       }
     });
-  
-    worker.on('error',(event: WorkerEvent) => {
+
+    worker.on('error', (event: WorkerEvent) => {
       logger.error({
         msg: `CatalogRecords ERROR`,
         ...event,
         location: '[registerExternalValues]',
       });
     });
-  
-    worker.on('exit',(event: WorkerEvent) => {
+
+    worker.on('exit', (event: WorkerEvent) => {
       logger.error({
         msg: `CatalogRecords EXIT`,
         ...event,
