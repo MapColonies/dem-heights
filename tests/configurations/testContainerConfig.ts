@@ -9,6 +9,7 @@ import DEMTerrainCacheManager from '../../src/heights/models/DEMTerrainCacheMana
 import { CatalogRecords } from '../../src/heights/models/catalogRecords';
 
 async function registerTestValues(shouldInitTerrainProviders = true): Promise<void> {
+  /* eslint-disable */
   const demTestCatalogRecords = [
     {
       __typename: 'LayerDemRecord',
@@ -136,6 +137,7 @@ async function registerTestValues(shouldInitTerrainProviders = true): Promise<vo
       ],
     },
   ];
+  /* eslint-enable */
 
   const productMetadataFields = config.get<string>('productMetadataFields').split(',');
 
@@ -146,7 +148,7 @@ async function registerTestValues(shouldInitTerrainProviders = true): Promise<vo
   container.register(PRODUCT_METADATA_FIELDS, { useValue: productMetadataFields });
   container.register(DEM_TERRAIN_CACHE_MANAGER, { useClass: DEMTerrainCacheManager }, { lifecycle: Lifecycle.Singleton });
 
-  await (async () => {
+  await (async (): Promise<void> => {
     const catalogTestRecordsServiceInstance = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP);
     const demTestTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
 
@@ -154,7 +156,6 @@ async function registerTestValues(shouldInitTerrainProviders = true): Promise<vo
       Object.fromEntries((demTestCatalogRecords as unknown as PycswDemCatalogRecord[]).map((record) => [record.id as string, record]))
     );
 
-    const catalogTestRecordsServiceInstance1 = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP);
     if (shouldInitTerrainProviders) {
       await demTestTerrainCacheManager.initTerrainProviders(demTestCatalogRecords as unknown as PycswDemCatalogRecord[]);
     }
