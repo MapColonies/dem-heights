@@ -1,3 +1,4 @@
+import { Worker } from 'worker_threads';
 import path from 'path';
 import config from 'config';
 import pino from 'pino';
@@ -16,9 +17,9 @@ import { tracing } from './common/tracing';
 import DEMTerrainCacheManager from './heights/models/DEMTerrainCacheManager';
 import { heightsRouterFactory, HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
 
-import { Worker } from 'worker_threads';
 import { CatalogRecords } from './heights/models/catalogRecords';
 import { isSame } from './heights/utilities';
+import { WorkerEvent } from './workerCatalogRecords';
 
 const PROTO_FILE = './proto/posWithHeight.proto';
 
@@ -38,26 +39,29 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
   
-  const initCSWWorker = () =>{
+  const initCSWWorker = (): void =>{
     const worker = new Worker('./workerCatalogRecords.js');
   
     // Listen for updates from the worker
-    worker.on('message',async (event: any) => {
+    // eslint-disable-next-line
+    worker.on('message',async (event: WorkerEvent) => {
       const data = event;
+      const dataValue = data.value as PycswDemCatalogRecord[];
+      let catalogRecordsServiceInstance, demTerrainCacheManager;
   
       switch (data.action) {
         case 'updateValue':
-          const catalogRecordsServiceInstance = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP);
-          const demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
+          catalogRecordsServiceInstance = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP);
+          demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
     
           if (!isSame(data.value, Object.values(catalogRecordsServiceInstance.getValue()))){
             catalogRecordsServiceInstance.setValue(Object.fromEntries(
-              (data.value as PycswDemCatalogRecord[]).map((record) => [record.id as string, record])
+              (dataValue).map((record) => [record.id as string, record])
             ));
-            await demTerrainCacheManager.initTerrainProviders(data.value);
+            await demTerrainCacheManager.initTerrainProviders(dataValue);
 
             logger.info({
-              msg: `CatalogRecords UPDATED - ${data.value.length} records fetched`,
+              msg: `CatalogRecords UPDATED - ${dataValue.length} records fetched`,
               location: '[registerExternalValues]',
             });
           }
@@ -65,14 +69,14 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         case 'error':
             logger.error({
               msg: `FETCH CatalogRecords ERROR`,
-              ...data.value,
+              ...dataValue,
               location: '[registerExternalValues]',
             });
           break;
       }
     });
   
-    worker.on('error',(event: any) => {
+    worker.on('error',(event: WorkerEvent) => {
       logger.error({
         msg: `CatalogRecords ERROR`,
         ...event,
@@ -80,7 +84,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       });
     });
   
-    worker.on('exit',(event: any) => {
+    worker.on('exit',(event: WorkerEvent) => {
       logger.error({
         msg: `CatalogRecords EXIT`,
         ...event,

@@ -4,6 +4,7 @@ import { PycswDemCatalogRecord } from "@map-colonies/mc-model-types";
 import { CswClientWrapper } from "./common/csw/cswClientWrapper";
 import { IService } from './common/csw/utils';
 
+export type WorkerEvent = {action: 'updateValue' | 'error', value: any};
 const SYNCH_RECORDS_INTERVAL = config.get<number>('synchRecordsInterval');
 
 const  cswClient = new CswClientWrapper(

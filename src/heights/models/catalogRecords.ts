@@ -5,11 +5,11 @@ import { injectable } from 'tsyringe';
 export class CatalogRecords {
   private value: Record<string, PycswDemCatalogRecord> = {};
 
-  getValue(): Record<string, PycswDemCatalogRecord> {
+  public getValue(): Record<string, PycswDemCatalogRecord> {
     return this.value;
   }
 
-  setValue(newValue: Record<string, PycswDemCatalogRecord>): void {
+  public setValue(newValue: Record<string, PycswDemCatalogRecord>): void {
     this.value = newValue;
   }
 }
