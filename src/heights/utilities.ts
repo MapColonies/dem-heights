@@ -82,7 +82,7 @@ export const cartographicArrayClusteringForHeightRequests = (
   return { optimizedCluster: newOptimizedCluster, totalRequests: totalRequests };
 };
 
-export const generateChecksum = (str: string, algorithm?: string , encoding?: crypto.BinaryToTextEncoding) => {
+export const generateChecksum = (str: string, algorithm?: string, encoding?: crypto.BinaryToTextEncoding) => {
   return crypto
     .createHash(algorithm || 'md5')
     .update(str, 'utf8')
@@ -91,4 +91,4 @@ export const generateChecksum = (str: string, algorithm?: string , encoding?: cr
 
 export const isSame = (src1: any, src2: any) => {
   return generateChecksum(JSON.stringify(src1)) === generateChecksum(JSON.stringify(src2));
-}
+};

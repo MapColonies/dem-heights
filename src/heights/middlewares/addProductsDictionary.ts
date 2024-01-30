@@ -5,10 +5,10 @@ import type { GetHeightsHandler } from '../controllers/heightsController';
 import { CatalogRecords } from '../models/catalogRecords';
 import { CATALOG_RECORDS_MAP } from '../../containerConfig';
 
-export const addProductsDictionaryMiddleware: (
-  logger: Logger,
-  productMetadataFields: string[]
-) => GetHeightsHandler = (logger, productMetadataFields) => {
+export const addProductsDictionaryMiddleware: (logger: Logger, productMetadataFields: string[]) => GetHeightsHandler = (
+  logger,
+  productMetadataFields
+) => {
   return (req, res, next) => {
     const startTime = performance.now();
     const catalogRecordsMap = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP).getValue();

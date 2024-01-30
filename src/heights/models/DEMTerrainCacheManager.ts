@@ -19,25 +19,25 @@ export default class DEMTerrainCacheManager {
     return `${serviceURL}/${TERRAINS_FOLDER}${cswUrl.split(TERRAINS_FOLDER)[1]}`;
   }
 
-  private getTokenResource (url: string): Resource {
+  private getTokenResource(url: string): Resource {
     const tokenProps: Record<string, unknown> = { url };
-    
+
     const injectionType = this.config.get<string>('accessToken.injectionType');
     const attributeName = this.config.get<string>('accessToken.attributeName');
     const tokenValue = this.config.get<string>('accessToken.tokenValue');
-    
+
     if (injectionType && injectionType.toLowerCase() === 'header') {
       tokenProps.headers = {
-        [attributeName]: tokenValue
+        [attributeName]: tokenValue,
       } as Record<string, unknown>;
     } else if (injectionType && injectionType.toLowerCase() === 'queryparam') {
       tokenProps.queryParameters = {
-        [attributeName]: tokenValue
+        [attributeName]: tokenValue,
       } as Record<string, unknown>;
     }
-  
-    return new Resource({...tokenProps as unknown as Resource});
-  };
+
+    return new Resource({ ...(tokenProps as unknown as Resource) });
+  }
 
   public async initTerrainProviders(demCatalogRecords: PycswDemCatalogRecord[]): Promise<void> {
     const terrainProviders: TerrainProviders = {};
@@ -50,9 +50,7 @@ export default class DEMTerrainCacheManager {
       const recordProviderLink = record.links?.find((link) => link.protocol === QMESH_PROTOCOL);
 
       if (recordProviderLink) {
-        const provider = await CesiumTerrainProvider.fromUrl(
-          this.getTokenResource(this.transformRouteToService(recordProviderLink.url as string))
-        );
+        const provider = await CesiumTerrainProvider.fromUrl(this.getTokenResource(this.transformRouteToService(recordProviderLink.url as string)));
 
         terrainProviders[record.id as string] = provider;
       }

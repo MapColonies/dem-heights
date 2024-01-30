@@ -8,23 +8,23 @@ import { IService, requestExecutor } from './utils';
 
 type CatalogRecordType = PycswDemCatalogRecord;
 const fieldTypes = {
-    isFootprint: (fieldName: string): boolean => fieldName === 'footprint',
-    isLayerPolygonParts: (fieldName: string): boolean => fieldName === 'layerPolygonParts',
-    isDate: (fieldName: string): boolean =>
-      ['creationDate', 'ingestionDate', 'updateDate', 'sourceDateStart', 'sourceDateEnd', 'insertDate', 'validationDate'].includes(fieldName),
-    isDiscrete: (fieldName: string): boolean => fieldName === 'discretes',
-    isLinks: (fieldName: string): boolean => fieldName === 'links',
-    isKeywords: (fieldName: string): boolean => fieldName === 'keywords',
-    isSensor: (fieldName: string): boolean => ['sensorType', 'sensors'].includes(fieldName),
-    isBoolean: (fieldName: string): boolean => ['hasTerrain'].includes(fieldName),
-    isRegion: (fieldName: string): boolean => ['region'].includes(fieldName),
-    isProductVersion: (fieldName: string): boolean => fieldName === 'productVersion',
-  };
-  
+  isFootprint: (fieldName: string): boolean => fieldName === 'footprint',
+  isLayerPolygonParts: (fieldName: string): boolean => fieldName === 'layerPolygonParts',
+  isDate: (fieldName: string): boolean =>
+    ['creationDate', 'ingestionDate', 'updateDate', 'sourceDateStart', 'sourceDateEnd', 'insertDate', 'validationDate'].includes(fieldName),
+  isDiscrete: (fieldName: string): boolean => fieldName === 'discretes',
+  isLinks: (fieldName: string): boolean => fieldName === 'links',
+  isKeywords: (fieldName: string): boolean => fieldName === 'keywords',
+  isSensor: (fieldName: string): boolean => ['sensorType', 'sensors'].includes(fieldName),
+  isBoolean: (fieldName: string): boolean => ['hasTerrain'].includes(fieldName),
+  isRegion: (fieldName: string): boolean => ['region'].includes(fieldName),
+  isProductVersion: (fieldName: string): boolean => fieldName === 'productVersion',
+};
+
 export class SearchOptions {
-    public filter?: FilterField[];
-    public sort?: SortField[];
-  }
+  public filter?: FilterField[];
+  public sort?: SortField[];
+}
 
 export class CswClientWrapper {
   private readonly typename: string;
