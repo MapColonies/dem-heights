@@ -54,7 +54,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
           catalogRecordsServiceInstance = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP);
           demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
     
-          if (!isSame(data.value, Object.values(catalogRecordsServiceInstance.getValue()))){
+          if (!isSame(dataValue, Object.values(catalogRecordsServiceInstance.getValue()))){
             catalogRecordsServiceInstance.setValue(Object.fromEntries(
               (dataValue).map((record) => [record.id as string, record])
             ));
