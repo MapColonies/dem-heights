@@ -1,14 +1,17 @@
+import { container } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import type { GetHeightsHandler } from '../controllers/heightsController';
+import { CatalogRecords } from '../models/catalogRecords';
+import { CATALOG_RECORDS_MAP } from '../../containerConfig';
 
-export const addProductsDictionaryMiddleware: (
-  logger: Logger,
-  catalogRecordsMap: Record<string, PycswDemCatalogRecord>,
-  productMetadataFields: string[]
-) => GetHeightsHandler = (logger, catalogRecordsMap, productMetadataFields) => {
+export const addProductsDictionaryMiddleware: (logger: Logger, productMetadataFields: string[]) => GetHeightsHandler = (
+  logger,
+  productMetadataFields
+) => {
   return (req, res, next) => {
     const startTime = performance.now();
+    const catalogRecordsMap = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP).getValue();
 
     const productsDictionary = { products: {} };
     Object.values(catalogRecordsMap as unknown as Record<string, PycswDemCatalogRecord>).forEach((product) => {

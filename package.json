@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@godaddy/terminus": "^4.11.1",
+    "@map-colonies/csw-client": "^1.2.0",
     "@map-colonies/error-express-handler": "^2.1.0",
     "@map-colonies/express-access-log-middleware": "^2.0.1",
     "@map-colonies/js-logger": "^1.0.1",
@@ -63,6 +64,7 @@
     "@turf/point-grid": "^6.5.0",
     "@turf/turf": "^6.5.0",
     "@types/geojson": "^7946.0.10",
+    "axios": "^0.21.1",
     "cesium": "^1.104.0",
     "compression": "^1.7.4",
     "config": "^3.3.7",

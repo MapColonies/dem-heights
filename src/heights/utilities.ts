@@ -1,5 +1,6 @@
 /* eslint-disable import/exports-last */
 
+import crypto from 'crypto';
 import { Cartographic } from 'cesium';
 import { PosWithTerrainProvider } from './interfaces';
 
@@ -79,4 +80,15 @@ export const cartographicArrayClusteringForHeightRequests = (
   const totalRequests = positionsClustersByTile.size - +positionsClustersByTile.has(NO_PROVIDER_KEY);
 
   return { optimizedCluster: newOptimizedCluster, totalRequests: totalRequests };
+};
+
+export const generateChecksum = (str: string, algorithm?: string, encoding?: crypto.BinaryToTextEncoding) => {
+  return crypto
+    .createHash(algorithm || 'md5')
+    .update(str, 'utf8')
+    .digest(encoding || 'hex');
+};
+
+export const isSame = (src1: any, src2: any) => {
+  return generateChecksum(JSON.stringify(src1)) === generateChecksum(JSON.stringify(src2));
 };

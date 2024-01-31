@@ -56,8 +56,13 @@ env:
       - 100
       - 150
       - 250
-  terrainProvidersToken: ''
-  demCatalogRecords: []
+  accessToken: 
+    attributeName: 'token'
+    injectionType: 'queryParam'
+    tokenValue: 'TOKEN'
+  cswDemUrl: ''
+  s3GatewayDemUrl: ''
+  synchRecordsInterval: 600000
   protoFileUrl: ''
   serviceVersion: ''
   maximumTilesPerRequest: 250
