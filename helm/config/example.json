@@ -1,0 +1,8 @@
+{
+  "csw": {
+    "exposureType": "ROUTE"
+  },
+  "s3Gateway": {
+    "exposureType": "ROUTE"
+  }
+}

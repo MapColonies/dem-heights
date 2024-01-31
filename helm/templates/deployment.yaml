@@ -53,10 +53,13 @@ spec:
           imagePullPolicy: {{ .Values.imagePullPolicy }}
           volumeMounts:
             {{- if .Values.caSecretName }}
-            - mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
-              name: root-ca
+            - name: root-ca
+              mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
               subPath: {{ quote .Values.caKey }}
             {{- end }}
+            - name: production-json
+              mountPath: /app/config/production.json
+              subPath: production.json
           env:
             - name: SERVER_PORT
               value: {{ .Values.env.targetPort | quote }}
@@ -88,4 +91,10 @@ spec:
           secret:
             secretName: {{ .Values.caSecretName }}
         {{- end }}
+        - name: production-json
+          configMap:
+            name: {{ $releaseName }}-configmap
+            items:
+              - key: "production.json"
+                path: "production.json"
 {{- end -}}
