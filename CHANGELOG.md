@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.1.0](https://github.com/MapColonies/dem-heights/compare/v2.0.4...v2.1.0) (2024-01-31)
+
+
+### Features
+
+* dynamic record from csw ([0a36db2](https://github.com/MapColonies/dem-heights/commit/0a36db2063c9ddc2dbabf29bb2e26538646bf31d))
+
 ### [2.0.4](https://github.com/MapColonies/dem-heights/compare/v2.0.3...v2.0.4) (2024-01-18)
 
 
