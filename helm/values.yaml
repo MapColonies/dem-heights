@@ -32,6 +32,12 @@ authentication:
     enabled: false
     customHeaderName: x-api-key
 
+shared:
+  accessToken: 
+    attributeName: token
+    injectionType: queryParam
+    tokenValue: TOKEN
+
 env:
   port: 8080
   targetPort: 8000
@@ -56,10 +62,6 @@ env:
       - 100
       - 150
       - 250
-  accessToken: 
-    attributeName: 'token'
-    injectionType: 'queryParam'
-    tokenValue: 'TOKEN'
   cswDemUrl: ''
   s3GatewayDemUrl: ''
   synchRecordsInterval: 600000

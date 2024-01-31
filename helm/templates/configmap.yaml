@@ -8,6 +8,9 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-configmap
 data:
+  ACCESS_TOKEN_ATTRIBUTE_NAME: {{ .Values.shared.accessToken.attributeName | quote }}
+  ACCESS_TOKEN_INJECTION_TYPE: {{ .Values.shared.accessToken.injectionType | quote }}
+  ACCESS_TOKEN_TOKEN_VALUE: {{ .Values.shared.accessToken.tokenValue | quote }}
   REQUEST_PAYLOAD_LIMIT: {{ .Values.env.requestPayloadLimit | quote }}
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.env.responseCompressionEnabled | quote }}
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
@@ -21,9 +24,6 @@ data:
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   TELEMETRY_METRICS_BUCKETS: {{ .Values.env.metrics.buckets | toJson | quote }}
   {{ end }}
-  ACCESS_TOKEN_ATTRIBUTE_NAME: {{ .Values.env.accessToken.attributeName | quote }}
-  ACCESS_TOKEN_INJECTION_TYPE: {{ .Values.env.accessToken.injectionType | quote }}
-  ACCESS_TOKEN_TOKEN_VALUE: {{ .Values.env.accessToken.tokenValue | quote }}
   CSW_DEM_URL: {{ .Values.env.cswDemUrl | quote }}
   S3_GATEWAY_DEM_URL: {{ .Values.env.s3GatewayDemUrl | quote }}
   SYNCH_RECORDS_INTERVAL: {{ .Values.env.synchRecordsInterval }}
