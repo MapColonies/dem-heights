@@ -18,6 +18,6 @@ cp $CLONE_FOLDER_PATH$PROTO_FILE_PATH $PROTO_APP_PATH
 
 echo "Finished Copy"
 
-cd /app
+cd /app/dist
 echo "Running start command"
 exec "$@"
