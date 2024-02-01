@@ -40,7 +40,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
 
   const initCSWWorker = (): void => {
-    const worker = new Worker('./workerCatalogRecords.js');
+    const worker = new Worker(path.resolve(__dirname, './workerCatalogRecords.js'));
 
     // Listen for updates from the worker
     // eslint-disable-next-line
