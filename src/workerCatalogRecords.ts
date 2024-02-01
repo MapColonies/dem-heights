@@ -40,7 +40,8 @@ const getCatalogRecords = async (): Promise<PycswDemCatalogRecord[]> => {
   return res;
 };
 
-await (async function updateValuePeriodically(): Promise<void> {
+// eslint-disable-next-line
+(async function updateValuePeriodically(): Promise<void> {
   try {
     const newValue = await getCatalogRecords();
     parentPort?.postMessage({ action: 'updateValue', value: newValue });
