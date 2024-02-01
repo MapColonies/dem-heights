@@ -32,11 +32,10 @@ authentication:
     enabled: false
     customHeaderName: x-api-key
 
-shared:
-  accessToken: 
-    attributeName: token
-    injectionType: queryParam
-    tokenValue: TOKEN
+accessToken: 
+  attributeName: token
+  injectionType: queryParam
+  tokenValue: TOKEN
 
 env:
   port: 8080

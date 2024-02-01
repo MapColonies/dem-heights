@@ -9,9 +9,9 @@ metadata:
   name: {{ .Release.Name }}-configmap
 data:
   production.json: {{ .Files.Get "config/production.json" | quote }}
-  ACCESS_TOKEN_ATTRIBUTE_NAME: {{ .Values.shared.accessToken.attributeName | quote }}
-  ACCESS_TOKEN_INJECTION_TYPE: {{ .Values.shared.accessToken.injectionType | quote }}
-  ACCESS_TOKEN_TOKEN_VALUE: {{ .Values.shared.accessToken.tokenValue | quote }}
+  ACCESS_TOKEN_ATTRIBUTE_NAME: {{ .Values.accessToken.attributeName | quote }}
+  ACCESS_TOKEN_INJECTION_TYPE: {{ .Values.accessToken.injectionType | quote }}
+  ACCESS_TOKEN_TOKEN_VALUE: {{ .Values.accessToken.tokenValue | quote }}
   REQUEST_PAYLOAD_LIMIT: {{ .Values.env.requestPayloadLimit | quote }}
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.env.responseCompressionEnabled | quote }}
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
