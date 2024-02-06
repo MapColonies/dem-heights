@@ -173,8 +173,6 @@ export class CswClientWrapper {
             }
             case isNumber(key):
               // eslint-disable-next-line
-              console.log('NUMBER FIELD:', key, '---', val, '---', JSON.parse(val as string));
-              // eslint-disable-next-line
               return JSON.parse(val as string);
             default:
               return val;
