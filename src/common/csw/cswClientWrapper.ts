@@ -161,7 +161,7 @@ export class CswClientWrapper {
               return val;
             }
             default:
-              return val;
+              return JSON.parse(val as any);
           }
         });
         result.push(finalParsed);
