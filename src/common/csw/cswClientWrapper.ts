@@ -161,7 +161,8 @@ export class CswClientWrapper {
               return val;
             }
             default:
-              return val;
+              // eslint-disable-next-line
+              return JSON.parse(val as string);
           }
         });
         result.push(finalParsed);
