@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.4](https://github.com/MapColonies/dem-heights/compare/v2.1.3...v2.1.4) (2024-02-06)
+
+
+### Bug Fixes
+
+* parse csw record to entity ([4b86331](https://github.com/MapColonies/dem-heights/commit/4b86331c7c576b48848f02676c0d5810e6b180bd))
+
 ### [2.1.3](https://github.com/MapColonies/dem-heights/compare/v2.1.2...v2.1.3) (2024-02-01)
 
 
