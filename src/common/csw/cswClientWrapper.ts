@@ -19,6 +19,16 @@ const fieldTypes = {
   isBoolean: (fieldName: string): boolean => ['hasTerrain'].includes(fieldName),
   isRegion: (fieldName: string): boolean => ['region'].includes(fieldName),
   isProductVersion: (fieldName: string): boolean => fieldName === 'productVersion',
+  isNumber: (fieldName: string): boolean =>
+    [
+      'resolutionDegree',
+      'resolutionMeter',
+      'absoluteAccuracyLEP90',
+      'relativeAccuracyLEP90',
+      'heightRangeFrom',
+      'heightRangeTo',
+      'imagingSortieAccuracyCEP90',
+    ].includes(fieldName),
 };
 
 export class SearchOptions {
@@ -81,7 +91,8 @@ export class CswClientWrapper {
   }
 
   public transformRecordsToEntity = (cswArray: CatalogRecordType[]): CatalogRecordType[] => {
-    const { isDate, isDiscrete, isKeywords, isLayerPolygonParts, isLinks, isSensor, isRegion, isProductVersion, isBoolean, isFootprint } = fieldTypes;
+    const { isDate, isDiscrete, isKeywords, isLayerPolygonParts, isLinks, isSensor, isRegion, isProductVersion, isBoolean, isFootprint, isNumber } =
+      fieldTypes;
 
     const cswParsedArray = transform(
       cswArray,
@@ -160,6 +171,9 @@ export class CswClientWrapper {
 
               return val;
             }
+            case isNumber(key):
+              // eslint-disable-next-line
+              return JSON.parse(val as string);
             default:
               return val;
           }
