@@ -6,7 +6,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-configmap
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-configmap
 data:
   production.json: {{ .Files.Get "config/production.json" | quote }}
   ACCESS_TOKEN_ATTRIBUTE_NAME: {{ .Values.accessToken.attributeName | quote }}
