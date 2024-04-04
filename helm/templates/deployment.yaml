@@ -71,7 +71,7 @@ spec:
             {{- end }}
           envFrom:
             - configMapRef:
-                name: {{ $releaseName }}-configmap
+                name: {{ $releaseName }}-{{ $chartName }}-configmap
           ports:
             - name: http
               containerPort: {{ .Values.env.targetPort }}
@@ -93,7 +93,7 @@ spec:
         {{- end }}
         - name: production-json
           configMap:
-            name: {{ $releaseName }}-configmap
+            name: {{ $releaseName }}-{{ $chartName }}-configmap
             items:
               - key: "production.json"
                 path: "production.json"

@@ -1,4 +1,6 @@
 {{- if .Values.enabled -}}
+{{- $releaseName := .Release.Name -}}
+{{- $chartName := include "heights.name" . -}}
 {{- $tracingEnabled := include "heights.tracingEnabled" . -}}
 {{- $tracingUrl := include "heights.tracingUrl" . -}}
 {{- $metricsEnabled := include "heights.metricsEnabled" . -}}
@@ -6,7 +8,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-{{ .Chart.Name }}-configmap
+  name: {{ $releaseName }}-{{ $chartName }}-configmap
 data:
   production.json: {{ .Files.Get "config/production.json" | quote }}
   ACCESS_TOKEN_ATTRIBUTE_NAME: {{ .Values.accessToken.attributeName | quote }}
