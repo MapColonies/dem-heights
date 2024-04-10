@@ -1,8 +1,8 @@
 {{- if .Values.enabled -}}
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "heights.name" . -}}
-{{- $cloudProviderFlavor := include "heights.cloudProviderFlavor" . -}}
 {{- $serviceName := include "service.fullname" . -}}
+{{- $cloudProviderFlavor := include "heights.cloudProviderFlavor" . -}}
 apiVersion: v1
 kind: Service
 metadata:

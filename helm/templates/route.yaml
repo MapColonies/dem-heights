@@ -1,12 +1,13 @@
 {{- $cloudProviderFlavor := include "heights.cloudProviderFlavor" . -}}
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
 {{- $releaseName := .Release.Name -}}
-{{ $targetPort := ternary "external" "internal" .Values.authentication.opa.enabled }}
+{{- $chartName := include "heights.name" . -}}
 {{- $serviceName := include "service.fullname" . -}}
+{{ $targetPort := ternary "external" "internal" .Values.authentication.opa.enabled }}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: {{ $releaseName }}-nginx-route
+  name: {{ $releaseName }}-{{ $chartName }}-nginx
   annotations:
     haproxy.router.openshift.io/rewrite-target: /
     {{- if .Values.route.timeout.enabled }}

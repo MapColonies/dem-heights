@@ -8,10 +8,10 @@ kind: Service
 metadata:
   name: {{ $serviceName }}-nginx
   labels:
-    app: {{ .Release.Name }}-{{ $chartName }}
-    component: heights-nginx-service
-    environment: {{ .Values.environment }}
-    release: {{ .Release.Name }}
+    app: {{ $releaseName }}-{{ $chartName }}
+    component: {{ $chartName }}-nginx-service
+    environment: {{ include "heights.environment" . }}
+    release: {{ $releaseName }}
 spec:
   # In case cloudProavider=azure
   {{- if eq $cloudProviderFlavor "azure" }}
@@ -36,7 +36,7 @@ spec:
       nodePort: {{ .Values.nginx.nodePort }}
       {{- end }}
   selector:
-    app: {{ .Release.Name }}-{{ $chartName }}
-    release: {{ .Release.Name }}
-    run: {{ .Release.Name }}-nginx
+    app: {{ $releaseName }}-{{ $chartName }}
+    release: {{ $releaseName }}
+    run: {{ $releaseName }}-nginx
 {{- end }}

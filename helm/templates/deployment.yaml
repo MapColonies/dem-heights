@@ -1,14 +1,14 @@
 {{- if .Values.enabled -}}
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "heights.name" . -}}
+{{- $imageTag := include "heights.tag" . -}}
 {{- $cloudProviderFlavor := include "heights.cloudProviderFlavor" . -}}
 {{- $cloudProviderDockerRegistryUrl := include "heights.cloudProviderDockerRegistryUrl" . -}}
 {{- $cloudProviderImagePullSecretName := include "heights.cloudProviderImagePullSecretName" . -}}
-{{- $imageTag := include "heights.tag" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $releaseName }}
+  name: {{ $releaseName }}-{{ $chartName }}
   labels:
     app: {{ $chartName }}
     component: {{ $chartName }}
@@ -46,7 +46,7 @@ spec:
         - name: {{ $cloudProviderImagePullSecretName | quote }}
     {{- end }}
       containers:
-        - name: {{ $releaseName }}-deployment
+        - name: {{ $chartName }}
           {{- with .Values.image }}
           image: {{ $cloudProviderDockerRegistryUrl }}{{ .repository }}:{{ $imageTag }}
           {{- end }}

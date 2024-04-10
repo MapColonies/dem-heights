@@ -30,7 +30,7 @@ Create chart name and version as used by the chart label.
 Create service name as used by the service name label.
 */}}
 {{- define "service.fullname" -}}
-{{- printf "%s-%s" .Release.Name "service" }}
+{{- printf "%s-%s" .Release.Name .Chart.Name }}
 {{- end }}
 
 {{/*
