@@ -157,4 +157,4 @@ components:
       type: string
       enum:
         - POINTS_DENSITY_TOO_LOW_ERROR
-        - GENERAL_SERVER_ERROR
+        - GENERAL_ERROR
