@@ -15,14 +15,14 @@ export interface HttpErrorWithCode extends HttpError {
 export enum CommonErrorCodes {
   TOO_MANY_POINTS_ERROR = 'TOO_MANY_POINTS_ERROR',
   POINTS_DENSITY_TOO_LOW_ERROR = 'POINTS_DENSITY_TOO_LOW_ERROR',
-  GENERAL_SERVER_ERROR = 'GENERAL_SERVER_ERROR',
+  GENERAL_ERROR = 'GENERAL_ERROR',
   EMPTY_POSITIONS_ARRAY = 'EMPTY_POSITIONS_ARRAY',
   MISSING_REQUIRED_PROPERTY = 'MISSING_REQUIRED_PROPERTY',
   INVALID_REQUEST = 'INVALID_REQUEST',
 }
 
 export const commonErrorCodesToStatusMap = new Map([
-  [CommonErrorCodes.GENERAL_SERVER_ERROR, httpStatusCodes.INTERNAL_SERVER_ERROR],
+  [CommonErrorCodes.GENERAL_ERROR, httpStatusCodes.INTERNAL_SERVER_ERROR],
   [CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR, httpStatusCodes.BAD_REQUEST],
   [CommonErrorCodes.EMPTY_POSITIONS_ARRAY, httpStatusCodes.BAD_REQUEST],
   [CommonErrorCodes.MISSING_REQUIRED_PROPERTY, httpStatusCodes.BAD_REQUEST],
@@ -48,7 +48,6 @@ export class CommonErrors {
     const err = new Error(`Points density is too low to compute`) as HttpErrorWithCode;
     err.status = httpStatusCodes.BAD_REQUEST;
     err.errorCode = CommonErrorCodes.POINTS_DENSITY_TOO_LOW_ERROR;
-
     return err;
   }
 
@@ -56,18 +55,14 @@ export class CommonErrors {
     const err = new Error(`Request's positions array must not be empty`) as HttpErrorWithCode;
     err.status = httpStatusCodes.BAD_REQUEST;
     err.errorCode = CommonErrorCodes.EMPTY_POSITIONS_ARRAY;
-
     return err;
   }
 
-  public GENERAL_SERVER_ERROR(e: Error): HttpErrorWithCode {
+  public GENERAL_ERROR(e: Error): HttpErrorWithCode {
     const err = new Error(`Sorry, something went wrong`) as HttpErrorWithCode;
-
     err.status = httpStatusCodes.INTERNAL_SERVER_ERROR;
-    err.errorCode = CommonErrorCodes.GENERAL_SERVER_ERROR;
-
+    err.errorCode = CommonErrorCodes.GENERAL_ERROR;
     this.logger.error(e, err.errorCode);
-
     return err;
   }
 
@@ -85,7 +80,7 @@ export class CommonErrors {
         message: err.message,
         errorCode: (err.errorCode as string | undefined) ?? applicationErrorCode,
         status: err.status,
-        stackTrace: process.env.NODE_ENV !== 'production' ? err.stack : {},
+        // stackTrace: process.env.NODE_ENV !== 'production' ? err.stack : {},
       });
     };
   }
@@ -98,7 +93,7 @@ export class CommonErrors {
       case err.status === httpStatusCodes.BAD_REQUEST:
         return CommonErrorCodes.INVALID_REQUEST;
       default:
-        return CommonErrorCodes.GENERAL_SERVER_ERROR;
+        return CommonErrorCodes.GENERAL_ERROR;
     }
   }
 }
