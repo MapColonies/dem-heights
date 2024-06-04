@@ -1,3 +1,147 @@
+KUKU: 
+  deploymentAnnotations:
+    collectord.io/index: INDEX_TEST
+    name: lfdadslkjaslkdja
+  autoscaling:
+    enabled: true
+  podLabels: 
+    mapcolonies.io/environment: test
+  podAnnotations:
+    enabled: true
+    resetOnConfigChange: true
+    annotations:
+      first_ann: first_ann
+      second_ann: second_ann
+  metrics:
+    enabled: true
+    url: http://otel-collector:4318/v1/metrics
+    prometheus:
+      scrape: true
+      port: 8000
+    buckets:
+      - 1
+      - 10
+      - 50
+      - 100
+      - 150
+      - 250
+  image: 
+    registry: docker.io
+    repository: bitnami/os-shell
+    tag: 12-debian-12-r%%IMAGE_REVISION%%
+    pullPolicy: IfNotPresent
+    pullSecrets: 
+      - FROMKUKUsdfsdfdsfsdf
+  podSecurityContext:
+    enabled: true
+    fsGroupChangePolicy: Always
+    sysctls: []
+    supplementalGroups: []
+    fsGroup: 1001
+  automountServiceAccountToken: false
+  hostAliases: 
+    - ip: "127.0.0.1"
+      hostnames:
+      - "foo.local"
+      - "bar.local"
+    - ip: "10.1.2.3"
+      hostnames:
+      - "foo.remote"
+      - "bar.remote"
+  podAffinityPreset: ""
+  podAntiAffinityPreset: soft
+  nodeAffinityPreset:
+    type: ""
+    key: ""
+    values: []
+  affinity: {}
+  nodeSelector: {}
+  tolerations: 
+  - key: foo
+    operator: "Equal"
+    value: bar
+  priorityClassName: ""
+  schedulerName: ""
+  terminationGracePeriodSeconds: ""
+  topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+        matchLabels:
+            release: {}
+  initContainers: []
+  containerSecurityContext:
+    enabled: true
+    seLinuxOptions: {}
+    runAsUser: 1001
+  command: []
+  args: []
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  resourcesPreset: "nano"
+  resources: {}
+  containerPorts:
+    http: 80
+    https: 443
+  customLivenessProbe: {}
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: foo
+    periodSeconds: bar
+    timeoutSeconds: foo
+    failureThreshold: bar
+    successThreshold: foo
+  customReadinessProbe: {}
+  customStartupProbe: {}
+  lifecycleHooks: {}
+  extraVolumes: []
+  extraVolumeMounts: []
+  sidecars: []
+
+kubeVersion: '1.13-0' #added not must
+commonLabels: '' #added not must
+commonAnnotations: '' #added not must
+persistence:
+  enabled: true
+  mountPath: /bitnami/%%MAIN_OBJECT_BLOCK%%/data
+  subPath: ""
+  storageClass: ""
+  annotations: {}
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  existingClaim: ""
+  selector: {}
+  dataSource: {}
+volumePermissions:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: bitnami/os-shell
+    tag: 12-debian-12-r%%IMAGE_REVISION%%
+    pullPolicy: IfNotPresent
+    pullSecrets: 
+      - FROMVALUESsdfsdfdsfsdf
+  resourcesPreset: "nano"
+  resources: {}
+  containerSecurityContext:
+    enabled: true
+    seLinuxOptions: {}
+    runAsUser: 0
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+  automountServiceAccountToken: true
+diagnosticMode:
+  enabled: true
+  command:
+    - sleep
+  args:
+    - infinity
+
 global:
   cloudProvider: {}
   tracing: {}

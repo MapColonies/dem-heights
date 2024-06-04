@@ -4,3 +4,7 @@ description: Helm chart for heights service
 type: application
 version: 2.1.7
 appVersion: 2.1.7
+dependencies:
+- name: common
+  version: 1.0.1
+  repository: file://../../helm-common

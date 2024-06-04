@@ -1,3 +1,9 @@
+
+{{- $MAIN_OBJECT_BLOCK := "KUKU" -}}
+{{- $COMPONENT_NAME := "backend" -}}
+{{ include "mc-chart.deployment" (dict "MAIN_OBJECT_BLOCK" $MAIN_OBJECT_BLOCK "COMPONENT_NAME" $COMPONENT_NAME "context" .) }}
+
+{{/*
 {{- if .Values.enabled -}}
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "heights.name" . -}}
@@ -98,3 +104,4 @@ spec:
               - key: "production.json"
                 path: "production.json"
 {{- end -}}
+*/}}
