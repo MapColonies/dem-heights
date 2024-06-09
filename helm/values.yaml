@@ -137,7 +137,7 @@ configValues:
   extraEnvVarsCM:
   extraEnvVarsSecret:
   resources:
-  resourcesPreset:
+  resourcesPreset: nano
   containerPorts:
     http: 80
     https: 443
