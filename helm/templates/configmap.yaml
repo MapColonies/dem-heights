@@ -18,15 +18,15 @@ data:
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.env.responseCompressionEnabled | quote }}
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
   LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
-  {{ if .Values.env.tracing.enabled }}
+  {{ if .Values.env.tracing.enabled -}}
   TELEMETRY_TRACING_ENABLED: {{ $tracingEnabled | quote }}
   TELEMETRY_TRACING_URL: {{ $tracingUrl }}
-  {{ end }}
-  {{ if .Values.env.metrics.enabled }}
+  {{ end -}}
+  {{ if .Values.env.metrics.enabled -}}
   TELEMETRY_METRICS_ENABLED: {{ $metricsEnabled | quote }}
   TELEMETRY_METRICS_URL: {{ $metricsUrl }}
   TELEMETRY_METRICS_BUCKETS: {{ .Values.env.metrics.buckets | toJson | quote }}
-  {{ end }}
+  {{ end -}}
   CSW_DEM_URL: {{ .Values.env.cswDemUrl | quote }}
   S3_GATEWAY_DEM_URL: {{ .Values.env.s3GatewayDemUrl | quote }}
   SYNCH_RECORDS_INTERVAL: {{ .Values.env.synchRecordsInterval | quote }}

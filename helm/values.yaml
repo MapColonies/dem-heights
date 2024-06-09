@@ -1,17 +1,68 @@
-KUKU: 
-  deploymentAnnotations:
-    collectord.io/index: INDEX_TEST
-    name: lfdadslkjaslkdja
-  autoscaling:
+kubeVersion:
+commonLabels:
+commonAnnotations:
+serviceAccount:
+  create: false
+  name: ''
+  annotations: {}
+  automountServiceAccountToken: false
+# ----------- initContainers -----------
+volumePermissions:
+  enabled: true
+  image:
+    # registry: docker.io
+    repository: bitnami/os-shell
+    tag: 12-debian-12-r-IMAGE_REVISION
+    pullPolicy: IfNotPresent
+    pullSecrets: 
+      # - pull-secret
+  containerSecurityContext:
     enabled: true
-  podLabels: 
-    mapcolonies.io/environment: test
+    runAsNonRoot: true
+    runAsUser: 1001
+    # seLinuxOptions: {}
+  resources:
+  resourcesPreset: nano
+# ------ volumes and volumeMounts ------
+persistence:
+  enabled: true
+  mountPath: /data
+  subPath:
+  storageClass:
+  annotations:
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  existingClaim:
+  selector:
+  dataSource:
+# ------------ command/debug -----------
+diagnosticMode:
+  enabled: true
+  command:
+    - sleep
+  args:
+    - infinity
+
+
+# ----------- MAIN_OBJECT_BLOCK ----------
+
+configValues:
+  deploymentAnnotations:
+    # collectord.io/index: '' # PROVIDE SPLUNK INDEX
+  autoscaling:
+    hpa:
+      enabled: false
+  replicaCount: 1
+  updateStrategy:
+  podLabels:
   podAnnotations:
     enabled: true
     resetOnConfigChange: true
     annotations:
-      first_ann: first_ann
-      second_ann: second_ann
+  tracing:
+    enabled: true
+    url: http://otel-collector:4318/v1/traces
   metrics:
     enabled: true
     url: http://otel-collector:4318/v1/metrics
@@ -25,131 +76,114 @@ KUKU:
       - 100
       - 150
       - 250
-  image: 
-    registry: docker.io
-    repository: bitnami/os-shell
-    tag: 12-debian-12-r%%IMAGE_REVISION%%
-    pullPolicy: IfNotPresent
-    pullSecrets: 
-      - FROMKUKUsdfsdfdsfsdf
-  podSecurityContext:
-    enabled: true
-    fsGroupChangePolicy: Always
-    sysctls: []
-    supplementalGroups: []
-    fsGroup: 1001
   automountServiceAccountToken: false
   hostAliases: 
-    - ip: "127.0.0.1"
-      hostnames:
-      - "foo.local"
-      - "bar.local"
-    - ip: "10.1.2.3"
-      hostnames:
-      - "foo.remote"
-      - "bar.remote"
-  podAffinityPreset: ""
+    # - ip: "127.0.0.1"
+    #   hostnames:
+    #   - "foo.local"
+    #   - "bar.local"
+    # - ip: "10.1.2.3"
+    #   hostnames:
+    #   - "foo.remote"
+    #   - "bar.remote"
+  affinity:
+  podAffinityPreset:
   podAntiAffinityPreset: soft
-  nodeAffinityPreset:
-    type: ""
-    key: ""
-    values: []
-  affinity: {}
-  nodeSelector: {}
+  nodeAffinityPreset: {}
+    # type: ''
+    # key: ''
+    # values: []
+  nodeSelector:
   tolerations: 
-  - key: foo
-    operator: "Equal"
-    value: bar
-  priorityClassName: ""
-  schedulerName: ""
-  terminationGracePeriodSeconds: ""
+    # - key: foo
+    #   operator: Equal
+    #   value: bar
+  priorityClassName:
+  schedulerName:
   topologySpreadConstraints:
-  - maxSkew: 1
-    topologyKey: topology.kubernetes.io/zone
-    whenUnsatisfiable: DoNotSchedule
-    labelSelector:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
         matchLabels:
-            release: {}
-  initContainers: []
+          app.kubernetes.io/name: heights
+  podSecurityContext:
+    enabled: false
+    fsGroup: 1001
+    fsGroupChangePolicy: Always
+    sysctls:
+    supplementalGroups:
+  terminationGracePeriodSeconds:
+  # ----- initContainers (custom) -----
+  initContainers:
+  # ----------- containers ------------
+  image:
+    # registry: docker.io
+    repository: dem-heights
+    tag: v2.1.7
+    pullPolicy: IfNotPresent
+    pullSecrets:
+    debug: false
   containerSecurityContext:
-    enabled: true
-    seLinuxOptions: {}
+    enabled: false
+    runAsNonRoot: true
     runAsUser: 1001
-  command: []
-  args: []
-  extraEnvVars: []
-  extraEnvVarsCM: ""
-  extraEnvVarsSecret: ""
-  resourcesPreset: "nano"
-  resources: {}
+    # seLinuxOptions: {}
+  command:
+    # - sleep
+  args:
+    # - infinity
+  extraEnvVars:
+  extraEnvVarsCM:
+  extraEnvVarsSecret:
+  resources:
+  resourcesPreset:
   containerPorts:
     http: 80
     https: 443
-  customLivenessProbe: {}
+  customLivenessProbe:
   livenessProbe:
     enabled: true
-    initialDelaySeconds: foo
-    periodSeconds: bar
-    timeoutSeconds: foo
-    failureThreshold: bar
-    successThreshold: foo
-  customReadinessProbe: {}
-  customStartupProbe: {}
-  lifecycleHooks: {}
-  extraVolumes: []
-  extraVolumeMounts: []
-  sidecars: []
-
-kubeVersion: '1.13-0' #added not must
-commonLabels: '' #added not must
-commonAnnotations: '' #added not must
-persistence:
-  enabled: true
-  mountPath: /bitnami/%%MAIN_OBJECT_BLOCK%%/data
-  subPath: ""
-  storageClass: ""
-  annotations: {}
-  accessModes:
-    - ReadWriteOnce
-  size: 8Gi
-  existingClaim: ""
-  selector: {}
-  dataSource: {}
-volumePermissions:
-  enabled: true
-  image:
-    registry: docker.io
-    repository: bitnami/os-shell
-    tag: 12-debian-12-r%%IMAGE_REVISION%%
-    pullPolicy: IfNotPresent
-    pullSecrets: 
-      - FROMVALUESsdfsdfdsfsdf
-  resourcesPreset: "nano"
-  resources: {}
-  containerSecurityContext:
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 3
+    successThreshold: 1
+  customReadinessProbe:
+  readinessProbe:
     enabled: true
-    seLinuxOptions: {}
-    runAsUser: 0
-serviceAccount:
-  create: true
-  name: ""
-  annotations: {}
-  automountServiceAccountToken: true
-diagnosticMode:
-  enabled: true
-  command:
-    - sleep
-  args:
-    - infinity
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 3
+    successThreshold: 1
+  customStartupProbe:
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 3
+    successThreshold: 1
+  lifecycleHooks:
+  extraVolumes:
+  extraVolumeMounts:
+  sidecars:
+
+
+
+
+
+
+
 
 global:
   cloudProvider: {}
   tracing: {}
   metrics: {}
-  environment: ''
+  environment: development
 
 enabled: true
-environment: development
 replicaCount: 1
 initialDelaySeconds: 60
 nodePort: 30030 #for minikube deployment only
