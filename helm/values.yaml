@@ -46,23 +46,94 @@ diagnosticMode:
 
 
 # ----------- MAIN_OBJECT_BLOCK ----------
-
+## configValues
+##
+## @section configValues parameters
+## @descriptionStart
+## This description starts in a new line instead of the same line of description start tag. It does not have multiple lines.
+## @descriptionEnd
 configValues:
-  deploymentAnnotations:
-    # collectord.io/index: '' # PROVIDE SPLUNK INDEX
+  ## @param configValues.deploymentAnnotations Annotations for configValues deployment
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ## E.g. PROVIDE SPLUNK INDEX
+  ## deploymentAnnotations:
+  ##   collectord.io/index: ''
+  deploymentAnnotations: {}
+  ## Autoscaling configuration
+  ## ref: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+  ##
   autoscaling:
+    ## @param configValues.autoscaling.vpa.enabled Enable VPA for pods (currently should be FALSE, TRUE still not tested)
+    ## @param configValues.autoscaling.vpa.annotations Annotations for VPA resource
+    ## @param configValues.autoscaling.vpa.controlledResources VPA List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory
+    ## @param configValues.autoscaling.vpa.maxAllowed VPA Max allowed resources for the pod
+    ## @param configValues.autoscaling.vpa.minAllowed VPA Min allowed resources for the pod
+    ##
+    vpa:
+      enabled: false
+      annotations: {}
+      controlledResources: []
+      maxAllowed: {}
+      minAllowed: {}
+      ## @param configValues.autoscaling.vpa.updatePolicy.updateMode Autoscaling update policy
+      ## Specifies whether recommended updates are applied when a Pod is started and whether recommended updates are applied during the life of a Pod
+      ## Possible values are "Off", "Initial", "Recreate", and "Auto".
+      ##
+      updatePolicy:
+        updateMode: Auto
+    ## @param configValues.autoscaling.hpa.enabled Enable HPA for pods
+    ## @param configValues.autoscaling.hpa.minReplicas Minimum number of replicas
+    ## @param configValues.autoscaling.hpa.maxReplicas Maximum number of replicas
+    ## @param configValues.autoscaling.hpa.targetCPU Target CPU utilization percentage
+    ## @param configValues.autoscaling.hpa.targetMemory Target Memory utilization percentage
+    ##
     hpa:
       enabled: false
+      minReplicas: ""
+      maxReplicas: ""
+      targetCPU: ""
+      targetMemory: ""
+  ## @param configValues.replicaCount Number of replicas to deploy
+  ##
   replicaCount: 1
-  updateStrategy:
-  podLabels:
+  ## @param configValues.updateStrategy Update strategy of deploy. For more details see values.yaml
+  ##
+  updateStrategy: {}
+    ## ONLY FOR DEPLOYMENTS:
+    ## @_param configValues.updateStrategy.type deployment strategy type. Can be set to RollingUpdate or Recreate
+    ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
+    ## ONLY FOR STATEFULSETS:
+    ## @_param configValues.updateStrategy.type statefulset strategy type. Can be set to RollingUpdate or OnDelete
+    ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+    # type: RollingUpdate
+  ## @param configValues.podLabels Extra labels for pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## Pod annotations configuration
+  ## ref: https://kubernetes.io/docs/concepts/workloads/autoscaling/
+  ## @param configValues.podAnnotations.enabled Enable pod annotations
+  ## @param configValues.podAnnotations.resetOnConfigChange Relative annnotation for reset onConfig change   
+  ## @param configValues.podAnnotations.annotations Additional pod annotations      
+  ##
   podAnnotations:
-    enabled: true
+    enabled: false
     resetOnConfigChange: true
-    annotations:
+    annotations: {}
+  ## Tracing configuration
+  ## @param configValues.tracing.enabled Enable the export of tracing.
+  ## @param configValues.tracing.url Traces collector url.
+  ##
   tracing:
     enabled: true
     url: http://otel-collector:4318/v1/traces
+  ## Prometheus metrics configuration
+  ## @param configValues.metrics.enabled Enable the export of Prometheus metrics.
+  ## @param configValues.metrics.url Metrics collector url.
+  ## @param configValues.metrics.prometheus.scrape Metrics collector url, used in deployment annotations
+  ## @param configValues.metrics.prometheus.port Metrics collector url port, used in deployment annotations
+  ## @param configValues.metrics.buckets [array] Metrics buckets for configmap
+  ## 
   metrics:
     enabled: true
     url: http://otel-collector:4318/v1/metrics
@@ -76,72 +147,216 @@ configValues:
       - 100
       - 150
       - 250
+  ## @param configValues.automountServiceAccountToken Mount Service Account token for pods
+  ##
   automountServiceAccountToken: false
-  hostAliases: 
-    # - ip: "127.0.0.1"
-    #   hostnames:
-    #   - "foo.local"
-    #   - "bar.local"
-    # - ip: "10.1.2.3"
-    #   hostnames:
-    #   - "foo.remote"
-    #   - "bar.remote"
-  affinity:
-  podAffinityPreset:
+  ## @param configValues.hostAliases Pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ## E.g. hostAliases: []
+  ##      - ip: "127.0.0.1"
+  ##        hostnames:
+  ##        - "foo.local"
+  ##        - "bar.local"
+  ##      - ip: "10.1.2.3"
+  ##        hostnames:
+  ##        - "foo.remote"
+  ##        - "bar.remote"
+  ##
+  hostAliases: []
+  ## @param configValues.affinity Affinity for pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `configValues.podAffinityPreset`, `configValues.podAntiAffinityPreset`, and `configValues.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param configValues.podAffinityPreset Pod affinity preset. Ignored if `configValues.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param configValues.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `configValues.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
   podAntiAffinityPreset: soft
+  ## @param configValues.nodeAffinityPreset Node afinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ## E.g. 
+  ## nodeAffinityPreset:
+  ##    ## @_param configValues.nodeAffinityPreset.type Node affinity preset type. Ignored if `configValues.affinity` is set. Allowed values: `soft` or `hard`
+  ##    ##
+  ##    type: ""
+  ##    ## @_param configValues.nodeAffinityPreset.key Node label key to match. Ignored if `configValues.affinity` is set
+  ##    ##
+  ##    key: ""
+  ##    ## @_param configValues.nodeAffinityPreset.values Node label values to match. Ignored if `configValues.affinity` is set
+  ##    ## E.g.
+  ##    ## values:
+  ##    ##   - e2e-az1
+  ##    ##   - e2e-az2
+  ##    ##
+  ##    values: []
+  ##
   nodeAffinityPreset: {}
-    # type: ''
-    # key: ''
-    # values: []
-  nodeSelector:
-  tolerations: 
-    # - key: foo
-    #   operator: Equal
-    #   value: bar
-  priorityClassName:
-  schedulerName:
+  ## @param configValues.nodeSelector Node labels for pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+  ##
+  nodeSelector: {}
+  ## @param configValues.tolerations Tolerations for pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ## E.g.
+  ## tolerations: 
+  ##   - key: foo
+  ##     operator: Equal
+  ##     value: bar
+  ##
+  tolerations: []
+  ## @param configValues.priorityClassName pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param configValues.schedulerName Name of the k8s scheduler (other than default) for pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param configValues.topologySpreadConstraints [array] Topology Spread Constraints for pod assignment spread across your cluster among failure-domains
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+  ##
   topologySpreadConstraints:
     - maxSkew: 1
       topologyKey: topology.kubernetes.io/zone
       whenUnsatisfiable: DoNotSchedule
       labelSelector:
         matchLabels:
-          app.kubernetes.io/name: heights
+          app.kubernetes.io/name: heights # {{ include "common.names.name" . }}
+  
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param configValues.podSecurityContext.enabled Enable pods' Security Context
+  ## @param configValues.podSecurityContext.fsGroupChangePolicy Set filesystem group change policy for pods
+  ## @param configValues.podSecurityContext.sysctls Set kernel settings using the sysctl interface for pods
+  ## @param configValues.podSecurityContext.supplementalGroups Set filesystem extra groups for pods
+  ## @param configValues.podSecurityContext.fsGroup Set fsGroup in pods' Security Context
+  ##
   podSecurityContext:
     enabled: false
     fsGroup: 1001
     fsGroupChangePolicy: Always
-    sysctls:
-    supplementalGroups:
-  terminationGracePeriodSeconds:
-  # ----- initContainers (custom) -----
-  initContainers:
-  # ----------- containers ------------
+    sysctls: []
+    supplementalGroups: []
+  ## @param configValues.terminationGracePeriodSeconds Seconds for pods need to terminate gracefully
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
+  ##
+  terminationGracePeriodSeconds: ""
+  ## @param configValues.initContainers Add additional init containers to the pods
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  ## E.g:
+  ## initContainers:
+  ##  - name: your-image-name
+  ##    image: your-image
+  ##    imagePullPolicy: Always
+  ##    command: ['sh', '-c', 'echo "hello world"']
+  ##
+  initContainers: []
+  ## MapColonies image (---- containers ---- deployment section)
+  ## @_param configValues.image.registry Image registry. Taken automatically from GLOBAL, should be overriden when in custom ONLY.
+  ## @param configValues.image.repository Image repository
+  ## @skip configValues.image.tag image tag (immutable tags are recommended)
+  ## @param configValues.image.digest image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended)
+  ## @param configValues.image.pullPolicy image pull policy. Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  ## @param configValues.image.pullSecrets image pull secrets. Secrets must be manually created in the namespace.
+  ## @param configValues.image.debug Enable image debug mode
+  ##
   image:
     # registry: docker.io
     repository: dem-heights
     tag: v2.1.7
+    digest: ""
     pullPolicy: IfNotPresent
-    pullSecrets:
+    pullSecrets: []
     debug: false
+  ## Configure Container Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  ## @param configValues.containerSecurityContext.enabled Enabled container' Security Context
+  ## @param configValues.containerSecurityContext.runAsNonRoot Set runAsNonRoot in container' Security Context
+  ## @param configValues.containerSecurityContext.runAsUser Set runAsUser in container' Security Context
+  ## @_param configValues.containerSecurityContext.seLinuxOptions [object,nullable] Set SELinux options in container
+  ## @_param configValues.containerSecurityContext.readOnlyRootFilesystem Set readOnlyRootFilesystem in container' Security Context
+  ## @_param configValues.containerSecurityContext.privileged Set privileged in container' Security Context
+  ## @_param configValues.containerSecurityContext.allowPrivilegeEscalation Set allowPrivilegeEscalation in container' Security Context
+  ## @_param configValues.containerSecurityContext.capabilities.drop List of capabilities to be dropped in container
+  ## @_param configValues.containerSecurityContext.seccompProfile.type Set seccomp profile in container
+  ##
   containerSecurityContext:
     enabled: false
     runAsNonRoot: true
     runAsUser: 1001
     # seLinuxOptions: {}
-  command:
-    # - sleep
-  args:
-    # - infinity
-  extraEnvVars:
-  extraEnvVarsCM:
-  extraEnvVarsSecret:
-  resources:
+    # runAsGroup: 1001
+    # readOnlyRootFilesystem: true
+    # privileged: false
+    # allowPrivilegeEscalation: false
+    # capabilities:
+    #  drop: ["ALL"]
+    # seccompProfile:
+    #  type: "RuntimeDefault"
+  ## @param configValues.command Override default container command (useful when using custom images)
+  ## E.g:
+  ##  command:
+  ##    - sleep
+  ##
+  command: []
+  ## @param configValues.args Override default container args (useful when using custom images)
+  ## E.g:
+  ##  args:
+  ##    - infinity
+  ##
+  ##
+  args: []
+  ## @param configValues.extraEnvVars Array with extra environment variables to add to containers
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param configValues.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for containers
+  ##
+  extraEnvVarsCM: ""
+  ## @param configValues.extraEnvVarsSecret Name of existing Secret containing extra env vars for containers
+  ##
+  extraEnvVarsSecret: ""
+  ## @param configValues.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+  ## Example:
+  ## resources:
+  ##   requests:
+  ##     cpu: 2
+  ##     memory: 512Mi
+  ##   limits:
+  ##     cpu: 3
+  ##     memory: 1024Mi
+  ##
+  resources: {}
+  ## Resource requests and limits
+  ## ref: http://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+  ## @param configValues.resourcesPreset Set container resources according to one common preset (allowed values: none, nano, small, medium, large, xlarge, 2xlarge). This is ignored if configValues.resources is set (configValues.resources is recommended for production).
+  ## More information: https://github.com/MapColonies/helm-common/blob/master/common-helpers/templates/_resources.tpl
+  ##
   resourcesPreset: nano
+  ## @param configValues.containerPorts.http HTTP container port
+  ## @param configValues.containerPorts.https HTTPS container port
+  ##
   containerPorts:
     http: 80
     https: 443
-  customLivenessProbe:
+  ## @param configValues.customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: {}
+  ## Configure extra options for containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param configValues.livenessProbe.enabled Enable livenessProbe on containers
+  ## @param configValues.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param configValues.livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param configValues.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param configValues.livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param configValues.livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
   livenessProbe:
     enabled: true
     initialDelaySeconds: 60
@@ -149,7 +364,16 @@ configValues:
     timeoutSeconds: 1
     failureThreshold: 3
     successThreshold: 1
-  customReadinessProbe:
+  ## @param configValues.customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: {}
+  ## @param configValues.readinessProbe.enabled Enable readinessProbe on containers
+  ## @param configValues.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param configValues.readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param configValues.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param configValues.readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param configValues.readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
   readinessProbe:
     enabled: true
     initialDelaySeconds: 60
@@ -157,7 +381,16 @@ configValues:
     timeoutSeconds: 1
     failureThreshold: 3
     successThreshold: 1
-  customStartupProbe:
+  ## @param configValues.customStartupProbe Custom startupProbe that overrides the default one
+  ##
+  customStartupProbe: {}
+  ## @param configValues.startupProbe.enabled Enable startupProbe on containers
+  ## @param configValues.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param configValues.startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param configValues.startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param configValues.startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param configValues.startupProbe.successThreshold Success threshold for startupProbe
+  ##
   startupProbe:
     enabled: true
     initialDelaySeconds: 60
@@ -165,17 +398,26 @@ configValues:
     timeoutSeconds: 1
     failureThreshold: 3
     successThreshold: 1
-  lifecycleHooks:
-  extraVolumes:
-  extraVolumeMounts:
-  sidecars:
-
-
-
-
-
-
-
+  ## @param configValues.lifecycleHooks for containers to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+  ## @param configValues.extraVolumes Optionally specify extra list of additional volumes for the pods
+  ##
+  extraVolumes: []
+  ## @param configValues.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the containers
+  ##
+  extraVolumeMounts: []
+  ## @param configValues.sidecars Add additional sidecar containers to the pods
+  ## E.g:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: []
 
 global:
   cloudProvider: {}
