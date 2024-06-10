@@ -3,7 +3,7 @@
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "heights.name" . -}}
 {{- $serviceName := include "service.fullname" . -}}
-{{ $targetPort := ternary "external" "internal" .Values.authentication.opa.enabled }}
+{{- $targetPort := ternary "external" "internal" .Values.authentication.opa.enabled -}}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
@@ -15,22 +15,22 @@ metadata:
     {{- end }}
 spec:
   {{- if .Values.route.host }}
-  host: {{ .Values.route.host }}
+  host: {{ .Values.route.host | quote }}
   {{- end }}
-  path:  {{ .Values.route.path | default "/" }}
+  path: {{ .Values.route.path | default "/" }}
   port:
     targetPort: {{ $targetPort }}
   to:
     kind: Service
     name: {{ $serviceName }}-nginx
-  {{- if .Values.route.https }}
+  {{- if .Values.route.tls.enabled }}
   tls:
     termination: edge
-    {{- if .Values.route.useCert }}
-    certificate: {{ .Files.Get "config/cert.pem" | quote }}
-    key: {{ .Files.Get "config/key.pem" | quote }}
-    caCertificate: {{ .Files.Get "config/caCertificate.pem" | quote }}
+    {{- if .Values.route.tls.useCert }}
+    certificate: {{ .Values.route.tls.certificate | quote }}
+    key: {{ .Values.route.tls.key | quote }}
+    caCertificate: {{ .Values.route.tls.caCertificate | quote }}
     insecureEdgeTerminationPolicy: Redirect
     {{- end }}
-  {{- end -}}
+  {{- end }}
 {{- end -}}
