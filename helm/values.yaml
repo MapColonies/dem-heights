@@ -8,21 +8,21 @@ serviceAccount:
   automountServiceAccountToken: false
 # ----------- initContainers -----------
 volumePermissions:
-  enabled: true
-  image:
-    # registry: docker.io
-    repository: bitnami/os-shell
-    tag: 12-debian-12-r-IMAGE_REVISION
-    pullPolicy: IfNotPresent
-    pullSecrets: 
-      # - pull-secret
-  containerSecurityContext:
-    enabled: true
-    runAsNonRoot: true
-    runAsUser: 1001
-    # seLinuxOptions: {}
-  resources:
-  resourcesPreset: nano
+  enabled: false
+  # image:
+  #   # registry: docker.io
+  #   repository: bitnami/os-shell
+  #   tag: 12-debian-12-r-IMAGE_REVISION
+  #   pullPolicy: IfNotPresent
+  #   pullSecrets: 
+  #     # - pull-secret
+  # containerSecurityContext:
+  #   enabled: true
+  #   runAsNonRoot: true
+  #   runAsUser: 1001
+  #   # seLinuxOptions: {}
+  # resources:
+  # resourcesPreset: nano
 # ------ volumes and volumeMounts ------
 persistence:
   enabled: true
@@ -117,42 +117,46 @@ configValues:
   ## @param configValues.podAnnotations.annotations Additional pod annotations      
   ##
   podAnnotations:
-    enabled: false
+    enabled: true
     resetOnConfigChange: true
     annotations: {}
-  ## Tracing configuration
-  ## @param configValues.tracing.enabled Enable the export of tracing.
-  ## @param configValues.tracing.url Traces collector url.
-  ##
-  tracing:
-    enabled: true
-    url: http://otel-collector:4318/v1/traces
   ## Prometheus metrics configuration
-  ## @param configValues.metrics.enabled Enable the export of Prometheus metrics.
-  ## @param configValues.metrics.url Metrics collector url.
-  ## @param configValues.metrics.prometheus.scrape Metrics collector url, used in deployment annotations
-  ## @param configValues.metrics.prometheus.port Metrics collector url port, used in deployment annotations
-  ## @param configValues.metrics.buckets [array] Metrics buckets for configmap
+  ## @param configValues.prometheus.scrape Flag to prometheus to scrape service metrics
+  ## @param configValues.prometheus.port If the metrics are exposed on a different port to the service then set this appropriately
+  ## @param configValues.prometheus.path If the metrics path is not `/metrics` override this
+  ## @param configValues.prometheus.scheme If the metrics endpoint is secured then you will need to set this to `https` & most likely set the `tls_config` of the scrape config
+  ## @param configValues.prometheus.params If the metrics endpoint uses query parameters then you can set any parameter
+  ## E.g. prometheus: 
+  ##        params:
+  ##        - format: prometheus
   ## 
-  metrics:
-    enabled: true
-    url: http://otel-collector:4318/v1/metrics
-    prometheus:
-      scrape: true
-      port: 8000
-    buckets:
-      - 1
-      - 10
-      - 50
-      - 100
-      - 150
-      - 250
+  prometheus:
+    scrape: true
+    port: 8000
+    path: /other-then-metrics
+    scheme: http
+    params: []
+
+  # metrics:
+  #   enabled: true
+  #   url: http://otel-collector:4318/v1/metrics
+  #   prometheus:
+  #     scrape: true
+  #     port: 8000
+  #   buckets:
+  #     - 1
+  #     - 10
+  #     - 50
+  #     - 100
+  #     - 150
+  #     - 250
+
   ## @param configValues.automountServiceAccountToken Mount Service Account token for pods
   ##
   automountServiceAccountToken: false
   ## @param configValues.hostAliases Pods host aliases
   ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
-  ## E.g. hostAliases: []
+  ## E.g. hostAliases: 
   ##      - ip: "127.0.0.1"
   ##        hostnames:
   ##        - "foo.local"
@@ -224,7 +228,7 @@ configValues:
       whenUnsatisfiable: DoNotSchedule
       labelSelector:
         matchLabels:
-          app.kubernetes.io/name: heights # {{ include "common.names.name" . }}
+          app.kubernetes.io/name: '{{ include "common.names.name" . }}'
   
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
@@ -421,9 +425,49 @@ configValues:
 
 global:
   cloudProvider: {}
+  deploymentFlavor: openshift
+  imageRegistry: my-registry-url.io
+  ## Tracing configuration
+  ## @param configValues.tracing
+  ## E.g
+  ## tracing:
+  ##  enabled: true
+  ##  url: http://otel-collector:4318/v1/traces
+  ##
   tracing: {}
   metrics: {}
   environment: development
+  ## Certificates shoule be handled on global level in order to be common
+  tlsCertificates:
+    certificate:
+    caCertificate:
+    key:
+  ## TEST START
+  tracing:
+    enabled: true
+    url: GLOBAL_http://otel-collector:4318/v1/traces
+  metrics:
+    enabled: true
+    url: http://otel-collector:4318/v1/metrics
+  currentSubChart: serving
+  testGlobalVal: info_GLOBAL
+  overrideGlobal:
+    testGlobalVal: info_GLOBAL_OVER
+  serving:
+    overrideGlobal:
+      testGlobalVal: info_GLOBAL_SERVING_OVER
+    heights:
+        overrideGlobal:
+          tracing:
+            enabled: true
+            url1: CHART_http://otel-collector:4318/v1/traces
+        releaseVersion: 'releaseVersion_OVER'
+        testGlobalVal: info_GLOBAL_SERVING_HEIGHTS_OVER
+  ingestion:
+    overrideGlobal:
+      testGlobalVal: info
+  testTemplated: '{{ include "common.names.name" . }}'
+  ## TEST END
 
 enabled: true
 replicaCount: 1
@@ -459,21 +503,13 @@ accessToken:
 
 env:
   port: 8080
-  targetPort: 8000
-  protocol: TCP
+  # targetPort: 8000
+  # protocol: TCP
   logLevel: info
   logPrettyPrintEnabled: false
   responseCompressionEnabled: true
   requestPayloadLimit: 8mb
-  tracing:
-    enabled: true
-    url: http://otel-collector:4318/v1/traces
   metrics:
-    enabled: true
-    url: http://otel-collector:4318/v1/metrics
-    prometheus:
-      scrape: true
-      port: 8000
     buckets:
       - 1
       - 10
@@ -549,23 +585,191 @@ envoy:
         memory: 900Mi
 
 route:
+  ## @param route.enabled Is route enabled for service
+  ##
   enabled: true
-  https: true
-  host:
+  ## @param route.annotations Additional custom annotations for route
+  ##
+  annotations: 
+    haproxy.router.openshift.io/rewrite-target: /
+  ## @param route.hostname Route hostname(DNS)
+  ##
+  hostname: ''
+  ## @param route.hostname Route path
+  ##
   path: /api/heights/v1
+  ## @param route.targetPort Route target port 
+  ##
+  targetPort: 8000
+  ## @param route.tls Route SSL configuration
+  ## ref: https://docs.openshift.com/container-platform/3.11/architecture/networking/routes.html
+  ## 
+  tls:
+    ## @param route.tls.enabled is route SSL enabled 
+    ##
+    enabled: true
+    ## @param route.tls.useCerts Is route should use certificates
+    ##
+    useCerts: true
+    ## @param route.tls.termination Secure routes provide the ability to use several types of TLS termination to serve certificates to the client (edge | passthrough | reencrypt)
+    ##
+    termination: edge
+    ## @param route.tls.insecureEdgeTerminationPolicy Edge-terminated routes can specify policy that enables traffic on insecure schemes (HTTP) to be disabled, (None or empty (for disabled) | Allow | Redirect)
+    ##
+    insecureEdgeTerminationPolicy: Redirect
+  ## @param route.extraRules Custom additional route rules
+  ##
+  extraRules: {}
+  ## @param route.timeout.enabled Is timeout defined for route (defaults to 30s by openshift)
+  ## @param route.timeout.enabled Timeout duration. Supported units (us, ms, s, m, h, d)
   timeout:
-    enabled: false # defaults to 30s by openshift
-    duration: 60s # supported units (us, ms, s, m, h, d)
-  useCert: false
+    enabled: false 
+    duration: 60s
 
 ingress:
-  enabled: false
-  type: nginx-org # supported values: 'nginx-org' | 'nginx-kubernetes'
-  tls:
-    enabled: false
-    useExternal: ''
-  host:
+  ## @param ingress.enabled Is route enabled for service
+  ##
+  enabled: true
+  ## @param ingress.apiVersion Force Ingress API version (automatically detected if not set)
+  ##
+  apiVersion: ""
+  ## @param ingress.type Ingress type supported by OS/K8S. Values: 'nginx-org' | 'nginx-kubernetes'
+  ## 
+  type: nginx-org
+  ## @param ingress.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ## e.g:
+  ## annotations:
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  ##
+  annotations: {}
+  ## @param ingress.pathType Ingress path type
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+  ##
+  pathType: Prefix
+  ## @param ingress.hostname Route hostname(DNS)
+  ##
+  hostname: COMPONENT_NAME.local
+  ## @param ingress.extraHosts An array with additional hostname(s) to be covered with the ingress record
+  ## e.g:
+  ## extraHosts:
+  ##   - name: COMPONENT_NAME.local
+  ##     path: /
+  ##
+  extraHosts: []
+  ## @param ingress.extraPaths An array with additional arbitrary paths that may need to be added to the ingress under the main host
+  ## e.g:
+  ## extraPaths:
+  ## - path: /*
+  ##   backend:
+  ##     serviceName: ssl-redirect
+  ##     servicePort: use-annotation
+  ##
+  extraPaths: []
+  ## @param ingress.path Default path for the ingress record
+  ## NOTE: You may need to set this to '/*' in order to use this with ALB ingress controllers
+  ##
   path: /dem-heights
+  ## @param ingress.extraRules Additional rules to be covered with this ingress record
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-rules
+  ## e.g:
+  ## extraRules:
+  ## - host: example.local
+  ##     http:
+  ##       path: /
+  ##       backend:
+  ##         service:
+  ##           name: example-svc
+  ##           port:
+  ##             name: http
+  ##
+  extraRules: []
+  ## @param ingress.extraTls TLS configuration for additional hostname(s) to be covered with this ingress record
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+  ## e.g:
+  ## extraTls:
+  ## - hosts:
+  ##     - %%COMPONENT_NAME%%.local
+  ##   secretName: %%COMPONENT_NAME%%.local-tls
+  ##
+  extraTls: []
+  ## @param ingress.selfSigned Create a TLS secret for this ingress record using self-signed certificates generated by Helm
+  ##
+  selfSigned: false
+  ## @param ingress.tls Enable TLS configuration for the host defined at `ingress.hostname` parameter
+  ## TLS certificates will be retrieved from a TLS secret with name: `{{- printf "%s-tls" .Values.ingress.hostname }}`
+  ## You can:
+  ##   - Use the `ingress.secrets` parameter to create this TLS secret
+  ##   - Rely on cert-manager to create it by setting the corresponding annotations
+  ##   - Rely on Helm to create self-signed certificates by setting `ingress.selfSigned=true`
+  ##
+  tls: true
+  # tls:
+    # enabled: false
+    # useExternal: ''
+  host:
   cors:
     enabled: true
     origin: '*'
+
+service:
+  ## @param service.type service type (NodePort | ClusterIP | LoadBalancer | ExternalName)
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  ##
+  type: NodePort
+  ## @param service.protocol Protocol for service (TCP | SCTP | UDP)
+  ## ref: https://kubernetes.io/docs/reference/networking/service-protocols/
+  ##
+  protocol: TCP
+  ## @param service.annotations Additional custom annotations for service
+  ##
+  annotations: {}
+  ## @param service.clusterIP service Cluster IP
+  ## e.g.:
+  ## clusterIP: None
+  ##
+  clusterIP: ""
+  ## @param service.sessionAffinity Control where client requests go, to the same pod or round-robin
+  ## Values: ClientIP or None
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/
+  ##
+  sessionAffinity: ""
+  ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+  ## sessionAffinityConfig:
+  ##   clientIP:
+  ##     timeoutSeconds: 300
+  ##
+  sessionAffinityConfig: {}
+  ## @param service.externalTrafficPolicy service external traffic policy. Probably default should be "Cluster"
+  ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+  ##
+  externalTrafficPolicy: ""
+  ## @param service.loadBalancerSourceRanges service Load Balancer sources
+  ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+  ## e.g:
+  ## loadBalancerSourceRanges:
+  ##   - 10.10.10.0/24
+  ##
+  loadBalancerSourceRanges: []
+  ## @param service.loadBalancerIP service Load Balancer IP
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+  ##
+  loadBalancerIP: ""
+  ## @param service.ports.http service HTTP port
+  ## @param service.ports.https service HTTPS port
+  ##
+  ports:
+    http: 80
+    https: ""
+  ## Node ports to expose
+  ## @param service.nodePorts.http Node port for HTTP
+  ## @param service.nodePorts.https Node port for HTTPS
+  ## NOTE: choose port between <30000-32767>
+  ##
+  nodePorts:
+    http: ""
+    https: ""
+  ## @param service.extraPorts Extra ports to expose in service (normally used with the `sidecars` value)
+  ##
+  extraPorts: []

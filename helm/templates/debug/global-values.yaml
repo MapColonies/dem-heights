@@ -1,0 +1,2 @@
+global:
+  {{ include "common.tplvalues.render" ( dict "value" .Values.global "context" . ) | nindent 4 }}

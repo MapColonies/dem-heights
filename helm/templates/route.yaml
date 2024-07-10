@@ -1,3 +1,8 @@
+{{- $MAIN_OBJECT_BLOCK := "configValues" -}}
+{{- $COMPONENT_NAME := "backend" -}}
+{{ include "mc-chart.route" (dict "COMPONENT_NAME" $COMPONENT_NAME "context" .) }}
+
+{{/*
 {{- $cloudProviderFlavor := include "heights.cloudProviderFlavor" . -}}
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
 {{- $releaseName := .Release.Name -}}
@@ -34,3 +39,4 @@ spec:
     {{- end }}
   {{- end -}}
 {{- end -}}
+*/}}

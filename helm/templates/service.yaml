@@ -1,3 +1,9 @@
+
+{{- $MAIN_OBJECT_BLOCK := "configValues" -}}
+{{- $COMPONENT_NAME := "backend" -}}
+{{ include "mc-chart.service" (dict "MAIN_OBJECT_BLOCK" $MAIN_OBJECT_BLOCK "COMPONENT_NAME" $COMPONENT_NAME "context" .) }}
+
+{{/*
 {{- if .Values.enabled -}}
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "heights.name" . -}}
@@ -30,3 +36,4 @@ spec:
     run: {{ $releaseName }}-{{ $chartName }}
     {{- include "heights.selectorLabels" . | nindent 4 }}
 {{- end }}
+*/}}

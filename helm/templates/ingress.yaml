@@ -1,3 +1,8 @@
+{{- $MAIN_OBJECT_BLOCK := "configValues" -}}
+{{- $COMPONENT_NAME := "backend" -}}
+{{ include "mc-chart.ingress" (dict "COMPONENT_NAME" $COMPONENT_NAME "context" .) }}
+
+{{/*
 {{- if and (.Values.enabled) (.Values.ingress.enabled) -}}
 {{- $releaseName := .Release.Name -}}
 {{- $chartName := include "heights.name" . -}}
@@ -11,10 +16,6 @@ metadata:
     {{- if eq .Values.ingress.type "nginx-org" }}
     nginx.org/mergeable-ingress-type: "minion"
     nginx.org/rewrites: 'serviceName={{ $serviceName }}-nginx rewrite=/'
-    {{- end }}
-    {{- if eq .Values.ingress.type "nginx-kubernetes" }}
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
-    {{- end }}
     nginx.org/location-snippets: |
       if ($request_method = OPTIONS) {
         return 204;
@@ -24,6 +25,10 @@ metadata:
       add_header 'Access-Control-Max-Age' 3600;
       add_header 'Access-Control-Expose-Headers' 'Content-Length';
       add_header 'Access-Control-Allow-Headers' '*';
+    {{- end }}
+    {{- end }}
+    {{- if eq .Values.ingress.type "nginx-kubernetes" }}
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
     {{- end }}
 spec:
   {{- if .Values.ingress.tls.enabled }}
@@ -44,3 +49,4 @@ spec:
               number: {{ .Values.nginx.port }}
     host: {{ .Values.ingress.host | quote }}
 {{- end -}}
+*/}}
