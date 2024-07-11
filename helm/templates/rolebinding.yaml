@@ -1,0 +1,2 @@
+
+{{ include "mc-chart.rolebinding" (dict "context" .) }}

@@ -443,13 +443,14 @@ global:
     caCertificate:
     key:
   ## TEST START
+  currentSubChart: serving
+  testTemplated: '{{ include "common.names.name" . }}'
   tracing:
     enabled: true
     url: GLOBAL_http://otel-collector:4318/v1/traces
   metrics:
     enabled: true
     url: http://otel-collector:4318/v1/metrics
-  currentSubChart: serving
   testGlobalVal: info_GLOBAL
   overrideGlobal:
     testGlobalVal: info_GLOBAL_OVER
@@ -466,7 +467,6 @@ global:
   ingestion:
     overrideGlobal:
       testGlobalVal: info
-  testTemplated: '{{ include "common.names.name" . }}'
   ## TEST END
 
 enabled: true
@@ -651,6 +651,11 @@ ingress:
   ## @param ingress.hostname Route hostname(DNS)
   ##
   hostname: COMPONENT_NAME.local
+  ## @param ingress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  ##
+  ingressClassName: ""
   ## @param ingress.extraHosts An array with additional hostname(s) to be covered with the ingress record
   ## e.g:
   ## extraHosts:
@@ -708,7 +713,9 @@ ingress:
   # tls:
     # enabled: false
     # useExternal: ''
-  host:
+  # host:
+  ## @param ingress.cors.enabled Is CORS enabled
+  ## @param ingress.cors.enabled CORS allowed origin
   cors:
     enabled: true
     origin: '*'
@@ -773,3 +780,46 @@ service:
   ## @param service.extraPorts Extra ports to expose in service (normally used with the `sidecars` value)
   ##
   extraPorts: []
+
+serviceAccount:
+  ## @param serviceAccount.create Specifies whether a ServiceAccount should be created
+  ##
+  create: true
+  ## @param serviceAccount.name The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the common.names.fullname template
+  ##
+  name: ""
+  ## @param serviceAccount.annotations Additional Service Account annotations (evaluated as a template)
+  ##
+  annotations: {}
+  ## @param serviceAccount.automountServiceAccountToken Automount service account token for the server service account
+  ##
+  automountServiceAccountToken: true
+
+rbac:
+  ## @param rbac.create Specifies whether RBAC resources should be created
+  ##
+  create: true
+  ## @param rbac.rules Custom RBAC rules to set
+  ## e.g:
+  ## rules:
+  ##   - apiGroups:
+  ##       - ""
+  ##     resources:
+  ##       - pods
+  ##     verbs:
+  ##       - get
+  ##       - list
+  ##
+  rules: []
+
+## PodSecurityPolicy configuration
+## ref: https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+##
+podSecurityPolicy:
+  ## @param podSecurityPolicy.create Whether to create a PodSecurityPolicy. WARNING: PodSecurityPolicy is deprecated in Kubernetes v1.21 or later, unavailable in v1.25 or later
+  ##
+  create: false
+  ## @param podSecurityPolicy.enabled Enable PodSecurityPolicy's RBAC rules
+  ##
+  enabled: false
