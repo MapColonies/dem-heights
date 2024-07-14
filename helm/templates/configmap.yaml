@@ -1,6 +1,8 @@
 {{- $COMPONENT_NAME := "backend" -}}
 
 {{- define "confMapData" -}}
+{{- $CONFIG_MANAGER_OBJECT := include "common.tplvalues.getGlobalObject" (dict "objName" "configManagment" "context" .) | fromYaml }}
+{{- if not $CONFIG_MANAGER_OBJECT.enabled -}}
   production.json: {{ .Files.Get "config/production.json" | quote }}
   ACCESS_TOKEN_ATTRIBUTE_NAME: {{ .Values.accessToken.attributeName | quote }}
   ACCESS_TOKEN_INJECTION_TYPE: {{ .Values.accessToken.injectionType | quote }}
@@ -13,6 +15,7 @@
   PROTO_FILE_URL: {{ .Values.env.protoFileUrl | quote }}
   SERVICE_VERSION: {{ .Values.env.serviceVersion | quote }}
   MAXIMUM_TILES_PER_REQUEST: {{ .Values.env.maximumTilesPerRequest | quote }}
+{{- end }}
   # BUKU: {{ dig "serving" "heights" "overrideGlobal" "logLevel" "GGGGGG" .Values.global }}
   # MUKU: {{ tpl .Values.global.testTemplated . }}
   MUKU_GLOBAL: {{ include "common.tplvalues.render" ( dict "value" .Values.global.testTemplated "context" . ) }}

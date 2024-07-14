@@ -437,6 +437,9 @@ global:
   tracing: {}
   metrics: {}
   environment: development
+  ## Configuration Manager
+  configManagment:
+    enabled: false
   ## Certificates shoule be handled on global level in order to be common
   tlsCertificates:
     certificate:
