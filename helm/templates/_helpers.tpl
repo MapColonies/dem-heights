@@ -150,3 +150,16 @@ Returns metrics url from global if exists or from chart's values
     {{- .Values.env.metrics.url -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Generate OpenTelemetry trace configuration
+*/}}
+{{- define "nginx.otelTrace" -}}
+{{- if eq .Values.nginx.opentelemetry.samplerMethod "AlwaysOn" -}}
+otel_trace on;
+{{- else if eq .Values.nginx.opentelemetry.samplerMethod "TraceIdRatioBased" -}}
+otel_trace $ratio_sampler;
+{{- else -}}
+otel_trace off;
+{{- end -}}
+{{- end -}}

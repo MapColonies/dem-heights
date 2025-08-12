@@ -88,6 +88,11 @@ nginx:
     domain: "dem"
     url: http://opa-int-opa-service.infra-services/v1/data/http/authz/decision
     # url: http://opa.service/v1/data/http/authz/decision
+  opentelemetry:
+    serviceName: nginx
+    samplerMethod: "AlwaysOff"
+    exporterPort: 4317
+    ratio: 10
   additionalPodAnnotations:
     co.elastic.logs/enabled: 'true'
     co.elastic.logs/module: 'nginx'
