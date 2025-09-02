@@ -82,15 +82,16 @@ nginx:
   port: 8080
   targetPort: 80
   nodePort: 30001
-  maxAge: '3600'
+  nginx:
+    maxAge: '3600'
   authorization:
     enabled: true
-    domain: "dem"
+    domain: dem
     url: http://opa-int-opa-service.infra-services/v1/data/http/authz/decision
     # url: http://opa.service/v1/data/http/authz/decision
   opentelemetry:
     serviceName: nginx
-    samplerMethod: "AlwaysOff"
+    samplerMethod: AlwaysOff
     exporterPort: 4317
     ratio: 10
   additionalPodAnnotations:
@@ -130,7 +131,7 @@ nginx:
     timeout:
       enabled: false # defaults to 30s by openshift
       duration: 60s # supported units (us, ms, s, m, h, d)
-    rewriteTarget: ""
+    rewriteTarget: /
     tls:
       enabled: false
       useCert: false

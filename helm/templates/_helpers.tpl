@@ -154,7 +154,7 @@ Returns metrics url from global if exists or from chart's values
 {{/*
 Generate OpenTelemetry trace configuration
 */}}
-{{- define "nginx.otelTrace" -}}
+{{- define "heightsNginx.otelTrace" -}}
 {{- if eq .Values.nginx.opentelemetry.samplerMethod "AlwaysOn" -}}
 otel_trace on;
 {{- else if eq .Values.nginx.opentelemetry.samplerMethod "TraceIdRatioBased" -}}
