@@ -83,12 +83,11 @@ nginx:
   targetPort: 80
   nodePort: 30001
   nginx:
-    maxAge: '3600'
+    maxAge: '1728000' # 20 days
   authorization:
     enabled: true
     domain: dem
-    url: http://opa-int-opa-service.infra-services/v1/data/http/authz/decision
-    # url: http://opa.service/v1/data/http/authz/decision
+    url: http://opa.service/v1/data/http/authz/decision
   opentelemetry:
     serviceName: nginx
     samplerMethod: AlwaysOff
