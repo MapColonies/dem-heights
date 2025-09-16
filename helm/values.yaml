@@ -81,7 +81,6 @@ nginx:
     tag: latest
   port: 8080
   targetPort: 80
-  nodePort: 30001
   nginx:
     maxAge: '1728000' # 20 days
   authorization:
@@ -122,9 +121,6 @@ nginx:
     routesMapping:
       - host:
         path: /api/heights/v1
-    timeout:
-      enabled: false # defaults to 30s by openshift
-      duration: 60s # supported units (us, ms, s, m, h, d)
     rewriteTarget: /
     tls:
       enabled: false
@@ -135,7 +131,6 @@ nginx:
 
   ingress:
     enabled: false
-    type: nginx-org # supported values: 'nginx-org' | 'nginx-kubernetes'
     ingressMapping:
       - host:
         path: /dem-heights
