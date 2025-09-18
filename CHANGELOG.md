@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.2.0](https://github.com/MapColonies/dem-heights/compare/v2.1.7...v2.2.0) (2025-09-18)
+
+
+### Features
+
+* migrate to opala (MAPCO-7171) ([#30](https://github.com/MapColonies/dem-heights/issues/30)) ([eb98973](https://github.com/MapColonies/dem-heights/commit/eb98973f0f735e6c457d3106e02d5328db70b84b))
+
+
+### Bug Fixes
+
+* artifacts ([73b1c39](https://github.com/MapColonies/dem-heights/commit/73b1c3981d76e02768b507866e939e9a824788c5))
+* environment for umbrella ([f21ec69](https://github.com/MapColonies/dem-heights/commit/f21ec697da30ecf4c75c929f1541787c6ea1fc3a))
+
 ### [2.1.7](https://github.com/MapColonies/dem-heights/compare/v2.1.6...v2.1.7) (2024-02-06)
 
 ### [2.1.6](https://github.com/MapColonies/dem-heights/compare/v2.1.5...v2.1.6) (2024-02-06)
