@@ -10,8 +10,7 @@ metadata:
     environment: {{ include "heights.environment" . }}
     release: {{ .Release.Name }}
 data:
-  jwt.js: {{ .Files.Get "config/jwt.js" | quote }}
   log_format.conf: {{ tpl (.Files.Get "config/log_format.conf") . | quote }}
   default.conf: {{ tpl (.Files.Get "config/default.conf") . | quote }}
-  nginx.conf: {{ .Files.Get "config/nginx.conf" | quote }}
+  nginx.conf: {{ tpl (.Files.Get "config/nginx.conf") . | quote }}
 {{- end }}
