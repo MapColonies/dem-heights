@@ -128,12 +128,3 @@ nginx:
       certificate: ""
       key: ""
       caCertificate: ""
-
-  ingress:
-    enabled: false
-    ingressMapping:
-      - host:
-        path: /dem-heights
-    tls:
-      enabled: false
-      secretName: ingress-tls-secret
