@@ -78,7 +78,6 @@ nginx:
   replicaCount: 1
   image:
     repository: nginx
-    tag: latest
   port: 8080
   targetPort: 80
   nginx:
