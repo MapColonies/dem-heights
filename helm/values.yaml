@@ -24,7 +24,7 @@ caKey: ca.crt
 
 image:
   repository: dem-heights
-  tag: v1.0.2
+  tag: ''
 
 accessToken: 
   attributeName: token
@@ -77,11 +77,19 @@ nginx:
   fullnameOverride: "dem-serving-heights-nginx"
   replicaCount: 1
   image:
-    repository: nginx
+    repository: common/nginx
   port: 8080
   targetPort: 80
+  backend:
+    host: heights
+    port: 8080
   nginx:
     maxAge: '1728000' # 20 days
+    extensions:
+      server:
+        fileName: 'server.conf'
+      location:
+        fileName: 'location.conf'
   authorization:
     enabled: true
     domain: dem
@@ -91,14 +99,14 @@ nginx:
     co.elastic.logs/module: 'nginx'
     co.elastic.logs/fileset.stdout: 'access'
     co.elastic.logs/fileset.stderr: 'error'
-  extraVolumes:
-    - name: nginx-config
-      configMap:
-        name: "{{ .Release.Name }}-nginx-configmap"
-  extraVolumeMounts:
-    - name: nginx-config
-      mountPath: "/etc/nginx/conf.d/default.conf"
-      subPath: default.conf
+  # extraVolumes:
+  #   - name: nginx-config
+  #     configMap:
+  #       name: "{{ .Release.Name }}-nginx-configmap"
+  # extraVolumeMounts:
+  #   - name: nginx-config
+  #     mountPath: "/etc/nginx/conf.d/default.conf"
+  #     subPath: default.conf
   resources:
     enabled: true
     value:

@@ -10,5 +10,5 @@ metadata:
     environment: {{ include "heights.environment" . }}
     release: {{ .Release.Name }}
 data:
-  default.conf: {{ tpl (.Files.Get "config/default.conf") . | quote }}
+  location.conf: {{ tpl (.Files.Get "config/location.conf") . | quote }}
 {{- end }}
