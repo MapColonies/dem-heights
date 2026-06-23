@@ -23,7 +23,7 @@ caPath: /usr/local/share/ca-certificates
 caKey: ca.crt
 
 image:
-  repository: dem-heights
+  repository: dem/dem-heights
   tag: ''
 
 accessToken: 
@@ -78,6 +78,9 @@ nginx:
   replicaCount: 1
   image:
     repository: common/nginx
+  mclabels:
+    environment: development
+    owner: dem
   port: 8080
   targetPort: 80
   backend:
@@ -86,27 +89,32 @@ nginx:
   nginx:
     maxAge: '1728000' # 20 days
     extensions:
-      server:
-        fileName: 'server.conf'
       location:
-        fileName: 'location.conf'
+        enabled: true
   authorization:
     enabled: true
     domain: dem
     url: http://opa.service/v1/data/http/authz/decision
+  opentelemetry:
+    serviceName: nginx
+    samplerMethod: AlwaysOff
+    exporterPort: 4317
+    ratio: 10
   additionalPodAnnotations:
     co.elastic.logs/enabled: 'true'
     co.elastic.logs/module: 'nginx'
     co.elastic.logs/fileset.stdout: 'access'
     co.elastic.logs/fileset.stderr: 'error'
-  # extraVolumes:
-  #   - name: nginx-config
-  #     configMap:
-  #       name: "{{ .Release.Name }}-nginx-configmap"
-  # extraVolumeMounts:
-  #   - name: nginx-config
-  #     mountPath: "/etc/nginx/conf.d/default.conf"
-  #     subPath: default.conf
+  extraVolumes:
+    - name: nginx-config
+      configMap:
+        name: "{{ .Release.Name }}-nginx-configmap"
+  extraVolumeMounts:
+    - name: nginx-config
+      mountPath: "/etc/nginx/conf.d/extensions/location.conf"
+      subPath: location.conf
+  prometheusExporter:
+    enabled: true
   resources:
     enabled: true
     value:
