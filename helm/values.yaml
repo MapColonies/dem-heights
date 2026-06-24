@@ -98,6 +98,7 @@ nginx:
   opentelemetry:
     serviceName: nginx
     samplerMethod: AlwaysOff
+    exporterHost: otel-collector
     exporterPort: 4317
     ratio: 10
   additionalPodAnnotations:
