@@ -31,7 +31,6 @@ spec:
         app: {{ $chartName }}
         release: {{ $releaseName }}
         run: {{ $releaseName }}-{{ $chartName }}
-        mapcolonies.io/alloy-api-logs: 'true'
         {{- include "heights.selectorLabels" . | nindent 8 }}
       {{- if .Values.resetOnConfigChange }}
       annotations:

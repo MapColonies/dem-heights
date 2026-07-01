@@ -24,7 +24,6 @@ caKey: ca.crt
 
 image:
   repository: dem/dem-heights
-  tag: ''
 
 accessToken: 
   attributeName: token
@@ -80,6 +79,8 @@ nginx:
     repository: common/nginx
   mclabels:
     environment: development
+    gisDomain: dem
+    partOf: dem-serving
     owner: dem
   port: 8080
   targetPort: 80
