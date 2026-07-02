@@ -85,7 +85,7 @@ nginx:
   port: 8080
   targetPort: 80
   backend:
-    host: heights
+    host: dem-heights # Should be replaced with real service name
     port: 8080
   nginx:
     maxAge: '1728000' # 20 days
