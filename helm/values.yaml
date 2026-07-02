@@ -23,8 +23,7 @@ caPath: /usr/local/share/ca-certificates
 caKey: ca.crt
 
 image:
-  repository: dem-heights
-  tag: v1.0.2
+  repository: dem/dem-heights
 
 accessToken: 
   attributeName: token
@@ -77,16 +76,32 @@ nginx:
   fullnameOverride: "dem-serving-heights-nginx"
   replicaCount: 1
   image:
-    repository: nginx
-    tag: latest
+    repository: common/nginx
+  mclabels:
+    environment: development
+    gisDomain: dem
+    partOf: dem-serving
+    owner: dem
   port: 8080
   targetPort: 80
+  backend:
+    host: dem-heights # Should be replaced with real service name
+    port: 8080
   nginx:
     maxAge: '1728000' # 20 days
+    extensions:
+      location:
+        enabled: true
   authorization:
     enabled: true
     domain: dem
     url: http://opa.service/v1/data/http/authz/decision
+  opentelemetry:
+    serviceName: nginx
+    samplerMethod: AlwaysOff
+    exporterHost: otel-collector
+    exporterPort: 4317
+    ratio: 10
   additionalPodAnnotations:
     co.elastic.logs/enabled: 'true'
     co.elastic.logs/module: 'nginx'
@@ -98,8 +113,10 @@ nginx:
         name: "{{ .Release.Name }}-nginx-configmap"
   extraVolumeMounts:
     - name: nginx-config
-      mountPath: "/etc/nginx/conf.d/default.conf"
-      subPath: default.conf
+      mountPath: "/etc/nginx/conf.d/extensions/location.conf"
+      subPath: location.conf
+  prometheusExporter:
+    enabled: true
   resources:
     enabled: true
     value:
