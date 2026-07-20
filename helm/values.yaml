@@ -80,7 +80,7 @@ nginx:
   mclabels:
     environment: development
     gisDomain: dem
-    partOf: dem-serving
+    partOf: serving
     owner: dem
   port: 8080
   targetPort: 80
