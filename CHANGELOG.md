@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.2.1](https://github.com/MapColonies/dem-heights/compare/v2.2.0...v2.2.1) (2026-07-21)
+
+
+### Bug Fixes
+
+* **openapi:** correct productType example values ([#37](https://github.com/MapColonies/dem-heights/issues/37)) ([8f3a3ca](https://github.com/MapColonies/dem-heights/commit/8f3a3ca22953db7ad6d3c3e9629296fa57ad52df))
+
+
+### Helm Changes
+
+* **nginx:** update dependency version ([#34](https://github.com/MapColonies/dem-heights/issues/34)) ([9293c3c](https://github.com/MapColonies/dem-heights/commit/9293c3c03d7f76a3b6afbcc091c58c59b4328f1b))
+* **values:** update partOf label to serving ([#36](https://github.com/MapColonies/dem-heights/issues/36)) ([73e495b](https://github.com/MapColonies/dem-heights/commit/73e495bc7a11b44bd5ab793d3ce255db6dde4898))
+
 ## [2.2.0](https://github.com/MapColonies/dem-heights/compare/v2.1.7...v2.2.0) (2026-03-04)
 
 
