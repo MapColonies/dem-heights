@@ -49,12 +49,12 @@ paths:
                     productId: second_Product
                 products:
                   first_Product:
-                    productType: QUANTIZED_MESH_DTM_BEST
+                    productType: DTM
                     updateDate: '2023-05-08T17:44:01.000Z'
                     resolutionMeter: 30
                     absoluteAccuracyLEP90: 9.e-7
                   second_Product:
-                    productType: QUANTIZED_MESH_DTM_BEST
+                    productType: DTM
                     updateDate: '2023-05-08T17:44:01.000Z'
                     resolutionMeter: 100
                     absoluteAccuracyLEP90: 9.e-7
