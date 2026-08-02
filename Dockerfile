@@ -25,4 +25,4 @@ COPY --from=build /app/package.json ./package.json
 USER node
 EXPOSE 8000
 
-CMD ["node", "--max_old_space_size=512", "./dist/index.js"]
+CMD ["node", "./dist/index.js"]
