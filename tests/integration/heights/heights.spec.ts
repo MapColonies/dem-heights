@@ -97,6 +97,13 @@ describe('heights', function () {
         });
       });
 
+      it('should default productType to MIXED when it is omitted', async function () {
+        const response = await requestSender.getPoints({ positions: mockJsonData.positions } as GetHeightsPointsRequest);
+
+        expect(response.status).toBe(httpStatusCodes.OK);
+        expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
+      });
+
       it('Should return 200 status code and the positions with null heights and no fields if no provider match for the request (Legit request)', async function () {
         const nonExistingTerrainType = TerrainTypes.DSM;
 
