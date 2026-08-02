@@ -1,4 +1,4 @@
-FROM node:24 AS build
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 
-FROM node:24-slim AS production
+FROM node:24-alpine AS production
 
 WORKDIR /app
 
@@ -25,4 +25,4 @@ COPY --from=build /app/package.json ./package.json
 USER node
 EXPOSE 8000
 
-CMD ["node", "./dist/index.js"]
+CMD ["node", "--max_old_space_size=512", "./dist/index.js"]
