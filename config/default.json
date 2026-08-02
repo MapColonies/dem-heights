@@ -50,7 +50,5 @@
   },
   "synchRecordsInterval": 600000,
   "productMetadataFields": "productType,updateDate,resolutionMeter,absoluteAccuracyLEP90",
-  "protoFileUrl": "https://github.com/MapColonies/dem-heights-data.git",
-  "serviceVersion": "v1",
   "maximumTilesPerRequest": 150
 }

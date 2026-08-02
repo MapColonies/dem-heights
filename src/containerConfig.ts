@@ -3,7 +3,6 @@ import path from 'path';
 import config from 'config';
 import pino from 'pino';
 import client from 'prom-client';
-import protobuf from 'protobufjs';
 import { instanceCachingFactory, container, Lifecycle } from 'tsyringe';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { trace } from '@opentelemetry/api';
@@ -21,8 +20,6 @@ import { CatalogRecords } from './heights/models/catalogRecords';
 import { isSame } from './heights/utilities';
 import { WorkerEvent } from './workerCatalogRecords';
 
-const PROTO_FILE = './proto/posWithHeight.proto';
-
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
   useChild?: boolean;
@@ -30,8 +27,6 @@ export interface RegisterOptions {
 
 export const CATALOG_RECORDS_MAP = Symbol('CATALOG_RECORDS_MAP');
 export const PRODUCT_METADATA_FIELDS = Symbol('PRODUCT_METADATA_FIELDS');
-export const POS_WITH_HEIGHT_PROTO_RESPONSE = Symbol('POS_WITH_HEIGHT_PROTO_RESPONSE');
-export const POS_WITH_HEIGHT_PROTO_REQUEST = Symbol('POS_WITH_HEIGHT_PROTO_REQUEST');
 export const DEM_TERRAIN_CACHE_MANAGER = Symbol('DEM_TERRAIN_CACHE_MANAGER');
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
@@ -98,10 +93,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   tracing.start();
   const tracer = trace.getTracer(SERVICE_NAME);
 
-  const posWithHeightProtoRoot = await protobuf.load(path.resolve(__dirname, PROTO_FILE));
-  const posWithHeightProtoResponse = posWithHeightProtoRoot.lookupType('posWithHeightPackage.PosWithHeightResponse');
-  const posWithHeightProtoRequest = posWithHeightProtoRoot.lookupType('posWithHeightPackage.PosRequest');
-
   const dependencies: InjectionObject<unknown>[] = [
     { token: SERVICES.CONFIG, provider: { useValue: config } },
     { token: SERVICES.LOGGER, provider: { useValue: logger } },
@@ -122,9 +113,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     },
     { token: CATALOG_RECORDS_MAP, provider: { useClass: CatalogRecords }, options: { lifecycle: Lifecycle.Singleton } },
     { token: PRODUCT_METADATA_FIELDS, provider: { useValue: productMetadataFields } },
-    { token: POS_WITH_HEIGHT_PROTO_RESPONSE, provider: { useValue: posWithHeightProtoResponse } },
     { token: DEM_TERRAIN_CACHE_MANAGER, provider: { useClass: DEMTerrainCacheManager }, options: { lifecycle: Lifecycle.Singleton } },
-    { token: POS_WITH_HEIGHT_PROTO_REQUEST, provider: { useValue: posWithHeightProtoRequest } },
     { token: HEIGHTS_ROUTER_SYMBOL, provider: { useFactory: heightsRouterFactory } },
     {
       token: 'onSignal',
@@ -138,5 +127,5 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     },
   ];
 
-  return registerDependencies(dependencies, options?.override, options?.useChild);
+  return Promise.resolve(registerDependencies(dependencies, options?.override, options?.useChild));
 };

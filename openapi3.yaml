@@ -26,10 +26,6 @@ paths:
                 - latitude: 32.80775333333333
                   longitude: 35.22673
               productType: MIXED
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
       responses:
         '200':
           description: OK
@@ -58,10 +54,6 @@ paths:
                     updateDate: '2023-05-08T17:44:01.000Z'
                     resolutionMeter: 100
                     absoluteAccuracyLEP90: 9.e-7
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
         '500':
           description: Service Error
           content:
