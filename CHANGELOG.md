@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.0](https://github.com/MapColonies/dem-heights/compare/v2.2.1...v3.0.0) (2026-08-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* /points no longer accepts or returns application/octet-stream (protobuf). Clients must use application/json.
+* /points no longer accepts or returns application/octet-stream (protobuf). Clients must use application/json.
+
+### Features
+
+* remove protobuf support from /points endpoint ([#40](https://github.com/MapColonies/dem-heights/issues/40)) ([693cacc](https://github.com/MapColonies/dem-heights/commit/693cacc7d1ef28c813ee9f689fb300739488a786))
+
+
+### Build System
+
+* upgrade runtime image to Node 24 ([411ec6a](https://github.com/MapColonies/dem-heights/commit/411ec6a98f300c0b3746490c1ffcd589c3731360))
+* use alpine base image ([#42](https://github.com/MapColonies/dem-heights/issues/42)) ([68c397f](https://github.com/MapColonies/dem-heights/commit/68c397f09d673a550fd658669adbbc48b7251605))
+
+
+### Miscellaneous Chores
+
+* upgrade to Node 24 ([#41](https://github.com/MapColonies/dem-heights/issues/41)) ([b0efd8c](https://github.com/MapColonies/dem-heights/commit/b0efd8c0a7bcab362fb052d1ecff8093b587391e))
+
 ## [2.2.1](https://github.com/MapColonies/dem-heights/compare/v2.2.0...v2.2.1) (2026-07-21)
 
 
