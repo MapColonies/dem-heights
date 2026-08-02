@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import path from 'path';
-import fs from 'fs';
 import config from 'config';
 import { Cartesian2, Cartographic, CesiumTerrainProvider } from 'cesium';
 import { Application } from 'express';
@@ -135,20 +133,6 @@ describe('heights', function () {
 
           expect(typeof position['productId'] === 'undefined').toEqual(isNullHeight);
         }
-      });
-    });
-
-    describe('Get points height (PROTO)', function () {
-      it('should return 200 status code and points heights for basic usage', async function () {
-        const MOCK_PROTO_FILE_RELATIVE_PATH = '../../../src/heights/MOCKS/protoReq.bin';
-        const protoFile = fs.readFileSync(path.resolve(__dirname, MOCK_PROTO_FILE_RELATIVE_PATH), null);
-
-        const response = await requestSender.getPointsProtobuf(protoFile);
-
-        expect(response.status).toBe(httpStatusCodes.OK);
-        expect(response.type).toBe('application/octet-stream');
-
-        // TODO: should decode returned protobuf data and check as json?
       });
     });
   });

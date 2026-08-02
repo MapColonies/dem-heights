@@ -8,10 +8,6 @@ export class HeightsRequestSender {
     return supertest.agent(this.app).post('/points').send(payload).set('Content-Type', 'application/json');
   }
 
-  public async getPointsProtobuf(payload: ArrayBufferLike): Promise<supertest.Response> {
-    return supertest.agent(this.app).post('/points').send(payload).set('Content-Type', 'application/octet-stream');
-  }
-
   // public async getPath(): Promise<supertest.Response> {
   //   return supertest.agent(this.app).post('/path').set('Content-Type', 'application/json');
   // }

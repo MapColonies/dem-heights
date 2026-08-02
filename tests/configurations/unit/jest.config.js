@@ -13,8 +13,7 @@ module.exports = {
   collectCoverageFrom: [
     '<rootDir>/src/**/*.ts',
     '!*/node_modules/',
-    '!<rootDir>/src/heights/middlewares/decodeProtobuf.ts',
-    '!<rootDir>/src/heights/middlewares/encodeProtobuf.ts',
+    '!<rootDir>/src/heights/middlewares/sendResponse.ts',
     '!/vendor/**',
     '!*/common/**',
     '!**/controllers/**',

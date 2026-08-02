@@ -62,7 +62,5 @@
   },
   "synchRecordsInterval": "SYNCH_RECORDS_INTERVAL",
   "productMetadataFields": "productType,updateDate,resolutionMeter,absoluteAccuracyLEP90",
-  "protoFileUrl": "PROTO_FILE_URL",
-  "serviceVersion": "SERVICE_VERSION",
   "maximumTilesPerRequest": "MAXIMUM_TILES_PER_REQUEST"
 }

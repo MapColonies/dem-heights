@@ -57,8 +57,6 @@ env:
   cswDemUrl: ''
   s3GatewayDemUrl: ''
   synchRecordsInterval: 600000
-  protoFileUrl: ''
-  serviceVersion: ''
   maximumTilesPerRequest: 250
 
 resources:

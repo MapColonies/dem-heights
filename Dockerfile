@@ -1,4 +1,4 @@
-FROM node:20 as build
+FROM node:20 AS build
 
 WORKDIR /app
 
@@ -8,16 +8,21 @@ RUN npm ci
 COPY . /app
 RUN npm run build
 
+# Strip dev dependencies so only runtime deps ship
+RUN npm prune --omit=dev
+
+
+FROM node:20-slim AS production
+
+WORKDIR /app
+
 ENV NODE_ENV=production
 
-COPY ./entrypoint.sh ./
-RUN chmod +x ./entrypoint.sh
-
-RUN mkdir -p ./clonedProtoFolder && chown -R root ./clonedProtoFolder && chmod -R g=u ./clonedProtoFolder && chown -R node ./clonedProtoFolder
-RUN mkdir -p ./dist/proto && chown -R root ./dist/proto && chmod -R g=u ./dist/proto && chown -R node ./dist/proto
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package.json ./package.json
 
 USER node
 EXPOSE 8000
 
-ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "--max_old_space_size=512", "./dist/index.js"]

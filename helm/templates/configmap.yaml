@@ -30,7 +30,5 @@ data:
   CSW_DEM_URL: {{ .Values.env.cswDemUrl | quote }}
   S3_GATEWAY_DEM_URL: {{ .Values.env.s3GatewayDemUrl | quote }}
   SYNCH_RECORDS_INTERVAL: {{ .Values.env.synchRecordsInterval | quote }}
-  PROTO_FILE_URL: {{ .Values.env.protoFileUrl | quote }}
-  SERVICE_VERSION: {{ .Values.env.serviceVersion | quote }}
   MAXIMUM_TILES_PER_REQUEST: {{ .Values.env.maximumTilesPerRequest | quote }}
 {{- end }}
