@@ -1,4 +1,4 @@
-FROM node:20 AS build
+FROM node:24 AS build
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 
-FROM node:20-slim AS production
+FROM node:24-slim AS production
 
 WORKDIR /app
 
