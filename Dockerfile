@@ -22,7 +22,10 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./package.json
 
+# Run from dist so node-config resolves ./config relative to CWD
+WORKDIR /app/dist
+
 USER node
 EXPOSE 8000
 
-CMD ["node", "--max_old_space_size=512", "./dist/index.js"]
+CMD ["node", "./index.js"]
