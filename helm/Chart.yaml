@@ -2,8 +2,8 @@ apiVersion: v2
 name: dem-heights
 description: Helm chart for heights service
 type: application
-version: 2.2.1
-appVersion: 2.2.1
+version: 3.0.0
+appVersion: 3.0.0
 dependencies:
   - name: nginx
     version: 2.3.0
