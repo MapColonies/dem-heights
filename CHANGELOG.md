@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.1](https://github.com/MapColonies/dem-heights/compare/v3.0.0...v3.0.1) (2026-08-04)
+
+
+### Build System
+
+* run container from dist so node-config resolves config dir ([#46](https://github.com/MapColonies/dem-heights/issues/46)) ([df12103](https://github.com/MapColonies/dem-heights/commit/df1210306a58f4874e01b239de1874f376560556))
+
 ## [3.0.0](https://github.com/MapColonies/dem-heights/compare/v2.2.1...v3.0.0) (2026-08-02)
 
 
