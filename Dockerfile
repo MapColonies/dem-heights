@@ -11,6 +11,10 @@ RUN npm run build
 # Strip dev dependencies so only runtime deps ship
 RUN npm prune --omit=dev
 
+# @zip.js/zip.js (via @cesium/engine) ships an encrypted-zip test fixture that
+# image scanners flag as password-protected; not used at runtime.
+RUN rm -rf node_modules/@zip.js/zip.js/tests
+
 
 FROM node:24-alpine AS production
 
