@@ -35,6 +35,9 @@
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
+  "overrides": {
+    "@zip.js/zip.js": "^2.7.0"
+  },
   "dependencies": {
     "@godaddy/terminus": "^4.11.1",
     "@map-colonies/csw-client": "^1.2.0",
