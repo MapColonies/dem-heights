@@ -54,7 +54,7 @@ export const cartographicArrayClusteringForHeightRequests = (
     }
 
     // Get max level for position.
-    const maxLevelAtPos = pos.terrainProvider.availability.computeMaximumLevelAtPosition(pos);
+    const maxLevelAtPos = pos.terrainProvider.availability!.computeMaximumLevelAtPosition(pos);
 
     // Get correspond tile.
     const posTile = pos.terrainProvider.tilingScheme.positionToTileXY(pos, maxLevelAtPos);
