@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.2](https://github.com/MapColonies/dem-heights/compare/v3.0.1...v3.0.2) (2026-08-13)
+
+
+### Build System
+
+* upgrade cesium to drop test fixtures from image ([#50](https://github.com/MapColonies/dem-heights/issues/50)) ([ce6e75d](https://github.com/MapColonies/dem-heights/commit/ce6e75d99fff545f34cf7647cd751bda0d61cd3e))
+
 ## [3.0.1](https://github.com/MapColonies/dem-heights/compare/v3.0.0...v3.0.1) (2026-08-04)
 
 
