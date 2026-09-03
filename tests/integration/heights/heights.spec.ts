@@ -3,10 +3,16 @@ import config from 'config';
 import { Application } from 'express';
 import httpStatusCodes from 'http-status-codes';
 import jsLogger from '@map-colonies/js-logger';
+import { container } from 'tsyringe';
+import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
+import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../../src/containerConfig';
 import { GetHeightsPointsRequest, GetHeightsPointsResponse } from '../../../src/heights/controllers/heightsController';
 import { PosWithHeight, TerrainTypes } from '../../../src/heights/interfaces';
+import { CatalogRecords } from '../../../src/heights/models/catalogRecords';
+import DEMTerrainCacheManager from '../../../src/heights/models/DEMTerrainCacheManager';
+import GeotiffHeightProvider from '../../../src/heights/models/geotiffHeightProvider';
 import mockJsonPoints, {
   emptyPositionsRequest,
   moreThen150RequestsPositions,
@@ -139,6 +145,63 @@ describe('heights', function () {
         expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
         expect(response.body).toHaveProperty('errorCode');
         expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.EMPTY_POSITIONS_ARRAY);
+      });
+    });
+  });
+
+  describe('Given seeded geotiff providers', function () {
+    beforeAll(async function () {
+      jest.spyOn(GeotiffHeightProvider, 'fromUrl').mockResolvedValue({
+        sample: async (points: { longitude: number; latitude: number }[]) => points.map(() => 123),
+      } as unknown as GeotiffHeightProvider);
+
+      const records = [
+        {
+          id: 'rec1',
+          productId: 'test_prod',
+          productType: 'DTM',
+          resolutionMeter: 30,
+          updateDate: '2023-05-08T17:44:01.000Z',
+          absoluteAccuracyLEP90: 9e-7,
+          productStatus: 'PUBLISHED',
+          footprint: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [34, 32],
+                [34, 33],
+                [36, 33],
+                [36, 32],
+                [34, 32],
+              ],
+            ],
+          },
+          links: [{ protocol: 'GEOTIFF', url: 'https://tiles-dev.mapcolonies.net/api/dem/v1/cogs/a.tif' }],
+        },
+      ];
+
+      container
+        .resolve<CatalogRecords>(CATALOG_RECORDS_MAP)
+        .setValue(Object.fromEntries(records.map((r) => [r.id, r])) as unknown as Record<string, PycswDemCatalogRecord>);
+      await container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER).initProviders(records as unknown as PycswDemCatalogRecord[]);
+    });
+
+    afterAll(function () {
+      container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP).setValue({});
+      jest.restoreAllMocks();
+    });
+
+    it('returns real heights, productId, and products metadata for a point inside a footprint', async function () {
+      const response = await requestSender.getPoints({ positions: [{ longitude: 35.0, latitude: 32.5 }] } as GetHeightsPointsRequest);
+
+      expect(response.status).toBe(httpStatusCodes.OK);
+      const body = response.body as GetHeightsPointsResponse;
+      expect(body.data).toHaveLength(1);
+      expect(body.data[0].height).toBe(123);
+      expect(body.data[0].productId).toBe('test_prod');
+      expect(body.products['test_prod']).toBeDefined();
+      ['productType', 'updateDate', 'resolutionMeter', 'absoluteAccuracyLEP90'].forEach((field) => {
+        expect((body.products['test_prod'] as Record<string, unknown>)[field]).toBeDefined();
       });
     });
   });
