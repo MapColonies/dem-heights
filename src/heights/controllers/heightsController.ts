@@ -1,13 +1,11 @@
 import { RequestHandler } from 'express';
-import { Cartographic } from 'cesium';
 import { injectable, inject } from 'tsyringe';
 import { HeightsManager } from '../models/heightsManager';
-import { PosWithHeight, TerrainTypes } from '../interfaces';
+import { GeoPoint, PosWithHeight, TerrainTypes } from '../interfaces';
 import { CommonErrors } from '../../common/commonErrors';
 
 export interface GetHeightsPointsRequest {
-  positions: Cartographic[];
-  radiansToOriginalPositionsMap: Map<string, string>;
+  positions: GeoPoint[];
   productType?: TerrainTypes;
 }
 
