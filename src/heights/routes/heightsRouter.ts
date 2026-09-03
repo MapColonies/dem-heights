@@ -7,8 +7,6 @@ import { IConfig } from '../../common/interfaces';
 import { PRODUCT_METADATA_FIELDS } from '../../containerConfig';
 import { HeightsController } from '../controllers/heightsController';
 import { createReqCtxMiddleware } from '../middlewares/createReqCtx';
-import { positionResAsDegreesMiddleware } from '../middlewares/dataToDegrees';
-import { convertReqPositionToRadiansMiddleware } from '../middlewares/dataToRadians';
 import { sendResponseMiddleware } from '../middlewares/sendResponse';
 import { validateRequestMiddleware } from '../middlewares/validateRequest';
 import { addProductsDictionaryMiddleware } from '../middlewares/addProductsDictionary';
@@ -25,9 +23,7 @@ const heightsRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
     '/points',
     createReqCtxMiddleware(logger),
     validateRequestMiddleware(config, logger, commonErrors),
-    convertReqPositionToRadiansMiddleware(logger),
     controller.getPoints,
-    positionResAsDegreesMiddleware(logger),
     addProductsDictionaryMiddleware(logger, productMetadataFields),
     sendResponseMiddleware(logger)
   );
