@@ -48,7 +48,7 @@ export default class GeotiffHeightProvider {
     const band = raster[0];
     const [tl, tr, bl, br] = [band[0], band[1], band[2], band[3]];
 
-    if ([tl, tr, bl, br].some((value) => value === this.noData)) {
+    if ([tl, tr, bl, br].some((value) => value === this.noData || Number.isNaN(value))) {
       return null;
     }
 
