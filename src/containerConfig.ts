@@ -51,7 +51,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
 
           if (!isSame(dataValue, Object.values(catalogRecordsServiceInstance.getValue()))) {
             catalogRecordsServiceInstance.setValue(Object.fromEntries(dataValue.map((record) => [record.id as string, record])));
-            await demTerrainCacheManager.initTerrainProviders(dataValue);
+            await demTerrainCacheManager.initProviders(dataValue);
 
             logger.info({
               msg: `CatalogRecords UPDATED - ${dataValue.length} records fetched`,
