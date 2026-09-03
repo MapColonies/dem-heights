@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import config from 'config';
-import { Cartesian2, Cartographic, CesiumTerrainProvider } from 'cesium';
 import { Application } from 'express';
 import httpStatusCodes from 'http-status-codes';
 import jsLogger from '@map-colonies/js-logger';
@@ -22,7 +21,6 @@ describe('heights', function () {
   const mockJsonDataOutOfBounds = positionsOutsideOfProviders as GetHeightsPointsRequest;
 
   let requestSender: HeightsRequestSender;
-  let cesiumTerrainProviderFromUrlSpy: jest.SpyInstance;
   let productMetadataFields: string[];
 
   const basicPositionResponse: PosWithHeight = {
@@ -34,25 +32,6 @@ describe('heights', function () {
 
   beforeAll(async function () {
     productMetadataFields = config.get<string>('productMetadataFields').split(',');
-
-    cesiumTerrainProviderFromUrlSpy = jest.spyOn(CesiumTerrainProvider, 'fromUrl');
-
-    cesiumTerrainProviderFromUrlSpy.mockReturnValue({
-      availability: {
-        available: true,
-        computeMaximumLevelAtPosition: () => {
-          return 13;
-        },
-      },
-      tilingScheme: {
-        positionToTileXY: (position: Cartographic) => {
-          // Making sure there are no overlapping tiles for any of the given positions,
-          // so that each position is a "request"
-          // (Assuming unique positions)
-          return new Cartesian2(position.latitude, position.longitude);
-        },
-      },
-    });
 
     const app = await getApp({
       override: [{ token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } }],
