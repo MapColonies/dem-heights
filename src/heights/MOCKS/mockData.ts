@@ -305,7 +305,6 @@ export const positionsOutsideOfProviders = {
 
 export const emptyPositionsRequest = {
   positions: [],
-  radiansToOriginalPositionsMap: new Map(),
 };
 
 export default {
