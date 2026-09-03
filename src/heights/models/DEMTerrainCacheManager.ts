@@ -1,5 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import { IConfig } from 'config';
+import { Logger } from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { HeightProviders } from '../interfaces';
 import { SERVICES } from '../../common/constants';
@@ -12,7 +13,10 @@ const COGS_FOLDER = 'cogs/';
 export default class DEMTerrainCacheManager {
   public heightProviders: HeightProviders = {};
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig) {}
+  public constructor(
+    @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(SERVICES.LOGGER) private readonly logger: Logger
+  ) {}
 
   public async initProviders(demCatalogRecords: PycswDemCatalogRecord[]): Promise<void> {
     const heightProviders: HeightProviders = {};
@@ -21,11 +25,21 @@ export default class DEMTerrainCacheManager {
 
     for (const record of geotiffRecords) {
       const link = record.links?.find((currentLink) => currentLink.protocol === GEOTIFF_PROTOCOL);
+      if (!link) {
+        continue;
+      }
 
-      if (link) {
+      try {
         const objectUrl = this.transformRouteToObjectUrl(link.url as string);
         const { url, headers } = this.buildAuthenticatedUrl(objectUrl);
         heightProviders[record.id as string] = await GeotiffHeightProvider.fromUrl(url, headers);
+      } catch (err) {
+        this.logger.error({
+          msg: 'Failed to open geotiff provider; skipping record',
+          recordId: record.id,
+          err,
+          location: '[DEMTerrainCacheManager] [initProviders]',
+        });
       }
     }
 
@@ -34,8 +48,11 @@ export default class DEMTerrainCacheManager {
 
   private transformRouteToObjectUrl(linkUrl: string): string {
     const serviceURL = this.config.get<string>('s3Gateway.url');
-
-    return `${serviceURL}/${COGS_FOLDER}${linkUrl.split(COGS_FOLDER)[1]}`;
+    const objectKey = linkUrl.split(COGS_FOLDER)[1];
+    if (objectKey === undefined) {
+      throw new Error(`GEOTIFF link URL missing '${COGS_FOLDER}' segment: ${linkUrl}`);
+    }
+    return `${serviceURL}/${COGS_FOLDER}${objectKey}`;
   }
 
   private buildAuthenticatedUrl(objectUrl: string): { url: string; headers?: Record<string, string> } {
