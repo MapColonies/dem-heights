@@ -36,6 +36,7 @@
 - `src/heights/middlewares/validateRequest.ts` — type `GeoPoint[]`; drop Cesium import.
 - `src/heights/routes/heightsRouter.ts` — remove the two radian middlewares from the chain.
 - `package.json` — remove `cesium`, add `geotiff`.
+- `tests/configurations/jest.setup.ts` — remove the global `jest.mock('cesium', ...)` (mocked `sampleTerrainMostDetailed`, now obsolete); keep only `import 'reflect-metadata';`. Runs before EVERY unit + integration spec, so it must be de-cesium'd or all specs fail to load. (Handled during Task 3, since it blocks Task 3's own spec.)
 - `tests/configurations/testContainerConfig.ts` — records use `GEOTIFF` links; mock `GeotiffHeightProvider.fromUrl`.
 - `tests/unit/heights/models/heightModel.spec.ts` — degrees input; mock geotiff provider.
 - `tests/unit/heights/middlewares/heightsMiddlewares.spec.ts` — remove radian/degree middleware tests.
