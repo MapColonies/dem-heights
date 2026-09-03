@@ -66,26 +66,26 @@ export class HeightsManager {
   public async getPoints(points: GeoPoint[], requestedProductType: TerrainTypes, reqCtx?: Record<string, unknown>): Promise<PosWithHeight[]> {
     this.logger.info({ pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
 
-    this.runningRequests++;
     // eslint-disable-next-line @typescript-eslint/naming-convention
     this.elevationsRequestsCounter?.inc({ points_number: points.length });
 
     if (points.length === 0) {
-      this.runningRequests--;
       return [];
     }
 
-    const result = await this.samplePositionsHeights(points, requestedProductType, reqCtx);
-
-    this.logger.info({
-      totalRequests: result.totalRequests,
-      pointsNumber: points.length,
-      location: '[HeightsManager] [getPoints]',
-      ...reqCtx,
-    });
-
-    this.runningRequests--;
-    return result.positions;
+    this.runningRequests++;
+    try {
+      const result = await this.samplePositionsHeights(points, requestedProductType, reqCtx);
+      this.logger.info({
+        totalRequests: result.totalRequests,
+        pointsNumber: points.length,
+        location: '[HeightsManager] [getPoints]',
+        ...reqCtx,
+      });
+      return result.positions;
+    } finally {
+      this.runningRequests--;
+    }
   }
 
   private async samplePositionsHeights(
