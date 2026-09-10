@@ -6,6 +6,7 @@ import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { SERVICES } from '../../src/common/constants';
 import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER, PRODUCT_METADATA_FIELDS } from '../../src/containerConfig';
 import DEMTerrainCacheManager from '../../src/heights/models/DEMTerrainCacheManager';
+import GeotiffHeightProvider from '../../src/heights/models/geotiffHeightProvider';
 import { CatalogRecords } from '../../src/heights/models/catalogRecords';
 
 async function registerTestValues(shouldInitTerrainProviders = true): Promise<void> {
@@ -74,8 +75,8 @@ async function registerTestValues(shouldInitTerrainProviders = true): Promise<vo
           __typename: 'Link',
           name: '',
           description: '',
-          protocol: 'TERRAIN_QMESH',
-          url: 'https://dem-int-nginx-s3-gateway-production-route-integration.apps.j1lk3njp.eastus.aroapp.io/api/dem/v1/terrains/combined_srtm_30_100_il_ever',
+          protocol: 'GEOTIFF',
+          url: 'https://tiles-dev.mapcolonies.net/api/dem/v1/cogs/combined_srtm_30_100_il_ever.tif',
         },
       ],
     },
@@ -131,8 +132,8 @@ async function registerTestValues(shouldInitTerrainProviders = true): Promise<vo
           __typename: 'Link',
           name: '',
           description: '',
-          protocol: 'TERRAIN_QMESH',
-          url: 'https://dem-int-nginx-s3-gateway-production-route-integration.apps.j1lk3njp.eastus.aroapp.io/api/dem/v1/terrains/srtm100',
+          protocol: 'GEOTIFF',
+          url: 'https://tiles-dev.mapcolonies.net/api/dem/v1/cogs/srtm100.tif',
         },
       ],
     },
@@ -148,6 +149,10 @@ async function registerTestValues(shouldInitTerrainProviders = true): Promise<vo
   container.register(PRODUCT_METADATA_FIELDS, { useValue: productMetadataFields });
   container.register(DEM_TERRAIN_CACHE_MANAGER, { useClass: DEMTerrainCacheManager }, { lifecycle: Lifecycle.Singleton });
 
+  jest.spyOn(GeotiffHeightProvider, 'fromUrl').mockResolvedValue({
+    sample: async (points: { longitude: number; latitude: number }[]) => points.map(() => 100),
+  } as unknown as GeotiffHeightProvider);
+
   await (async (): Promise<void> => {
     const catalogTestRecordsServiceInstance = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP);
     const demTestTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
@@ -157,7 +162,7 @@ async function registerTestValues(shouldInitTerrainProviders = true): Promise<vo
     );
 
     if (shouldInitTerrainProviders) {
-      await demTestTerrainCacheManager.initTerrainProviders(demTestCatalogRecords as unknown as PycswDemCatalogRecord[]);
+      await demTestTerrainCacheManager.initProviders(demTestCatalogRecords as unknown as PycswDemCatalogRecord[]);
     }
   })();
 }

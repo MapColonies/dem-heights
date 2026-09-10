@@ -9,7 +9,15 @@ module.exports = {
   },
   coverageReporters: ['text', 'html'],
   collectCoverage: true,
-  collectCoverageFrom: ['<rootDir>/src/**/*.ts', '!*/node_modules/', '!/vendor/**', '!*/common/**', '!**/models/**', '!<rootDir>/src/*'],
+  collectCoverageFrom: [
+    '<rootDir>/src/**/*.ts',
+    '!*/node_modules/',
+    '!/vendor/**',
+    '!*/common/**',
+    '!**/models/**',
+    '!<rootDir>/src/*',
+    '!<rootDir>/src/heights/utilities.ts', // helper reached only via CSW worker (inert in integration); unit-covered instead
+  ],
   coverageDirectory: '<rootDir>/coverage',
   rootDir: '../../../.',
   testMatch: ['<rootDir>/tests/integration/**/*.spec.ts'],
