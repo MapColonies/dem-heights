@@ -5,7 +5,6 @@ import { Logger } from '@map-colonies/js-logger';
 import PromisePool from '@supercharge/promise-pool/dist';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { Feature } from '@turf/turf';
-import { CommonErrors } from '../../common/commonErrors';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerConfig';
@@ -38,7 +37,6 @@ export class HeightsManager {
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(CommonErrors) private readonly commonErrors: CommonErrors,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
@@ -102,29 +100,33 @@ export class HeightsManager {
       ...reqCtx,
     });
 
-    // Group points by the provider chosen for them (null = no provider).
-    const groups = new Map<string | null, GeoPoint[]>();
-    for (const position of positionsWithProviders) {
+    // Group points by the provider chosen for them (null = no provider), keeping each point's
+    // original index so results can be scattered back in input order.
+    const groups = new Map<string | null, { point: GeoPoint; index: number }[]>();
+    positionsWithProviders.forEach((position, index) => {
       const key = position.providerKey ?? null;
       const bucket = groups.get(key) ?? [];
-      bucket.push({ longitude: position.longitude, latitude: position.latitude });
+      bucket.push({ point: { longitude: position.longitude, latitude: position.latitude }, index });
       groups.set(key, bucket);
-    }
+    });
 
     const groupEntries = [...groups.entries()];
-    const finalPositionsWithHeights: PosWithHeight[] = [];
+    const finalPositionsWithHeights = new Array<PosWithHeight>(positionsWithProviders.length);
 
-    const { results } = await PromisePool.for(groupEntries)
+    await PromisePool.for(groupEntries)
       .withConcurrency(Math.max(1, groupEntries.length))
-      .process(async ([providerKey, points]) => {
+      .process(async ([providerKey, entries]) => {
         if (providerKey === null) {
-          return points.map((point) => ({ ...point, height: null } as PosWithHeight));
+          entries.forEach(({ point, index }) => {
+            finalPositionsWithHeights[index] = { ...point, height: null } as PosWithHeight;
+          });
+          return;
         }
 
         const samplingStart = performance.now();
         const provider = this.heightProviders[providerKey];
         const record = this.catalogRecordsMap[providerKey];
-        const heights = await provider.sample(points);
+        const heights = await provider.sample(entries.map(({ point }) => point));
 
         this.logger.info({
           terrainSamplingTime: performance.now() - samplingStart,
@@ -134,17 +136,15 @@ export class HeightsManager {
           ...reqCtx,
         });
 
-        return points.map((point, index) => {
-          const height = heights[index];
-          return {
+        entries.forEach(({ point, index }, i) => {
+          const height = heights[i];
+          finalPositionsWithHeights[index] = {
             ...point,
             height,
             ...(height !== null ? { productId: record.productId as string } : {}),
           } as PosWithHeight;
         });
       });
-
-    finalPositionsWithHeights.push(...(results as PosWithHeight[][]).flat());
 
     return { positions: finalPositionsWithHeights, totalRequests: groupEntries.length };
   }
