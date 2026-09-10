@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.3](https://github.com/MapColonies/dem-heights/compare/v3.0.2...v3.0.3) (2026-09-10)
+
+
+### Helm Changes
+
+* **nginx:** update dependency chart version to 2.3.1 ([#53](https://github.com/MapColonies/dem-heights/issues/53)) ([01f04f6](https://github.com/MapColonies/dem-heights/commit/01f04f611493fea739711dc9d602d248acd7324a))
+
 ## [3.0.2](https://github.com/MapColonies/dem-heights/compare/v3.0.1...v3.0.2) (2026-08-13)
 
 
