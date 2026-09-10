@@ -1,8 +1,10 @@
 import { fromUrl } from 'geotiff';
 import type { GeoTIFFImage } from 'geotiff';
+import PromisePool from '@supercharge/promise-pool/dist';
 import { GeoPoint } from '../interfaces';
 
 const DEFAULT_NODATA = -32768;
+const DEFAULT_SAMPLING_CONCURRENCY = 16;
 
 export default class GeotiffHeightProvider {
   private constructor(
@@ -13,21 +15,46 @@ export default class GeotiffHeightProvider {
     private readonly pixelHeight: number, // degrees/pixel, negative
     private readonly rasterWidth: number,
     private readonly rasterHeight: number,
-    private readonly noData: number
+    private readonly noData: number,
+    private readonly samplingConcurrency: number
   ) {}
 
-  public static async fromUrl(url: string, headers?: Record<string, string>): Promise<GeotiffHeightProvider> {
+  public static async fromUrl(
+    url: string,
+    headers?: Record<string, string>,
+    samplingConcurrency: number = DEFAULT_SAMPLING_CONCURRENCY
+  ): Promise<GeotiffHeightProvider> {
     const tiff = await fromUrl(url, headers ? { headers } : {});
     const image = await tiff.getImage(0);
     const [originX, originY] = image.getOrigin();
     const [pixelWidth, pixelHeight] = image.getResolution();
     const noData = image.getGDALNoData() ?? DEFAULT_NODATA;
 
-    return new GeotiffHeightProvider(image, originX, originY, pixelWidth, pixelHeight, image.getWidth(), image.getHeight(), noData);
+    return new GeotiffHeightProvider(
+      image,
+      originX,
+      originY,
+      pixelWidth,
+      pixelHeight,
+      image.getWidth(),
+      image.getHeight(),
+      noData,
+      samplingConcurrency
+    );
   }
 
   public async sample(points: GeoPoint[]): Promise<(number | null)[]> {
-    return Promise.all(points.map(async (point) => this.sampleOne(point)));
+    // Bound concurrent range reads so a large batch doesn't open N simultaneous connections to the gateway.
+    const heights = new Array<number | null>(points.length);
+    await PromisePool.for(points.map((point, index) => ({ point, index })))
+      .withConcurrency(this.samplingConcurrency)
+      .handleError((error) => {
+        throw error;
+      })
+      .process(async ({ point, index }) => {
+        heights[index] = await this.sampleOne(point);
+      });
+    return heights;
   }
 
   private async sampleOne(point: GeoPoint): Promise<number | null> {

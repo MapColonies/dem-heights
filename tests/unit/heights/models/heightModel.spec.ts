@@ -43,6 +43,21 @@ describe('Get Heights model', function () {
       }
     });
 
+    it('Should preserve input order when points span providers and out-of-coverage gaps', async function () {
+      const positions = [
+        { longitude: 35.2, latitude: 32.0 }, // inside footprint
+        { longitude: 0, latitude: 0 }, // outside every footprint
+        { longitude: 35.5, latitude: 32.5 }, // inside footprint
+      ];
+
+      const result = await heightsManager.getPoints(positions, TerrainTypes.MIXED);
+
+      expect(result).toHaveLength(3);
+      expect(result[0]).toMatchObject({ longitude: 35.2, latitude: 32.0, height: 100 });
+      expect(result[1]).toMatchObject({ longitude: 0, latitude: 0, height: null });
+      expect(result[2]).toMatchObject({ longitude: 35.5, latitude: 32.5, height: 100 });
+    });
+
     it('Should return height only for the positions inside a provider footprint', async function () {
       const result = await heightsManager.getPoints(mockJsonDataOutOfBounds.positions, TerrainTypes.MIXED);
 
@@ -59,7 +74,9 @@ describe('Get Heights model', function () {
 
   describe('Given invalid params', function () {
     it('Should return empty array for empty positions', async function () {
-      await expect(heightsManager.getPoints((emptyPositionsRequest as unknown as GetHeightsPointsRequest).positions, TerrainTypes.MIXED)).resolves.toEqual([]);
+      await expect(
+        heightsManager.getPoints((emptyPositionsRequest as unknown as GetHeightsPointsRequest).positions, TerrainTypes.MIXED)
+      ).resolves.toEqual([]);
     });
   });
 });

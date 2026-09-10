@@ -13,15 +13,13 @@ const COGS_FOLDER = 'cogs/';
 export default class DEMTerrainCacheManager {
   public heightProviders: HeightProviders = {};
 
-  public constructor(
-    @inject(SERVICES.CONFIG) private readonly config: IConfig,
-    @inject(SERVICES.LOGGER) private readonly logger: Logger
-  ) {}
+  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {}
 
   public async initProviders(demCatalogRecords: PycswDemCatalogRecord[]): Promise<void> {
     const heightProviders: HeightProviders = {};
 
     const geotiffRecords = demCatalogRecords.filter((record) => record.links?.some((link) => link.protocol === GEOTIFF_PROTOCOL));
+    const samplingConcurrency = Number(this.config.get<number>('samplingConcurrency'));
 
     for (const record of geotiffRecords) {
       const link = record.links?.find((currentLink) => currentLink.protocol === GEOTIFF_PROTOCOL);
@@ -32,7 +30,7 @@ export default class DEMTerrainCacheManager {
       try {
         const objectUrl = this.transformRouteToObjectUrl(link.url as string);
         const { url, headers } = this.buildAuthenticatedUrl(objectUrl);
-        heightProviders[record.id as string] = await GeotiffHeightProvider.fromUrl(url, headers);
+        heightProviders[record.id as string] = await GeotiffHeightProvider.fromUrl(url, headers, samplingConcurrency);
       } catch (err) {
         this.logger.error({
           msg: 'Failed to open geotiff provider; skipping record',
@@ -65,8 +63,9 @@ export default class DEMTerrainCacheManager {
     }
 
     if (injectionType.toLowerCase() === 'queryparam') {
-      const separator = objectUrl.includes('?') ? '&' : '?';
-      return { url: `${objectUrl}${separator}${attributeName}=${encodeURIComponent(tokenValue)}` };
+      const url = new URL(objectUrl);
+      url.searchParams.set(attributeName, tokenValue);
+      return { url: url.toString() };
     }
 
     return { url: objectUrl };
