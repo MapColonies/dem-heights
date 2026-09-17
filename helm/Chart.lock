@@ -1,6 +1,6 @@
 dependencies:
 - name: nginx
   repository: oci://acrarolibotnonprod.azurecr.io/helm/common
-  version: 2.3.1
-digest: sha256:30fa4a9b23680d2af6722bd5af8a4f88b3ebe27e90f56d039a11acef6fef49d6
-generated: "2026-09-10T13:53:52.700653898+03:00"
+  version: 2.5.0
+digest: sha256:fb8235ecce868c7c2718a1620f7c4b16f498c29aa014a8c79cc2a3bde64b3172
+generated: "2026-09-17T17:12:15.474249986+03:00"
