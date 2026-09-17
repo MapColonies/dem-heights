@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.4](https://github.com/MapColonies/dem-heights/compare/v3.0.3...v3.0.4) (2026-09-17)
+
+
+### Helm Changes
+
+* **deps:** bump nginx subchart 2.3.1 -&gt; 2.5.0 ([#55](https://github.com/MapColonies/dem-heights/issues/55)) ([23ab66f](https://github.com/MapColonies/dem-heights/commit/23ab66f96d976d26bd7308578be1189a72093a4f))
+
 ## [3.0.3](https://github.com/MapColonies/dem-heights/compare/v3.0.2...v3.0.3) (2026-09-10)
 
 
