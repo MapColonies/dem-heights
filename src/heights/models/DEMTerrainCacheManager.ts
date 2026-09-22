@@ -2,6 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import { IConfig } from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
+import PromisePool from '@supercharge/promise-pool/dist';
 import { HeightProviders } from '../interfaces';
 import { SERVICES } from '../../common/constants';
 import GeotiffHeightProvider from './geotiffHeightProvider';
@@ -21,25 +22,27 @@ export default class DEMTerrainCacheManager {
     const geotiffRecords = demCatalogRecords.filter((record) => record.links?.some((link) => link.protocol === GEOTIFF_PROTOCOL));
     const samplingConcurrency = Number(this.config.get<number>('samplingConcurrency'));
 
-    for (const record of geotiffRecords) {
-      const link = record.links?.find((currentLink) => currentLink.protocol === GEOTIFF_PROTOCOL);
-      if (!link) {
-        continue;
-      }
-
-      try {
-        const objectUrl = this.transformRouteToObjectUrl(link.url as string);
-        const { url, headers } = this.buildAuthenticatedUrl(objectUrl);
-        heightProviders[record.id as string] = await GeotiffHeightProvider.fromUrl(url, headers, samplingConcurrency);
-      } catch (err) {
+    // Open providers concurrently but bounded — each fromUrl is an independent gateway round-trip.
+    // A single record's failure is isolated (logged, skipped) so the rest still register.
+    await PromisePool.for(geotiffRecords)
+      .withConcurrency(samplingConcurrency)
+      .handleError((err, record) => {
         this.logger.error({
           msg: 'Failed to open geotiff provider; skipping record',
           recordId: record.id,
           err,
           location: '[DEMTerrainCacheManager] [initProviders]',
         });
-      }
-    }
+      })
+      .process(async (record) => {
+        const link = record.links?.find((currentLink) => currentLink.protocol === GEOTIFF_PROTOCOL);
+        if (!link) {
+          return;
+        }
+        const objectUrl = this.transformRouteToObjectUrl(link.url as string);
+        const { url, headers } = this.buildAuthenticatedUrl(objectUrl);
+        heightProviders[record.id as string] = await GeotiffHeightProvider.fromUrl(url, headers, samplingConcurrency);
+      });
 
     this.heightProviders = heightProviders;
   }
