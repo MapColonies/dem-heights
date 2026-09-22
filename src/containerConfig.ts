@@ -1,5 +1,3 @@
-import { Worker } from 'worker_threads';
-import path from 'path';
 import config from 'config';
 import pino from 'pino';
 import client from 'prom-client';
@@ -7,7 +5,6 @@ import { instanceCachingFactory, container, Lifecycle } from 'tsyringe';
 import { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { trace } from '@opentelemetry/api';
 import jsLogger, { LoggerOptions } from '@map-colonies/js-logger';
-import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { getOtelMixin } from '@map-colonies/telemetry';
 import { SERVICES, SERVICE_NAME } from './common/constants';
 import { InjectionObject, registerDependencies } from './common/dependencyRegistration';
@@ -15,10 +12,8 @@ import { IConfig } from './common/interfaces';
 import { tracing } from './common/tracing';
 import DEMTerrainCacheManager from './heights/models/DEMTerrainCacheManager';
 import { heightsRouterFactory, HEIGHTS_ROUTER_SYMBOL } from './heights/routes/heightsRouter';
-
 import { CatalogRecords } from './heights/models/catalogRecords';
-import { isSame } from './heights/utilities';
-import { WorkerEvent } from './workerCatalogRecords';
+import { CatalogSyncManager } from './heights/models/catalogSyncManager';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -28,65 +23,12 @@ export interface RegisterOptions {
 export const CATALOG_RECORDS_MAP = Symbol('CATALOG_RECORDS_MAP');
 export const PRODUCT_METADATA_FIELDS = Symbol('PRODUCT_METADATA_FIELDS');
 export const DEM_TERRAIN_CACHE_MANAGER = Symbol('DEM_TERRAIN_CACHE_MANAGER');
+export const CATALOG_SYNC_MANAGER = Symbol('CATALOG_SYNC_MANAGER');
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
   const loggerConfig = config.get<LoggerOptions>('telemetry.logger');
   // @ts-expect-error the signature is wrong
   const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin(), timestamp: pino.stdTimeFunctions.isoTime });
-
-  const initCSWWorker = (): void => {
-    const worker = new Worker(path.resolve(__dirname, './workerCatalogRecords.js'));
-
-    // Listen for updates from the worker
-    // eslint-disable-next-line
-    worker.on('message', async (event: WorkerEvent) => {
-      const data = event;
-      const dataValue = data.value as PycswDemCatalogRecord[];
-      let catalogRecordsServiceInstance, demTerrainCacheManager;
-
-      switch (data.action) {
-        case 'updateValue':
-          catalogRecordsServiceInstance = container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP);
-          demTerrainCacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
-
-          if (!isSame(dataValue, Object.values(catalogRecordsServiceInstance.getValue()))) {
-            catalogRecordsServiceInstance.setValue(Object.fromEntries(dataValue.map((record) => [record.id as string, record])));
-            await demTerrainCacheManager.initProviders(dataValue);
-
-            logger.info({
-              msg: `CatalogRecords UPDATED - ${dataValue.length} records fetched`,
-              location: '[registerExternalValues]',
-            });
-          }
-          break;
-        case 'error':
-          logger.error({
-            msg: `FETCH CatalogRecords ERROR`,
-            ...dataValue,
-            location: '[registerExternalValues]',
-          });
-          break;
-      }
-    });
-
-    worker.on('error', (event: WorkerEvent) => {
-      logger.error({
-        msg: `CatalogRecords ERROR`,
-        ...event,
-        location: '[registerExternalValues]',
-      });
-    });
-
-    worker.on('exit', (event: WorkerEvent) => {
-      logger.error({
-        msg: `CatalogRecords EXIT`,
-        ...event,
-        location: '[registerExternalValues]',
-      });
-    });
-  };
-
-  initCSWWorker();
 
   const productMetadataFields = config.get<string>('productMetadataFields').split(',');
 
@@ -114,12 +56,14 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     { token: CATALOG_RECORDS_MAP, provider: { useClass: CatalogRecords }, options: { lifecycle: Lifecycle.Singleton } },
     { token: PRODUCT_METADATA_FIELDS, provider: { useValue: productMetadataFields } },
     { token: DEM_TERRAIN_CACHE_MANAGER, provider: { useClass: DEMTerrainCacheManager }, options: { lifecycle: Lifecycle.Singleton } },
+    { token: CATALOG_SYNC_MANAGER, provider: { useClass: CatalogSyncManager }, options: { lifecycle: Lifecycle.Singleton } },
     { token: HEIGHTS_ROUTER_SYMBOL, provider: { useFactory: heightsRouterFactory } },
     {
       token: 'onSignal',
       provider: {
         useValue: {
           useValue: async (): Promise<void> => {
+            container.resolve<CatalogSyncManager>(CATALOG_SYNC_MANAGER).stop();
             await Promise.all([tracing.stop()]);
           },
         },
@@ -127,5 +71,14 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
     },
   ];
 
-  return Promise.resolve(registerDependencies(dependencies, options?.override, options?.useChild));
+  const registeredContainer = registerDependencies(dependencies, options?.override, options?.useChild);
+
+  registeredContainer
+    .resolve<CatalogSyncManager>(CATALOG_SYNC_MANAGER)
+    .start(
+      registeredContainer.resolve<CatalogRecords>(CATALOG_RECORDS_MAP),
+      registeredContainer.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER)
+    );
+
+  return Promise.resolve(registeredContainer);
 };
