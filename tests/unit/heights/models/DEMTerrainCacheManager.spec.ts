@@ -41,6 +41,6 @@ describe('DEMTerrainCacheManager', () => {
     const manager = new DEMTerrainCacheManager(config, jsLogger({ enabled: false }));
     await manager.initProviders(records);
 
-    expect(Object.keys(manager.heightProviders).sort()).toEqual(['a', 'b', 'c']);
+    expect(Object.keys(manager.heightProviders).sort((first, second) => first.localeCompare(second))).toEqual(['a', 'b', 'c']);
   });
 });
