@@ -12,6 +12,12 @@ import DEMTerrainCacheManager from './DEMTerrainCacheManager';
 const START_RECORD = 1;
 const END_RECORD = 1000;
 
+// isSame checksums a JSON serialization, so array order matters. CSW may return the same
+// records in a different order between polls — normalize by id so reordering alone doesn't
+// trigger a needless provider rebuild.
+const sortById = (records: PycswDemCatalogRecord[]): PycswDemCatalogRecord[] =>
+  [...records].sort((first, second) => (first.id as string).localeCompare(second.id as string));
+
 @injectable()
 export class CatalogSyncManager {
   private readonly cswClient: CswClientWrapper;
@@ -52,9 +58,12 @@ export class CatalogSyncManager {
 
     try {
       const records = await this.fetchCatalogRecords();
-      if (catalogRecords && cacheManager && !isSame(records, Object.values(catalogRecords.getValue()))) {
-        catalogRecords.setValue(Object.fromEntries(records.map((record) => [record.id as string, record])));
+      if (catalogRecords && cacheManager && !isSame(sortById(records), sortById(Object.values(catalogRecords.getValue())))) {
+        // Rebuild providers before publishing the new catalog. Otherwise, during initProviders'
+        // await window a reader sees the new catalog paired with stale providers, and a removed
+        // record resolves to an undefined catalog entry (throws on .footprint access).
         await cacheManager.initProviders(records);
+        catalogRecords.setValue(Object.fromEntries(records.map((record) => [record.id as string, record])));
         this.logger.info({ msg: `CatalogRecords UPDATED - ${records.length} records fetched`, location: '[CatalogSyncManager]' });
       }
     } catch (err) {
