@@ -62,5 +62,6 @@
   },
   "synchRecordsInterval": "SYNCH_RECORDS_INTERVAL",
   "productMetadataFields": "productType,updateDate,resolutionMeter,absoluteAccuracyLEP90",
-  "maximumTilesPerRequest": "MAXIMUM_TILES_PER_REQUEST"
+  "maximumTilesPerRequest": "MAXIMUM_TILES_PER_REQUEST",
+  "samplingConcurrency": "SAMPLING_CONCURRENCY"
 }

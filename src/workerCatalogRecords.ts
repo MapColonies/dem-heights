@@ -19,15 +19,15 @@ const END_RECORD = 1000;
 const getCatalogRecords = async (): Promise<PycswDemCatalogRecord[]> => {
   const res = await cswClient.getRecords(START_RECORD, END_RECORD, {
     filter: [
-      // ******* DEM profile has special BOOLEAN field 'mc:hasTerrain' which holds an indication of TERRAIN_PROVIDER
-      // ******* Probably there is a bug when filtering by BOOLEAN field. Instead used LIKE filter that looks in LINKS field
+      // ******* DEM profile links carry the object protocol. We match records exposing a GEOTIFF link
+      // ******* (COG served from the S3 gateway) via a LIKE filter on the LINKS field.
       // {
       //   field: 'mc:hasTerrain',
       //   eq: 'True',
       // },
       {
         field: 'mc:links',
-        like: 'TERRAIN_QMESH',
+        like: 'GEOTIFF',
       },
       {
         field: 'mc:productStatus',
