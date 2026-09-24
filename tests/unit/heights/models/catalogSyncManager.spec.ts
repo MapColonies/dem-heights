@@ -100,4 +100,39 @@ describe('CatalogSyncManager', () => {
     const scheduledWithInterval = setTimeoutSpy.mock.calls.filter((call) => call[1] === interval);
     expect(scheduledWithInterval.length).toBeGreaterThanOrEqual(1);
   });
+
+  it('does not rebuild providers when the same records return in a different order', async () => {
+    const twoRecords = [
+      { id: 'a', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/a.tif' }] },
+      { id: 'b', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/b.tif' }] },
+    ] as unknown as PycswDemCatalogRecord[];
+    jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockResolvedValue([twoRecords[1], twoRecords[0]]);
+    const catalogRecords = new CatalogRecords();
+    catalogRecords.setValue(Object.fromEntries(twoRecords.map((record) => [record.id as string, record])));
+    const { cacheManager, initProviders } = makeCacheManager();
+
+    manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+    manager.start(catalogRecords, cacheManager);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(initProviders).not.toHaveBeenCalled();
+  });
+
+  it('rebuilds providers before publishing the new catalog', async () => {
+    jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockResolvedValue(RECORDS);
+    const catalogRecords = new CatalogRecords();
+    const initProviders = jest.fn().mockImplementation(async () => {
+      // the new catalog must not be visible while providers are still being (re)built
+      expect(Object.keys(catalogRecords.getValue())).toEqual([]);
+      await Promise.resolve();
+    });
+    const cacheManager = { initProviders } as unknown as DEMTerrainCacheManager;
+
+    manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+    manager.start(catalogRecords, cacheManager);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(initProviders).toHaveBeenCalledWith(RECORDS);
+    expect(Object.keys(catalogRecords.getValue())).toEqual(['r1']);
+  });
 });
