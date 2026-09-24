@@ -46,10 +46,12 @@ export default class DEMTerrainCacheManager {
 
   private transformRouteToObjectUrl(linkUrl: string): string {
     const serviceURL = this.config.get<string>('s3Gateway.url');
-    const objectKey = linkUrl.split(COGS_FOLDER)[1];
-    if (objectKey === undefined) {
+    // Take everything from the first 'cogs/' to the end — split()[1] would drop trailing
+    // segments if 'cogs/' appears more than once in the URL.
+    if (!linkUrl.includes(COGS_FOLDER)) {
       throw new Error(`GEOTIFF link URL missing '${COGS_FOLDER}' segment: ${linkUrl}`);
     }
+    const objectKey = linkUrl.slice(linkUrl.indexOf(COGS_FOLDER) + COGS_FOLDER.length);
     return `${serviceURL}/${COGS_FOLDER}${objectKey}`;
   }
 

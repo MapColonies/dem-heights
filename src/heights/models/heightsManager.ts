@@ -2,13 +2,14 @@ import { Polygon } from 'geojson';
 import client from 'prom-client';
 import { container, inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
+import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import PromisePool from '@supercharge/promise-pool/dist';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { Feature } from '@turf/turf';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerConfig';
-import { GeoPoint, PosWithHeight, PosWithProvider, TerrainTypes } from '../interfaces';
+import { GeoPoint, HeightProviders, PosWithHeight, PosWithProvider, TerrainTypes } from '../interfaces';
 import DEMTerrainCacheManager from './DEMTerrainCacheManager';
 import { CatalogRecords } from './catalogRecords';
 
@@ -91,8 +92,15 @@ export class HeightsManager {
     requestedProductType: TerrainTypes,
     reqCtx?: Record<string, unknown>
   ): Promise<{ positions: PosWithHeight[]; totalRequests: number }> {
+    // Snapshot the provider map and catalog once per request. Both are rebuilt wholesale on a
+    // background timer; resolving them fresh per access could pair a providerKey chosen against
+    // one snapshot with a provider/catalog map from a later rebuild (provider becomes undefined,
+    // sample() throws).
+    const heightProviders = this.heightProviders;
+    const catalogRecordsMap = this.catalogRecordsMap;
+
     const attachProviderStart = performance.now();
-    const positionsWithProviders = this.attachProviderToPositions(positionsArr, requestedProductType);
+    const positionsWithProviders = this.attachProviderToPositions(positionsArr, requestedProductType, heightProviders, catalogRecordsMap);
     this.logger.info({
       attachProviderTime: performance.now() - attachProviderStart,
       pointsNumber: positionsArr.length,
@@ -115,6 +123,11 @@ export class HeightsManager {
 
     await PromisePool.for(groupEntries)
       .withConcurrency(Math.max(1, groupEntries.length))
+      .handleError((error) => {
+        // Without this, promise-pool silently collects sample() failures and resolves normally,
+        // leaving height slots undefined. Rethrow so the request fails loudly instead.
+        throw error;
+      })
       .process(async ([providerKey, entries]) => {
         if (providerKey === null) {
           entries.forEach(({ point, index }) => {
@@ -124,8 +137,8 @@ export class HeightsManager {
         }
 
         const samplingStart = performance.now();
-        const provider = this.heightProviders[providerKey];
-        const record = this.catalogRecordsMap[providerKey];
+        const provider = heightProviders[providerKey];
+        const record = catalogRecordsMap[providerKey];
         const heights = await provider.sample(entries.map(({ point }) => point));
 
         this.logger.info({
@@ -141,7 +154,7 @@ export class HeightsManager {
           finalPositionsWithHeights[index] = {
             ...point,
             height,
-            ...(height !== null ? { productId: record.productId as string } : {}),
+            ...(height !== null && record.productId !== undefined ? { productId: record.productId } : {}),
           } as PosWithHeight;
         });
       });
@@ -149,30 +162,35 @@ export class HeightsManager {
     return { positions: finalPositionsWithHeights, totalRequests: groupEntries.length };
   }
 
-  private attachProviderToPositions(positions: GeoPoint[], requestedProductType: TerrainTypes): PosWithProvider[] {
+  private attachProviderToPositions(
+    positions: GeoPoint[],
+    requestedProductType: TerrainTypes,
+    heightProviders: HeightProviders,
+    catalogRecordsMap: Record<string, PycswDemCatalogRecord>
+  ): PosWithProvider[] {
     /*
      * Filter providers by requested product type (unless MIXED)
      * Filter providers by footprint point intersection
      * Sort by highest resolution (lower resolutionMeter is better), tie-break on newest updateDate
      * Attach the best provider key to the point
      */
+    // Provider list and product-type filter are the same for every point — compute once.
+    const providerEntries = Object.entries(heightProviders);
+    const productTypeFiltered =
+      requestedProductType !== TerrainTypes.MIXED
+        ? providerEntries.filter(([key]) => catalogRecordsMap[key].productType?.includes(requestedProductType))
+        : providerEntries;
+
     return positions.map((position) => {
-      const providerEntries = Object.entries(this.heightProviders);
-
-      const productTypeFiltered =
-        requestedProductType !== TerrainTypes.MIXED
-          ? providerEntries.filter(([key]) => this.catalogRecordsMap[key].productType?.includes(requestedProductType))
-          : providerEntries;
-
       const footprintFiltered = productTypeFiltered.filter(([key]) =>
-        booleanPointInPolygon([position.longitude, position.latitude], this.catalogRecordsMap[key].footprint as Feature<Polygon>)
+        booleanPointInPolygon([position.longitude, position.latitude], catalogRecordsMap[key].footprint as Feature<Polygon>)
       );
 
       const sorted = footprintFiltered.sort(([aKey], [bKey]) => {
         const A_BEFORE_B = -1;
         const B_BEFORE_A = 1;
-        const recordA = this.catalogRecordsMap[aKey];
-        const recordB = this.catalogRecordsMap[bKey];
+        const recordA = catalogRecordsMap[aKey];
+        const recordB = catalogRecordsMap[bKey];
 
         switch (true) {
           case (recordA.resolutionMeter as number) < (recordB.resolutionMeter as number):
