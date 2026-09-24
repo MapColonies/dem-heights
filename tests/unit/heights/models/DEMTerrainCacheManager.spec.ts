@@ -28,4 +28,19 @@ describe('DEMTerrainCacheManager', () => {
     expect(Object.keys(manager.heightProviders)).toEqual(['good']);
     expect(errorSpy).toHaveBeenCalled();
   });
+
+  it('registers a provider for every geotiff record', async () => {
+    const records = [
+      { id: 'a', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/a.tif' }] },
+      { id: 'b', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/b.tif' }] },
+      { id: 'c', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/c.tif' }] },
+    ] as unknown as PycswDemCatalogRecord[];
+
+    jest.spyOn(GeotiffHeightProvider, 'fromUrl').mockResolvedValue({} as GeotiffHeightProvider);
+
+    const manager = new DEMTerrainCacheManager(config, jsLogger({ enabled: false }));
+    await manager.initProviders(records);
+
+    expect(Object.keys(manager.heightProviders).sort((first, second) => first.localeCompare(second))).toEqual(['a', 'b', 'c']);
+  });
 });
