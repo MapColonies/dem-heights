@@ -5,6 +5,7 @@ on: pull_request
 permissions:
   contents: read
   pull-requests: read
+  checks: write
 
 jobs:
   eslint:
@@ -29,6 +30,7 @@ jobs:
           prettier: true
           eslint_extensions: ts
           tsc: true
+          continue_on_error: false
 
   openapi-lint:
     name: Run OpenAPI lint Check
