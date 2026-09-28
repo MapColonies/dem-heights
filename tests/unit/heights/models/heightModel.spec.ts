@@ -2,7 +2,9 @@ import { container } from 'tsyringe';
 import { HeightsManager } from '../../../../src/heights/models/heightsManager';
 import mockJsonPoints, { positionsOutsideOfProviders, emptyPositionsRequest } from '../../../../src/heights/MOCKS/mockData';
 import { GetHeightsPointsRequest } from '../../../../src/heights/controllers/heightsController';
-import { PosWithHeight, TerrainTypes } from '../../../../src/heights/interfaces';
+import { TerrainTypes } from '../../../../src/heights/interfaces';
+import { DEM_TERRAIN_CACHE_MANAGER } from '../../../../src/containerConfig';
+import DEMTerrainCacheManager from '../../../../src/heights/models/DEMTerrainCacheManager';
 import { registerTestValues } from '../../../configurations/testContainerConfig';
 
 describe('Get Heights model', function () {
@@ -66,9 +68,20 @@ describe('Get Heights model', function () {
         expect(position.longitude).toBeDefined();
         expect(position.latitude).toBeDefined();
 
-        const isNullHeight = (position.height as number | null) === null;
+        const isNullHeight = position.height === null;
         expect(typeof position.productId === 'undefined').toEqual(isNullHeight);
       }
+    });
+  });
+
+  describe('Given a provider failure', function () {
+    it('Should reject instead of silently returning positions with undefined heights when a provider sample fails', async function () {
+      const cacheManager = container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER);
+      for (const provider of Object.values(cacheManager.heightProviders)) {
+        jest.spyOn(provider, 'sample').mockRejectedValue(new Error('range read failed'));
+      }
+
+      await expect(heightsManager.getPoints(mockJsonData.positions, TerrainTypes.MIXED)).rejects.toThrow('range read failed');
     });
   });
 
