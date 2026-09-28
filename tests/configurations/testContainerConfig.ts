@@ -9,6 +9,8 @@ import DEMTerrainCacheManager from '../../src/heights/models/DEMTerrainCacheMana
 import GeotiffHeightProvider from '../../src/heights/models/geotiffHeightProvider';
 import { CatalogRecords } from '../../src/heights/models/catalogRecords';
 
+const MOCK_SAMPLE_HEIGHT = 100;
+
 async function registerTestValues(shouldInitTerrainProviders = true): Promise<void> {
   /* eslint-disable */
   const demTestCatalogRecords = [
@@ -150,7 +152,7 @@ async function registerTestValues(shouldInitTerrainProviders = true): Promise<vo
   container.register(DEM_TERRAIN_CACHE_MANAGER, { useClass: DEMTerrainCacheManager }, { lifecycle: Lifecycle.Singleton });
 
   jest.spyOn(GeotiffHeightProvider, 'fromUrl').mockResolvedValue({
-    sample: async (points: { longitude: number; latitude: number }[]) => points.map(() => 100),
+    sample: async (points: { longitude: number; latitude: number }[]) => Promise.resolve(points.map(() => MOCK_SAMPLE_HEIGHT)),
   } as unknown as GeotiffHeightProvider);
 
   await (async (): Promise<void> => {

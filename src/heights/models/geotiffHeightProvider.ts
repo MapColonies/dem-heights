@@ -5,6 +5,7 @@ import { GeoPoint } from '../interfaces';
 
 const DEFAULT_NODATA = -32768;
 const DEFAULT_SAMPLING_CONCURRENCY = 16;
+const BILINEAR_WINDOW_SIZE = 2;
 
 export default class GeotiffHeightProvider {
   private constructor(
@@ -71,7 +72,9 @@ export default class GeotiffHeightProvider {
     const dx = fx - px;
     const dy = fy - py;
 
-    const raster = (await this.image.readRasters({ window: [px, py, px + 2, py + 2] })) as unknown as number[][];
+    const raster = (await this.image.readRasters({
+      window: [px, py, px + BILINEAR_WINDOW_SIZE, py + BILINEAR_WINDOW_SIZE],
+    })) as unknown as number[][];
     const band = raster[0];
     const [tl, tr, bl, br] = [band[0], band[1], band[2], band[3]];
 

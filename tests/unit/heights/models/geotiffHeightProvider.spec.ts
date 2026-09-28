@@ -54,8 +54,10 @@ describe('GeotiffHeightProvider', () => {
 
   it('passes token headers through to fromUrl', async () => {
     mockTiff(makeImage([1, 1, 1, 1]));
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     await GeotiffHeightProvider.fromUrl('http://gw/cogs/x.tif', { 'x-api-key': 'T' });
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     expect(fromUrl).toHaveBeenCalledWith('http://gw/cogs/x.tif', { headers: { 'x-api-key': 'T' } });
   });
 });

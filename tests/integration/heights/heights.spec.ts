@@ -121,7 +121,7 @@ describe('heights', function () {
         for (const position of (response.body as GetHeightsPointsResponse).data) {
           expect(position['latitude'] && position['longitude']).toBeDefined();
 
-          const isNullHeight = (position.height as number | null) === null;
+          const isNullHeight = position.height === null;
 
           expect(typeof position['productId'] === 'undefined').toEqual(isNullHeight);
         }
@@ -152,7 +152,7 @@ describe('heights', function () {
   describe('Given seeded geotiff providers', function () {
     beforeAll(async function () {
       jest.spyOn(GeotiffHeightProvider, 'fromUrl').mockResolvedValue({
-        sample: async (points: { longitude: number; latitude: number }[]) => points.map(() => 123),
+        sample: async (points: { longitude: number; latitude: number }[]) => Promise.resolve(points.map(() => 123)),
       } as unknown as GeotiffHeightProvider);
 
       const records = [
