@@ -7,7 +7,7 @@ import { container } from 'tsyringe';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { getApp } from '../../../src/app';
 import { SERVICES } from '../../../src/common/constants';
-import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../../src/containerConfig';
+import { CATALOG_RECORDS_MAP, CATALOG_SYNC_MANAGER, DEM_TERRAIN_CACHE_MANAGER } from '../../../src/containerConfig';
 import { GetHeightsPointsRequest, GetHeightsPointsResponse } from '../../../src/heights/controllers/heightsController';
 import { PosWithHeight, TerrainTypes } from '../../../src/heights/interfaces';
 import { CatalogRecords } from '../../../src/heights/models/catalogRecords';
@@ -40,7 +40,10 @@ describe('heights', function () {
     productMetadataFields = config.get<string>('productMetadataFields').split(',');
 
     const app = await getApp({
-      override: [{ token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } }],
+      override: [
+        { token: SERVICES.LOGGER, provider: { useValue: jsLogger({ enabled: false }) } },
+        { token: CATALOG_SYNC_MANAGER, provider: { useValue: { start: (): void => undefined, stop: (): void => undefined } } },
+      ],
     });
 
     requestSender = new HeightsRequestSender(app as Application);
