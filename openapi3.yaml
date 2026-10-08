@@ -54,6 +54,12 @@ paths:
                     updateDate: '2023-05-08T17:44:01.000Z'
                     resolutionMeter: 100
                     absoluteAccuracyLEP90: 9.e-7
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
         '500':
           description: Service Error
           content:
@@ -73,6 +79,8 @@ components:
         errorCode:
           oneOf:
             - $ref: '#/components/schemas/errorCodesEnum'
+        status:
+          type: integer
     pointsReq:
       type: object
       required:
@@ -148,5 +156,9 @@ components:
     errorCodesEnum:
       type: string
       enum:
+        - EMPTY_POSITIONS_ARRAY
+        - TOO_MANY_POINTS_ERROR
         - POINTS_DENSITY_TOO_LOW_ERROR
         - GENERAL_ERROR
+        - MISSING_REQUIRED_PROPERTY
+        - INVALID_REQUEST
