@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.0](https://github.com/MapColonies/dem-heights/compare/v3.0.4...v3.1.0) (2026-10-08)
+
+
+### Features
+
+* replace QMesh terrain engine with direct GeoTIFF/COG sampling (MAPCO-11560) ([#52](https://github.com/MapColonies/dem-heights/issues/52)) ([f88f245](https://github.com/MapColonies/dem-heights/commit/f88f24519ce221b73e1d657c0166010ef5084ce9))
+
 ## [3.0.4](https://github.com/MapColonies/dem-heights/compare/v3.0.3...v3.0.4) (2026-09-17)
 
 
