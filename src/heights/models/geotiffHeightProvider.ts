@@ -6,6 +6,8 @@ import { GeoPoint } from '../interfaces';
 const DEFAULT_NODATA = -32768;
 const DEFAULT_SAMPLING_CONCURRENCY = 16;
 const BILINEAR_WINDOW_SIZE = 2;
+const RASTER_PIXEL_IS_POINT = 2;
+const HALF_PIXEL = 0.5;
 
 export default class GeotiffHeightProvider {
   private constructor(
@@ -17,7 +19,9 @@ export default class GeotiffHeightProvider {
     private readonly rasterWidth: number,
     private readonly rasterHeight: number,
     private readonly noData: number,
-    private readonly samplingConcurrency: number
+    private readonly samplingConcurrency: number,
+    // Offset from the origin to the first sample point, in pixels.
+    private readonly sampleOffset: number
   ) {}
 
   public static async fromUrl(
@@ -30,6 +34,8 @@ export default class GeotiffHeightProvider {
     const [originX, originY] = image.getOrigin();
     const [pixelWidth, pixelHeight] = image.getResolution();
     const noData = image.getGDALNoData() ?? DEFAULT_NODATA;
+    // PixelIsArea (the GeoTIFF default): the origin is the first pixel's outer corner, values sit at pixel centers.
+    const pixelIsPoint = image.getGeoKeys()?.GTRasterTypeGeoKey === RASTER_PIXEL_IS_POINT;
 
     return new GeotiffHeightProvider(
       image,
@@ -40,7 +46,8 @@ export default class GeotiffHeightProvider {
       image.getWidth(),
       image.getHeight(),
       noData,
-      samplingConcurrency
+      samplingConcurrency,
+      pixelIsPoint ? 0 : HALF_PIXEL
     );
   }
 
@@ -59,32 +66,42 @@ export default class GeotiffHeightProvider {
   }
 
   private async sampleOne(point: GeoPoint): Promise<number | null> {
-    const fx = (point.longitude - this.originX) / this.pixelWidth;
-    const fy = (point.latitude - this.originY) / this.pixelHeight;
-    const px = Math.floor(fx);
-    const py = Math.floor(fy);
+    const fx = (point.longitude - this.originX) / this.pixelWidth - this.sampleOffset;
+    const fy = (point.latitude - this.originY) / this.pixelHeight - this.sampleOffset;
 
-    // Need a full 2x2 neighborhood for bilinear interpolation.
-    if (px < 0 || py < 0 || px >= this.rasterWidth - 1 || py >= this.rasterHeight - 1) {
+    if (!this.isInside(fx, this.rasterWidth) || !this.isInside(fy, this.rasterHeight)) {
       return null;
     }
 
-    const dx = fx - px;
-    const dy = fy - py;
+    // Between the outermost sample points and the raster edge, clamp to the edge pixels.
+    const cx = Math.min(Math.max(fx, 0), this.rasterWidth - 1);
+    const cy = Math.min(Math.max(fy, 0), this.rasterHeight - 1);
+    const px = Math.min(Math.floor(cx), this.rasterWidth - BILINEAR_WINDOW_SIZE);
+    const py = Math.min(Math.floor(cy), this.rasterHeight - BILINEAR_WINDOW_SIZE);
+    const dx = cx - px;
+    const dy = cy - py;
 
     const raster = (await this.image.readRasters({
       window: [px, py, px + BILINEAR_WINDOW_SIZE, py + BILINEAR_WINDOW_SIZE],
     })) as unknown as number[][];
-    const band = raster[0];
-    const [tl, tr, bl, br] = [band[0], band[1], band[2], band[3]];
+    const [tl, tr, bl, br] = raster[0];
+    const weighted: [number, number][] = [
+      [tl, (1 - dx) * (1 - dy)],
+      [tr, dx * (1 - dy)],
+      [bl, (1 - dx) * dy],
+      [br, dx * dy],
+    ];
 
-    if ([tl, tr, bl, br].some((value) => value === this.noData || Number.isNaN(value))) {
+    // A nodata neighbor only matters if it contributes to the result.
+    if (weighted.some(([value, weight]) => weight > 0 && (value === this.noData || Number.isNaN(value)))) {
       return null;
     }
 
-    const top = tl + (tr - tl) * dx;
-    const bottom = bl + (br - bl) * dx;
+    return weighted.reduce((height, [value, weight]) => (weight > 0 ? height + value * weight : height), 0);
+  }
 
-    return top + (bottom - top) * dy;
+  // The raster covers half a pixel beyond its outermost sample points.
+  private isInside(samplePosition: number, size: number): boolean {
+    return samplePosition >= -HALF_PIXEL && samplePosition <= size - HALF_PIXEL;
   }
 }
