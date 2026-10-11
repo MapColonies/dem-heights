@@ -62,25 +62,25 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         case 'error':
           logger.error({
             msg: `FETCH CatalogRecords ERROR`,
-            ...dataValue,
+            err: data.value as Error,
             location: '[registerExternalValues]',
           });
           break;
       }
     });
 
-    worker.on('error', (event: WorkerEvent) => {
+    worker.on('error', (err: Error) => {
       logger.error({
         msg: `CatalogRecords ERROR`,
-        ...event,
+        err,
         location: '[registerExternalValues]',
       });
     });
 
-    worker.on('exit', (event: WorkerEvent) => {
+    worker.on('exit', (exitCode: number) => {
       logger.error({
         msg: `CatalogRecords EXIT`,
-        ...event,
+        exitCode,
         location: '[registerExternalValues]',
       });
     });
