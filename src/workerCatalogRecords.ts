@@ -3,6 +3,7 @@ import config from 'config';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { CswClientWrapper } from './common/csw/cswClientWrapper';
 import { IService } from './common/csw/utils';
+import { syncRetryDelay } from './heights/utilities';
 
 const SYNCH_RECORDS_INTERVAL = config.get<number>('synchRecordsInterval');
 
@@ -40,17 +41,23 @@ const getCatalogRecords = async (): Promise<PycswDemCatalogRecord[]> => {
   return res;
 };
 
+let consecutiveFailures = 0;
+
 // eslint-disable-next-line
 (async function updateValuePeriodically(): Promise<void> {
   try {
     const newValue = await getCatalogRecords();
     parentPort?.postMessage({ action: 'updateValue', value: newValue });
+    consecutiveFailures = 0;
   } catch (err) {
     parentPort?.postMessage({ action: 'error', value: err });
+    consecutiveFailures++;
   }
 
+  // On startup pycsw is often not ready yet; waiting a full interval would leave heights without providers.
+  const delay = consecutiveFailures === 0 ? SYNCH_RECORDS_INTERVAL : syncRetryDelay(consecutiveFailures, SYNCH_RECORDS_INTERVAL);
   // eslint-disable-next-line
-  setTimeout(updateValuePeriodically, SYNCH_RECORDS_INTERVAL);
+  setTimeout(updateValuePeriodically, delay);
 })();
 
 export interface WorkerEvent {
