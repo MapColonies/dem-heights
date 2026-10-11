@@ -16,15 +16,23 @@ const PIXEL_IS_POINT = 2;
 // A distinct value per pixel.
 const linearGrid = (column: number, row: number): number => 100 * row + column;
 
-const makeImage = (grid: (column: number, row: number) => number = linearGrid, rasterType: number | null = PIXEL_IS_AREA) => ({
+const makeImage = (
+  grid: (column: number, row: number) => number = linearGrid,
+  rasterType: number | null = PIXEL_IS_AREA,
+  width = SIZE,
+  height = SIZE
+) => ({
   getOrigin: () => [34.0, 33.0, 0],
   getResolution: () => [RES, -RES],
-  getWidth: () => SIZE,
-  getHeight: () => SIZE,
+  getWidth: () => width,
+  getHeight: () => height,
   getGDALNoData: () => NODATA,
   // eslint-disable-next-line @typescript-eslint/naming-convention
   getGeoKeys: () => (rasterType === null ? null : { GTRasterTypeGeoKey: rasterType }),
   readRasters: jest.fn(async ({ window: [x0, y0, x1, y1] }: { window: number[] }) => {
+    if (x0 < 0 || y0 < 0 || x1 > width || y1 > height) {
+      throw new Error(`window [${x0},${y0},${x1},${y1}] outside ${width}x${height} raster`);
+    }
     const band: number[] = [];
     for (let row = y0; row < y1; row++) {
       for (let column = x0; column < x1; column++) {
@@ -101,6 +109,30 @@ describe('GeotiffHeightProvider', () => {
       expect(nextToNodata).toBe(linearGrid(5, 7));
       expect(onNodata).toBeNull();
     });
+  });
+
+  it('samples a single-pixel raster', async () => {
+    const provider = await providerFor(makeImage(() => 42, PIXEL_IS_AREA, 1, 1));
+
+    const heights = await provider.sample([at(0.5, 0.5), at(0.1, 0.9), at(1.1, 0.5)]);
+
+    expect(heights).toEqual([42, 42, null]);
+  });
+
+  it('samples a raster one pixel wide', async () => {
+    const provider = await providerFor(makeImage(linearGrid, PIXEL_IS_AREA, 1, SIZE));
+
+    const heights = await provider.sample([at(0.3, 8.4), at(0.9, 8.6)]);
+
+    expect(heights).toEqual([linearGrid(0, 8), linearGrid(0, 8)]);
+  });
+
+  it('samples a raster one pixel tall', async () => {
+    const provider = await providerFor(makeImage(linearGrid, PIXEL_IS_AREA, SIZE, 1));
+
+    const heights = await provider.sample([at(8.4, 0.3), at(8.6, 0.9)]);
+
+    expect(heights).toEqual([linearGrid(8, 0), linearGrid(8, 0)]);
   });
 
   it('passes token headers through to fromUrl', async () => {
