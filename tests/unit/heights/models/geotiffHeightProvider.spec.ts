@@ -9,6 +9,7 @@ const { fromUrl } = require('geotiff') as { fromUrl: jest.Mock };
 
 const NODATA = -32768;
 const SIZE = 100;
+const TILE = 16;
 const RES = 0.001;
 const PIXEL_IS_AREA = 1;
 const PIXEL_IS_POINT = 2;
@@ -26,6 +27,8 @@ const makeImage = (
   getResolution: () => [RES, -RES],
   getWidth: () => width,
   getHeight: () => height,
+  getTileWidth: () => TILE,
+  getTileHeight: () => TILE,
   getGDALNoData: () => NODATA,
   // eslint-disable-next-line @typescript-eslint/naming-convention
   getGeoKeys: () => (rasterType === null ? null : { GTRasterTypeGeoKey: rasterType }),
@@ -133,6 +136,28 @@ describe('GeotiffHeightProvider', () => {
 
       expect(heights).toEqual([linearGrid(8, 0), linearGrid(8, 0)]);
     });
+  });
+
+  it('reads each internal tile once per call', async () => {
+    const image = makeImage();
+    const provider = await providerFor(image);
+    // Three points in tile (0,0), including its last column, and two in tile (1,0).
+    const points = [at(1.5, 1.5), at(3.2, 7.9), at(15.9, 4.2), at(17.5, 1.5), at(20.1, 5.5)];
+
+    const heights = await provider.sample(points);
+
+    expect(image.readRasters).toHaveBeenCalledTimes(2);
+    expect(heights).toEqual([linearGrid(1, 1), linearGrid(3, 7), linearGrid(15, 4), linearGrid(17, 1), linearGrid(20, 5)]);
+  });
+
+  it('does not read for points outside the raster', async () => {
+    const image = makeImage();
+    const provider = await providerFor(image);
+
+    const heights = await provider.sample([at(-1, 5), at(5, SIZE + 1)]);
+
+    expect(heights).toEqual([null, null]);
+    expect(image.readRasters).not.toHaveBeenCalled();
   });
 
   it('passes token headers through to fromUrl', async () => {
