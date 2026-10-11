@@ -8,6 +8,11 @@ const DEFAULT_SAMPLING_CONCURRENCY = 16;
 const RASTER_PIXEL_IS_POINT = 2;
 const HALF_PIXEL = 0.5;
 
+interface PixelIndex {
+  column: number;
+  row: number;
+}
+
 export default class GeotiffHeightProvider {
   private constructor(
     private readonly image: GeoTIFFImage,
@@ -17,6 +22,8 @@ export default class GeotiffHeightProvider {
     private readonly pixelHeight: number, // degrees/pixel, negative
     private readonly rasterWidth: number,
     private readonly rasterHeight: number,
+    private readonly tileWidth: number,
+    private readonly tileHeight: number,
     private readonly noData: number,
     private readonly samplingConcurrency: number,
     private readonly sampleOffset: number
@@ -43,6 +50,8 @@ export default class GeotiffHeightProvider {
       pixelHeight,
       image.getWidth(),
       image.getHeight(),
+      image.getTileWidth(),
+      image.getTileHeight(),
       noData,
       samplingConcurrency,
       pixelIsPoint ? 0 : HALF_PIXEL
@@ -50,20 +59,45 @@ export default class GeotiffHeightProvider {
   }
 
   public async sample(points: GeoPoint[]): Promise<(number | null)[]> {
+    const heights = new Array<number | null>(points.length).fill(null);
+
+    // One read per internal tile: points in the same tile share a window, so the tile is fetched and decoded once.
+    const groups = new Map<string, { index: number; pixel: PixelIndex }[]>();
+    points.forEach((point, index) => {
+      const pixel = this.locate(point);
+      if (pixel === null) {
+        return;
+      }
+      const key = `${Math.floor(pixel.column / this.tileWidth)}:${Math.floor(pixel.row / this.tileHeight)}`;
+      const group = groups.get(key) ?? [];
+      group.push({ index, pixel });
+      groups.set(key, group);
+    });
+
     // Bound concurrent range reads so a large batch doesn't open N simultaneous connections to the gateway.
-    const heights = new Array<number | null>(points.length);
-    await PromisePool.for(points.map((point, index) => ({ point, index })))
+    await PromisePool.for([...groups.values()])
       .withConcurrency(this.samplingConcurrency)
       .handleError((error) => {
         throw error;
       })
-      .process(async ({ point, index }) => {
-        heights[index] = await this.sampleOne(point);
+      .process(async (group) => {
+        const x0 = Math.min(...group.map(({ pixel }) => pixel.column));
+        const y0 = Math.min(...group.map(({ pixel }) => pixel.row));
+        const x1 = Math.max(...group.map(({ pixel }) => pixel.column)) + 1;
+        const y1 = Math.max(...group.map(({ pixel }) => pixel.row)) + 1;
+        const raster = (await this.image.readRasters({ window: [x0, y0, x1, y1] })) as unknown as number[][];
+        const band = raster[0];
+
+        for (const { index, pixel } of group) {
+          const value = band[(pixel.row - y0) * (x1 - x0) + (pixel.column - x0)];
+          heights[index] = value === this.noData || Number.isNaN(value) ? null : value;
+        }
       });
+
     return heights;
   }
 
-  private async sampleOne(point: GeoPoint): Promise<number | null> {
+  private locate(point: GeoPoint): PixelIndex | null {
     const fx = (point.longitude - this.originX) / this.pixelWidth - this.sampleOffset;
     const fy = (point.latitude - this.originY) / this.pixelHeight - this.sampleOffset;
 
@@ -72,13 +106,10 @@ export default class GeotiffHeightProvider {
     }
 
     // Nearest neighbour: the pixel containing the point.
-    const column = Math.min(Math.max(Math.round(fx), 0), this.rasterWidth - 1);
-    const row = Math.min(Math.max(Math.round(fy), 0), this.rasterHeight - 1);
-
-    const raster = (await this.image.readRasters({ window: [column, row, column + 1, row + 1] })) as unknown as number[][];
-    const [value] = raster[0];
-
-    return value === this.noData || Number.isNaN(value) ? null : value;
+    return {
+      column: Math.min(Math.max(Math.round(fx), 0), this.rasterWidth - 1),
+      row: Math.min(Math.max(Math.round(fy), 0), this.rasterHeight - 1),
+    };
   }
 
   // The raster covers half a pixel beyond its outermost sample points.
