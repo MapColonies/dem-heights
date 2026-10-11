@@ -20,7 +20,6 @@ export default class GeotiffHeightProvider {
     private readonly rasterHeight: number,
     private readonly noData: number,
     private readonly samplingConcurrency: number,
-    // Offset from the origin to the first sample point, in pixels.
     private readonly sampleOffset: number
   ) {}
 
@@ -73,7 +72,6 @@ export default class GeotiffHeightProvider {
       return null;
     }
 
-    // Between the outermost sample points and the raster edge, clamp to the edge pixels.
     const cx = Math.min(Math.max(fx, 0), this.rasterWidth - 1);
     const cy = Math.min(Math.max(fy, 0), this.rasterHeight - 1);
     const px = Math.min(Math.floor(cx), this.rasterWidth - BILINEAR_WINDOW_SIZE);
@@ -92,7 +90,6 @@ export default class GeotiffHeightProvider {
       [br, dx * dy],
     ];
 
-    // A nodata neighbor only matters if it contributes to the result.
     if (weighted.some(([value, weight]) => weight > 0 && (value === this.noData || Number.isNaN(value)))) {
       return null;
     }

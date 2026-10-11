@@ -61,7 +61,6 @@ describe('GeotiffHeightProvider', () => {
   it('interpolates between pixel centers', async () => {
     const provider = await providerFor(makeImage());
 
-    // Shared corner of pixels (5,7), (6,7), (5,8), (6,8): the mean of the four.
     const [corner, offCenter] = await provider.sample([at(6, 8), at(5.75, 7.6)]);
 
     expect(corner).toBeCloseTo((linearGrid(5, 7) + linearGrid(6, 7) + linearGrid(5, 8) + linearGrid(6, 8)) / 4, 6);
