@@ -3,6 +3,7 @@ import { IConfig } from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import PromisePool from '@supercharge/promise-pool';
+import { Pool } from 'geotiff';
 import { HeightProviders } from '../interfaces';
 import { SERVICES } from '../../common/constants';
 import GeotiffHeightProvider from './geotiffHeightProvider';
@@ -13,8 +14,13 @@ const COGS_FOLDER = 'cogs/';
 @injectable()
 export default class DEMTerrainCacheManager {
   public heightProviders: HeightProviders = {};
+  private readonly decoderPool?: Pool;
 
-  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {}
+  public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
+    const decoderWorkers = Number(this.config.get<number>('decoderWorkers'));
+    // Tile decoding is CPU-bound; on the main thread a large request blocks the event loop, readiness probe included.
+    this.decoderPool = decoderWorkers > 0 ? new Pool(decoderWorkers) : undefined;
+  }
 
   public async initProviders(demCatalogRecords: PycswDemCatalogRecord[]): Promise<void> {
     const heightProviders: HeightProviders = {};
@@ -41,7 +47,7 @@ export default class DEMTerrainCacheManager {
         }
         const objectUrl = this.transformRouteToObjectUrl(link.url as string);
         const { url, headers } = this.buildAuthenticatedUrl(objectUrl);
-        heightProviders[record.id as string] = await GeotiffHeightProvider.fromUrl(url, headers, samplingConcurrency);
+        heightProviders[record.id as string] = await GeotiffHeightProvider.fromUrl(url, headers, samplingConcurrency, this.decoderPool);
       });
 
     this.heightProviders = heightProviders;
