@@ -51,5 +51,6 @@
   "synchRecordsInterval": 600000,
   "productMetadataFields": "productType,updateDate,resolutionMeter,absoluteAccuracyLEP90",
   "maximumTilesPerRequest": 150,
-  "samplingConcurrency": 16
+  "samplingConcurrency": 16,
+  "decoderWorkers": 2
 }
