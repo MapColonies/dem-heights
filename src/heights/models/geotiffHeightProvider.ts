@@ -8,6 +8,8 @@ const DEFAULT_SAMPLING_CONCURRENCY = 16;
 const BILINEAR_WINDOW_SIZE = 2;
 const RASTER_PIXEL_IS_POINT = 2;
 const HALF_PIXEL = 0.5;
+// Weights below this are floating-point noise from the geo-to-pixel transform, e.g. a point on a sample point landing at 6.9999999.
+const MIN_WEIGHT = 1e-9;
 
 export default class GeotiffHeightProvider {
   private constructor(
@@ -90,11 +92,11 @@ export default class GeotiffHeightProvider {
       [br, dx * dy],
     ];
 
-    if (weighted.some(([value, weight]) => weight > 0 && (value === this.noData || Number.isNaN(value)))) {
+    if (weighted.some(([value, weight]) => weight > MIN_WEIGHT && (value === this.noData || Number.isNaN(value)))) {
       return null;
     }
 
-    return weighted.reduce((height, [value, weight]) => (weight > 0 ? height + value * weight : height), 0);
+    return weighted.reduce((height, [value, weight]) => (weight > MIN_WEIGHT ? height + value * weight : height), 0);
   }
 
   // The raster covers half a pixel beyond its outermost sample points.
