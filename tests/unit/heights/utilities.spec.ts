@@ -1,4 +1,4 @@
-import { generateChecksum, isSame } from '../../../src/heights/utilities';
+import { generateChecksum, isSame, syncRetryDelay } from '../../../src/heights/utilities';
 
 describe('utilities', () => {
   describe('generateChecksum', () => {
@@ -16,6 +16,15 @@ describe('utilities', () => {
     });
     it('returns false for different objects', () => {
       expect(isSame({ a: 1 }, { a: 2 })).toBe(false);
+    });
+  });
+
+  describe('syncRetryDelay', () => {
+    it('doubles the delay with each consecutive failure', () => {
+      expect([1, 2, 3, 4].map((failures) => syncRetryDelay(failures, 600000))).toEqual([5000, 10000, 20000, 40000]);
+    });
+    it('never exceeds the sync interval', () => {
+      expect(syncRetryDelay(20, 600000)).toBe(600000);
     });
   });
 });
