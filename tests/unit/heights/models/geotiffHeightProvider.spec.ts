@@ -13,10 +13,9 @@ const RES = 0.001;
 const PIXEL_IS_AREA = 1;
 const PIXEL_IS_POINT = 2;
 
-// Linear in column and row, so bilinear interpolation is exact: height = 100 * row + column.
+// Linear, so bilinear interpolation is exact.
 const linearGrid = (column: number, row: number): number => 100 * row + column;
 
-// origin [34,33], resolution [0.001,-0.001], 100x100
 const makeImage = (grid: (column: number, row: number) => number = linearGrid, rasterType: number | null = PIXEL_IS_AREA) => ({
   getOrigin: () => [34.0, 33.0, 0],
   getResolution: () => [RES, -RES],
@@ -50,13 +49,12 @@ const at = (column: number, row: number): { longitude: number; latitude: number 
 describe('GeotiffHeightProvider', () => {
   afterEach(() => jest.clearAllMocks());
 
-  // sampleOffset: where pixel values sit relative to the raster's outer corner, in pixels.
   describe.each([
     { name: 'PixelIsArea', rasterType: PIXEL_IS_AREA, sampleOffset: 0.5 },
     { name: 'PixelIsPoint', rasterType: PIXEL_IS_POINT, sampleOffset: 0 },
     { name: 'no GeoKeys (defaults to PixelIsArea)', rasterType: null, sampleOffset: 0.5 },
   ])('$name', ({ rasterType, sampleOffset }) => {
-    // Point at fractional sample-grid position (column, row), i.e. where pixel (column, row)'s value sits.
+    // Point at fractional sample-grid position (column, row): integers land where pixel values sit.
     const atSample = (column: number, row: number): { longitude: number; latitude: number } => at(column + sampleOffset, row + sampleOffset);
     const image = (grid?: (column: number, row: number) => number): ReturnType<typeof makeImage> => makeImage(grid, rasterType);
 
