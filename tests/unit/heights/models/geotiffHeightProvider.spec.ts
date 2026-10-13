@@ -13,7 +13,7 @@ const RES = 0.001;
 const PIXEL_IS_AREA = 1;
 const PIXEL_IS_POINT = 2;
 
-// Linear, so bilinear interpolation is exact.
+// A distinct value per pixel.
 const linearGrid = (column: number, row: number): number => 100 * row + column;
 
 const makeImage = (grid: (column: number, row: number) => number = linearGrid, rasterType: number | null = PIXEL_IS_AREA) => ({
@@ -66,26 +66,23 @@ describe('GeotiffHeightProvider', () => {
       expect(height).toBeCloseTo(linearGrid(5, 7), 6);
     });
 
-    it('interpolates between sample points', async () => {
+    it('returns the containing pixel value anywhere inside the pixel', async () => {
       const provider = await providerFor(image());
 
-      const [between, offCenter] = await provider.sample([atSample(5.5, 7.5), atSample(5.25, 7.1)]);
+      const heights = await provider.sample([atSample(5.4, 7.4), atSample(4.6, 6.6), atSample(5.6, 7.6), atSample(5.002, 6.995)]);
 
-      expect(between).toBeCloseTo((linearGrid(5, 7) + linearGrid(6, 7) + linearGrid(5, 8) + linearGrid(6, 8)) / 4, 6);
-      expect(offCenter).toBeCloseTo(100 * 7.1 + 5.25, 6);
+      expect(heights).toEqual([linearGrid(5, 7), linearGrid(5, 7), linearGrid(6, 8), linearGrid(5, 7)]);
     });
 
     it('clamps to the edge pixels within half a pixel of the raster edge', async () => {
       const edgeImage = image();
       const provider = await providerFor(edgeImage);
 
-      const [left, right, bottom] = await provider.sample([atSample(-0.3, 7), atSample(SIZE - 0.7, 7.5), atSample(5, SIZE - 0.6)]);
+      const heights = await provider.sample([atSample(-0.3, 7), atSample(SIZE - 0.7, 7.4), atSample(5, SIZE - 0.6)]);
 
-      expect(left).toBeCloseTo(linearGrid(0, 7), 6);
-      expect(right).toBeCloseTo(linearGrid(SIZE - 1, 7.5), 6);
-      expect(bottom).toBeCloseTo(linearGrid(5, SIZE - 1), 6);
+      expect(heights).toEqual([linearGrid(0, 7), linearGrid(SIZE - 1, 7), linearGrid(5, SIZE - 1)]);
       const windows = edgeImage.readRasters.mock.calls.map(([options]) => options.window);
-      expect(windows).toContainEqual([SIZE - 2, 7, SIZE, 9]);
+      expect(windows).toContainEqual([SIZE - 1, 7, SIZE, 8]);
     });
 
     it('returns null for a point outside the raster', async () => {
@@ -96,13 +93,13 @@ describe('GeotiffHeightProvider', () => {
       expect(heights).toEqual([null, null, null, null]);
     });
 
-    it('returns null only when a contributing neighbor is nodata', async () => {
+    it('returns null only when the containing pixel is nodata', async () => {
       const provider = await providerFor(image((column, row) => (column === 6 && row === 7 ? NODATA : linearGrid(column, row))));
 
-      const [onSample, between] = await provider.sample([atSample(5, 7), atSample(5.5, 7.5)]);
+      const [nextToNodata, onNodata] = await provider.sample([atSample(5.45, 7), atSample(5.55, 7)]);
 
-      expect(onSample).toBeCloseTo(linearGrid(5, 7), 6);
-      expect(between).toBeNull();
+      expect(nextToNodata).toBe(linearGrid(5, 7));
+      expect(onNodata).toBeNull();
     });
   });
 

@@ -5,11 +5,8 @@ import { GeoPoint } from '../interfaces';
 
 const DEFAULT_NODATA = -32768;
 const DEFAULT_SAMPLING_CONCURRENCY = 16;
-const BILINEAR_WINDOW_SIZE = 2;
 const RASTER_PIXEL_IS_POINT = 2;
 const HALF_PIXEL = 0.5;
-// Weights below this are floating-point noise from the geo-to-pixel transform, e.g. a point on a sample point landing at 6.9999999.
-const MIN_WEIGHT = 1e-9;
 
 export default class GeotiffHeightProvider {
   private constructor(
@@ -74,29 +71,14 @@ export default class GeotiffHeightProvider {
       return null;
     }
 
-    const cx = Math.min(Math.max(fx, 0), this.rasterWidth - 1);
-    const cy = Math.min(Math.max(fy, 0), this.rasterHeight - 1);
-    const px = Math.min(Math.floor(cx), this.rasterWidth - BILINEAR_WINDOW_SIZE);
-    const py = Math.min(Math.floor(cy), this.rasterHeight - BILINEAR_WINDOW_SIZE);
-    const dx = cx - px;
-    const dy = cy - py;
+    // Nearest neighbour: the pixel containing the point.
+    const column = Math.min(Math.max(Math.round(fx), 0), this.rasterWidth - 1);
+    const row = Math.min(Math.max(Math.round(fy), 0), this.rasterHeight - 1);
 
-    const raster = (await this.image.readRasters({
-      window: [px, py, px + BILINEAR_WINDOW_SIZE, py + BILINEAR_WINDOW_SIZE],
-    })) as unknown as number[][];
-    const [tl, tr, bl, br] = raster[0];
-    const weighted: [number, number][] = [
-      [tl, (1 - dx) * (1 - dy)],
-      [tr, dx * (1 - dy)],
-      [bl, (1 - dx) * dy],
-      [br, dx * dy],
-    ];
+    const raster = (await this.image.readRasters({ window: [column, row, column + 1, row + 1] })) as unknown as number[][];
+    const [value] = raster[0];
 
-    if (weighted.some(([value, weight]) => weight > MIN_WEIGHT && (value === this.noData || Number.isNaN(value)))) {
-      return null;
-    }
-
-    return weighted.reduce((height, [value, weight]) => (weight > MIN_WEIGHT ? height + value * weight : height), 0);
+    return value === this.noData || Number.isNaN(value) ? null : value;
   }
 
   // The raster covers half a pixel beyond its outermost sample points.
