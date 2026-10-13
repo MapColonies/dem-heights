@@ -141,12 +141,10 @@ components:
                 type: number
                 format: double
                 minimum: 0
-                exclusiveMinimum: true
               absoluteAccuracyLEP90:
                 type: number
                 format: double
                 minimum: 0
-                exclusiveMinimum: true
               updateDate:
                 type: string
                 format: date-time
