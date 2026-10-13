@@ -77,8 +77,7 @@ components:
         message:
           type: string
         errorCode:
-          oneOf:
-            - $ref: '#/components/schemas/errorCodesEnum'
+          $ref: '#/components/schemas/errorCodesEnum'
         status:
           type: integer
     pointsReq:
@@ -111,6 +110,7 @@ components:
       properties:
         data:
           type: array
+          minItems: 1
           items:
             type: object
             required:
@@ -136,14 +136,17 @@ components:
             type: object
             properties:
               productType:
-                oneOf:
-                  - $ref: '#/components/schemas/productTypeEnum'
+                $ref: '#/components/schemas/productTypeEnum'
               resolutionMeter:
                 type: number
                 format: double
+                minimum: 0
+                exclusiveMinimum: true
               absoluteAccuracyLEP90:
                 type: number
                 format: double
+                minimum: 0
+                exclusiveMinimum: true
               updateDate:
                 type: string
                 format: date-time
