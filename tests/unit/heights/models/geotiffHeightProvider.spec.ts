@@ -50,67 +50,62 @@ const at = (column: number, row: number): { longitude: number; latitude: number 
 describe('GeotiffHeightProvider', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('returns the pixel value at a pixel center', async () => {
-    const provider = await providerFor(makeImage());
+  // sampleOffset: where pixel values sit relative to the raster's outer corner, in pixels.
+  describe.each([
+    { name: 'PixelIsArea', rasterType: PIXEL_IS_AREA, sampleOffset: 0.5 },
+    { name: 'PixelIsPoint', rasterType: PIXEL_IS_POINT, sampleOffset: 0 },
+    { name: 'no GeoKeys (defaults to PixelIsArea)', rasterType: null, sampleOffset: 0.5 },
+  ])('$name', ({ rasterType, sampleOffset }) => {
+    // Point at fractional sample-grid position (column, row), i.e. where pixel (column, row)'s value sits.
+    const atSample = (column: number, row: number): { longitude: number; latitude: number } => at(column + sampleOffset, row + sampleOffset);
+    const image = (grid?: (column: number, row: number) => number): ReturnType<typeof makeImage> => makeImage(grid, rasterType);
 
-    const [height] = await provider.sample([at(5.5, 7.5)]);
+    it('returns the pixel value at its sample point', async () => {
+      const provider = await providerFor(image());
 
-    expect(height).toBeCloseTo(linearGrid(5, 7), 6);
-  });
+      const [height] = await provider.sample([atSample(5, 7)]);
 
-  it('interpolates between pixel centers', async () => {
-    const provider = await providerFor(makeImage());
+      expect(height).toBeCloseTo(linearGrid(5, 7), 6);
+    });
 
-    const [corner, offCenter] = await provider.sample([at(6, 8), at(5.75, 7.6)]);
+    it('interpolates between sample points', async () => {
+      const provider = await providerFor(image());
 
-    expect(corner).toBeCloseTo((linearGrid(5, 7) + linearGrid(6, 7) + linearGrid(5, 8) + linearGrid(6, 8)) / 4, 6);
-    expect(offCenter).toBeCloseTo(100 * 7.1 + 5.25, 6);
-  });
+      const [between, offCenter] = await provider.sample([atSample(5.5, 7.5), atSample(5.25, 7.1)]);
 
-  it('treats a raster without GeoKeys as PixelIsArea', async () => {
-    const provider = await providerFor(makeImage(linearGrid, null));
+      expect(between).toBeCloseTo((linearGrid(5, 7) + linearGrid(6, 7) + linearGrid(5, 8) + linearGrid(6, 8)) / 4, 6);
+      expect(offCenter).toBeCloseTo(100 * 7.1 + 5.25, 6);
+    });
 
-    const [height] = await provider.sample([at(5.5, 7.5)]);
+    it('clamps to the edge pixels within half a pixel of the raster edge', async () => {
+      const edgeImage = image();
+      const provider = await providerFor(edgeImage);
 
-    expect(height).toBeCloseTo(linearGrid(5, 7), 6);
-  });
+      const [left, right, bottom] = await provider.sample([atSample(-0.3, 7), atSample(SIZE - 0.7, 7.5), atSample(5, SIZE - 0.6)]);
 
-  it('samples PixelIsPoint rasters at the grid points', async () => {
-    const provider = await providerFor(makeImage(linearGrid, PIXEL_IS_POINT));
+      expect(left).toBeCloseTo(linearGrid(0, 7), 6);
+      expect(right).toBeCloseTo(linearGrid(SIZE - 1, 7.5), 6);
+      expect(bottom).toBeCloseTo(linearGrid(5, SIZE - 1), 6);
+      const windows = edgeImage.readRasters.mock.calls.map(([options]) => options.window);
+      expect(windows).toContainEqual([SIZE - 2, 7, SIZE, 9]);
+    });
 
-    const [height] = await provider.sample([at(5, 7)]);
+    it('returns null for a point outside the raster', async () => {
+      const provider = await providerFor(image());
 
-    expect(height).toBeCloseTo(linearGrid(5, 7), 6);
-  });
+      const heights = await provider.sample([atSample(-0.6, 7), atSample(SIZE - 0.4, 7), atSample(5, -0.6), { longitude: 10.0, latitude: 10.0 }]);
 
-  it('clamps to the edge pixels within half a pixel of the raster edge', async () => {
-    const image = makeImage();
-    const provider = await providerFor(image);
+      expect(heights).toEqual([null, null, null, null]);
+    });
 
-    const [left, right, bottom] = await provider.sample([at(0.2, 7.5), at(SIZE - 0.2, 7.5), at(5.5, SIZE - 0.1)]);
+    it('returns null only when a contributing neighbor is nodata', async () => {
+      const provider = await providerFor(image((column, row) => (column === 6 && row === 7 ? NODATA : linearGrid(column, row))));
 
-    expect(left).toBeCloseTo(linearGrid(0, 7), 6);
-    expect(right).toBeCloseTo(linearGrid(SIZE - 1, 7), 6);
-    expect(bottom).toBeCloseTo(linearGrid(5, SIZE - 1), 6);
-    const windows = image.readRasters.mock.calls.map(([options]) => options.window);
-    expect(windows).toContainEqual([SIZE - 2, 7, SIZE, 9]);
-  });
+      const [onSample, between] = await provider.sample([atSample(5, 7), atSample(5.5, 7.5)]);
 
-  it('returns null for a point outside the raster', async () => {
-    const provider = await providerFor(makeImage());
-
-    const heights = await provider.sample([at(-0.1, 7.5), at(SIZE + 0.1, 7.5), at(5.5, -0.1), { longitude: 10.0, latitude: 10.0 }]);
-
-    expect(heights).toEqual([null, null, null, null]);
-  });
-
-  it('returns null only when a contributing neighbor is nodata', async () => {
-    const provider = await providerFor(makeImage((column, row) => (column === 6 && row === 7 ? NODATA : linearGrid(column, row))));
-
-    const [center, between] = await provider.sample([at(5.5, 7.5), at(6, 8)]);
-
-    expect(center).toBeCloseTo(linearGrid(5, 7), 6);
-    expect(between).toBeNull();
+      expect(onSample).toBeCloseTo(linearGrid(5, 7), 6);
+      expect(between).toBeNull();
+    });
   });
 
   it('passes token headers through to fromUrl', async () => {
