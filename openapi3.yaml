@@ -100,7 +100,7 @@ components:
                 type: number
                 format: double
         productType:
-          oneOf:
+          allOf:
             - $ref: '#/components/schemas/productTypeEnum'
           default: MIXED
     pointsRes:
