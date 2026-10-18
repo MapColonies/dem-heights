@@ -109,30 +109,30 @@ describe('GeotiffHeightProvider', () => {
       expect(nextToNodata).toBe(linearGrid(5, 7));
       expect(onNodata).toBeNull();
     });
-  });
 
-  it('samples a single-pixel raster', async () => {
-    const provider = await providerFor(makeImage(() => 42, PIXEL_IS_AREA, 1, 1));
+    it('samples a single-pixel raster', async () => {
+      const provider = await providerFor(makeImage(() => 42, rasterType, 1, 1));
 
-    const heights = await provider.sample([at(0.5, 0.5), at(0.1, 0.9), at(1.1, 0.5)]);
+      const heights = await provider.sample([atSample(0, 0), atSample(-0.4, 0.4), atSample(0.6, 0)]);
 
-    expect(heights).toEqual([42, 42, null]);
-  });
+      expect(heights).toEqual([42, 42, null]);
+    });
 
-  it('samples a raster one pixel wide', async () => {
-    const provider = await providerFor(makeImage(linearGrid, PIXEL_IS_AREA, 1, SIZE));
+    it('samples a raster one pixel wide', async () => {
+      const provider = await providerFor(makeImage(linearGrid, rasterType, 1, SIZE));
 
-    const heights = await provider.sample([at(0.3, 8.4), at(0.9, 8.6)]);
+      const heights = await provider.sample([atSample(-0.2, 7.9), atSample(0.4, 8.1)]);
 
-    expect(heights).toEqual([linearGrid(0, 8), linearGrid(0, 8)]);
-  });
+      expect(heights).toEqual([linearGrid(0, 8), linearGrid(0, 8)]);
+    });
 
-  it('samples a raster one pixel tall', async () => {
-    const provider = await providerFor(makeImage(linearGrid, PIXEL_IS_AREA, SIZE, 1));
+    it('samples a raster one pixel tall', async () => {
+      const provider = await providerFor(makeImage(linearGrid, rasterType, SIZE, 1));
 
-    const heights = await provider.sample([at(8.4, 0.3), at(8.6, 0.9)]);
+      const heights = await provider.sample([atSample(7.9, -0.2), atSample(8.1, 0.4)]);
 
-    expect(heights).toEqual([linearGrid(8, 0), linearGrid(8, 0)]);
+      expect(heights).toEqual([linearGrid(8, 0), linearGrid(8, 0)]);
+    });
   });
 
   it('passes token headers through to fromUrl', async () => {
