@@ -19,7 +19,7 @@ export default class GeotiffHeightProvider {
     private readonly rasterHeight: number,
     private readonly noData: number,
     private readonly samplingConcurrency: number,
-    private readonly sampleOffset: number
+    private readonly cornerOffset: number
   ) {}
 
   public static async fromUrl(
@@ -32,7 +32,7 @@ export default class GeotiffHeightProvider {
     const [originX, originY] = image.getOrigin();
     const [pixelWidth, pixelHeight] = image.getResolution();
     const noData = image.getGDALNoData() ?? DEFAULT_NODATA;
-    // PixelIsArea (the GeoTIFF default): the origin is the first pixel's outer corner, values sit at pixel centers.
+    // PixelIsArea (the GeoTIFF default): the origin is the first pixel's outer corner. PixelIsPoint: it is the first pixel's center.
     const pixelIsPoint = image.getGeoKeys()?.GTRasterTypeGeoKey === RASTER_PIXEL_IS_POINT;
 
     return new GeotiffHeightProvider(
@@ -45,7 +45,7 @@ export default class GeotiffHeightProvider {
       image.getHeight(),
       noData,
       samplingConcurrency,
-      pixelIsPoint ? 0 : HALF_PIXEL
+      pixelIsPoint ? HALF_PIXEL : 0
     );
   }
 
@@ -64,16 +64,17 @@ export default class GeotiffHeightProvider {
   }
 
   private async sampleOne(point: GeoPoint): Promise<number | null> {
-    const fx = (point.longitude - this.originX) / this.pixelWidth - this.sampleOffset;
-    const fy = (point.latitude - this.originY) / this.pixelHeight - this.sampleOffset;
+    // Position in pixels from the raster's outer corner.
+    const fx = (point.longitude - this.originX) / this.pixelWidth + this.cornerOffset;
+    const fy = (point.latitude - this.originY) / this.pixelHeight + this.cornerOffset;
 
     if (!this.isInside(fx, this.rasterWidth) || !this.isInside(fy, this.rasterHeight)) {
       return null;
     }
 
-    // Nearest neighbour: the pixel containing the point.
-    const column = Math.min(Math.max(Math.round(fx), 0), this.rasterWidth - 1);
-    const row = Math.min(Math.max(Math.round(fy), 0), this.rasterHeight - 1);
+    // Nearest neighbour: the pixel containing the point; a point on the far edge belongs to the last pixel.
+    const column = Math.min(Math.floor(fx), this.rasterWidth - 1);
+    const row = Math.min(Math.floor(fy), this.rasterHeight - 1);
 
     const raster = (await this.image.readRasters({ window: [column, row, column + 1, row + 1] })) as unknown as number[][];
     const [value] = raster[0];
@@ -81,8 +82,7 @@ export default class GeotiffHeightProvider {
     return value === this.noData || Number.isNaN(value) ? null : value;
   }
 
-  // The raster covers half a pixel beyond its outermost sample points.
-  private isInside(samplePosition: number, size: number): boolean {
-    return samplePosition >= -HALF_PIXEL && samplePosition <= size - HALF_PIXEL;
+  private isInside(position: number, size: number): boolean {
+    return position >= 0 && position <= size;
   }
 }
