@@ -205,4 +205,188 @@ describe('heights', function () {
       });
     });
   });
+
+  describe('Given a productId + catalogProductType selector (pinned catalog-item mode)', function () {
+    // Own catalog, own footprint area, kept separate from 'Given seeded geotiff providers' above so adding
+    // these records can't change which provider best-resolution auto-select picks for that block's test point.
+    const pinnedFootprint = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [10, 10],
+          [10, 12],
+          [12, 12],
+          [12, 10],
+          [10, 10],
+        ],
+      ],
+    };
+
+    const basePinnedRecord = {
+      resolutionMeter: 30,
+      updateDate: '2023-05-08T17:44:01.000Z',
+      absoluteAccuracyLEP90: 9e-7,
+      productStatus: 'PUBLISHED',
+      footprint: pinnedFootprint,
+    };
+
+    const pinnedRecords = [
+      {
+        ...basePinnedRecord,
+        id: 'pin-dtm',
+        productId: 'pinned_dtm_product',
+        productType: 'DTM',
+        links: [{ protocol: 'GEOTIFF', url: 'https://tiles-dev.mapcolonies.net/api/dem/v1/cogs/pin-dtm.tif' }],
+      },
+      {
+        ...basePinnedRecord,
+        id: 'pin-nonexact',
+        productId: 'pinned_nonexact_product',
+        productType: 'QUANTIZED_MESH_DTM_BEST', // not literally 'DTM' — demonstrates the exact-match limitation (MAPCO-12427)
+        links: [{ protocol: 'GEOTIFF', url: 'https://tiles-dev.mapcolonies.net/api/dem/v1/cogs/pin-nonexact.tif' }],
+      },
+      {
+        ...basePinnedRecord,
+        id: 'pin-no-link',
+        productId: 'pinned_nolink_product',
+        productType: 'DTM',
+        links: [],
+      },
+      {
+        ...basePinnedRecord,
+        id: 'pin-not-ready',
+        productId: 'pinned_notready_product',
+        productType: 'DTM',
+        links: [{ protocol: 'GEOTIFF', url: 'https://tiles-dev.mapcolonies.net/api/dem/v1/cogs/pin-not-ready.tif' }],
+      },
+    ];
+
+    beforeAll(async function () {
+      // Keyed by URL (not call order) so one record's provider can fail to open while the rest load fine.
+      jest.spyOn(GeotiffHeightProvider, 'fromUrl').mockImplementation(async (url: string) => {
+        if (url.includes('pin-not-ready')) {
+          throw new Error('simulated open failure');
+        }
+        const provider = await Promise.resolve({
+          sample: async (points: { longitude: number; latitude: number }[]) => Promise.resolve(points.map(() => 123)),
+        } as unknown as GeotiffHeightProvider);
+        return provider;
+      });
+
+      container
+        .resolve<CatalogRecords>(CATALOG_RECORDS_MAP)
+        .setValue(Object.fromEntries(pinnedRecords.map((r) => [r.id, r])) as unknown as Record<string, PycswDemCatalogRecord>);
+      await container.resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER).initProviders(pinnedRecords as unknown as PycswDemCatalogRecord[]);
+    });
+
+    afterAll(function () {
+      container.resolve<CatalogRecords>(CATALOG_RECORDS_MAP).setValue({});
+      jest.restoreAllMocks();
+    });
+
+    it('samples using the pinned record and ignores body productType', async function () {
+      const response = await requestSender.getPoints(
+        { positions: [{ longitude: 11, latitude: 11 }], productType: TerrainTypes.DSM } as GetHeightsPointsRequest,
+        { productId: 'pinned_dtm_product', catalogProductType: 'DTM' }
+      );
+
+      expect(response.status).toBe(httpStatusCodes.OK);
+      const body = response.body as GetHeightsPointsResponse;
+      expect(body.data[0].height).toBe(123);
+      expect(body.data[0].productId).toBe('pinned_dtm_product');
+    });
+
+    it('returns 400 INVALID_REQUEST for catalogProductType=MIXED, rejected at the OpenAPI layer', async function () {
+      const response = await requestSender.getPoints({ positions: [{ longitude: 11, latitude: 11 }] } as GetHeightsPointsRequest, {
+        productId: 'pinned_dtm_product',
+        catalogProductType: 'MIXED',
+      });
+
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.INVALID_REQUEST);
+    });
+
+    it('returns 400 MISSING_REQUIRED_PROPERTY when only productId is given', async function () {
+      const response = await requestSender.getPoints({ positions: [{ longitude: 11, latitude: 11 }] } as GetHeightsPointsRequest, {
+        productId: 'pinned_dtm_product',
+      });
+
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.MISSING_REQUIRED_PROPERTY);
+    });
+
+    it('returns 400 MISSING_REQUIRED_PROPERTY when only catalogProductType is given', async function () {
+      const response = await requestSender.getPoints({ positions: [{ longitude: 11, latitude: 11 }] } as GetHeightsPointsRequest, {
+        catalogProductType: 'DTM',
+      });
+
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.MISSING_REQUIRED_PROPERTY);
+    });
+
+    it('returns 400 UNKNOWN_CATALOG_ITEM for an unknown productId', async function () {
+      const response = await requestSender.getPoints({ positions: [{ longitude: 11, latitude: 11 }] } as GetHeightsPointsRequest, {
+        productId: 'does-not-exist',
+        catalogProductType: 'DTM',
+      });
+
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.UNKNOWN_CATALOG_ITEM);
+    });
+
+    it('returns 400 UNKNOWN_CATALOG_ITEM for a matching record with no GEOTIFF link (defensive; near-impossible in production)', async function () {
+      const response = await requestSender.getPoints({ positions: [{ longitude: 11, latitude: 11 }] } as GetHeightsPointsRequest, {
+        productId: 'pinned_nolink_product',
+        catalogProductType: 'DTM',
+      });
+
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.UNKNOWN_CATALOG_ITEM);
+    });
+
+    it('returns 400 UNKNOWN_CATALOG_ITEM for a record whose stored productType is not exactly DSM/DTM, despite a working GEOTIFF provider', async function () {
+      const response = await requestSender.getPoints({ positions: [{ longitude: 11, latitude: 11 }] } as GetHeightsPointsRequest, {
+        productId: 'pinned_nonexact_product',
+        catalogProductType: 'DTM',
+      });
+
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.UNKNOWN_CATALOG_ITEM);
+    });
+
+    it('returns 503 CATALOG_ITEM_NOT_READY for a matching record whose provider failed to open', async function () {
+      const response = await requestSender.getPoints({ positions: [{ longitude: 11, latitude: 11 }] } as GetHeightsPointsRequest, {
+        productId: 'pinned_notready_product',
+        catalogProductType: 'DTM',
+      });
+
+      expect(response.status).toBe(httpStatusCodes.SERVICE_UNAVAILABLE);
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.CATALOG_ITEM_NOT_READY);
+    });
+
+    it('returns 400 POINT_OUTSIDE_CATALOG_ITEM_COVERAGE and fails the whole request when any point is outside the pinned footprint', async function () {
+      const response = await requestSender.getPoints(
+        {
+          positions: [
+            { longitude: 11, latitude: 11 }, // inside
+            { longitude: 0, latitude: 0 }, // outside
+          ],
+        } as GetHeightsPointsRequest,
+        { productId: 'pinned_dtm_product', catalogProductType: 'DTM' }
+      );
+
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.POINT_OUTSIDE_CATALOG_ITEM_COVERAGE);
+    });
+
+    it('rejects a repeated productId query key at the OpenAPI type:string layer, before resolveCatalogItem', async function () {
+      const response = await requestSender.getPoints(
+        { positions: [{ longitude: 11, latitude: 11 }] } as GetHeightsPointsRequest,
+        'productId=a&productId=b&catalogProductType=DTM'
+      );
+
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.INVALID_REQUEST);
+    });
+  });
 });

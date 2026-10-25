@@ -13,6 +13,19 @@ paths:
       tags:
         - heights
       summary: get points heights
+      parameters:
+        - in: query
+          name: productId
+          required: false
+          schema:
+            type: string
+          description: Pin sampling to this catalog item's productId. Must be supplied together with catalogProductType, or omitted together with it.
+        - in: query
+          name: catalogProductType
+          required: false
+          schema:
+            $ref: '#/components/schemas/catalogProductTypeEnum'
+          description: Pin sampling to this product type. Must be supplied together with productId, or omitted together with it.
       requestBody:
         description: Points to calculate heights for.
         content:
@@ -56,6 +69,12 @@ paths:
                     absoluteAccuracyLEP90: 9.e-7
         '400':
           description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        '503':
+          description: Catalog item not ready
           content:
             application/json:
               schema:
@@ -154,6 +173,11 @@ components:
         - DSM
         - DTM
         - MIXED
+    catalogProductTypeEnum:
+      type: string
+      enum:
+        - DSM
+        - DTM
     errorCodesEnum:
       type: string
       enum:
@@ -163,3 +187,6 @@ components:
         - GENERAL_ERROR
         - MISSING_REQUIRED_PROPERTY
         - INVALID_REQUEST
+        - UNKNOWN_CATALOG_ITEM
+        - CATALOG_ITEM_NOT_READY
+        - POINT_OUTSIDE_CATALOG_ITEM_COVERAGE
