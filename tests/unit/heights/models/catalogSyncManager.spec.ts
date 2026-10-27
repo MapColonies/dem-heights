@@ -5,6 +5,7 @@ import { CswClientWrapper } from '../../../../src/common/csw/cswClientWrapper';
 import { CatalogSyncManager } from '../../../../src/heights/models/catalogSyncManager';
 import { CatalogRecords } from '../../../../src/heights/models/catalogRecords';
 import DEMTerrainCacheManager from '../../../../src/heights/models/DEMTerrainCacheManager';
+import { syncRetryDelay } from '../../../../src/heights/utilities';
 
 const RECORDS = [{ id: 'r1', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/r1.tif' }] }] as unknown as PycswDemCatalogRecord[];
 
@@ -88,7 +89,7 @@ describe('CatalogSyncManager', () => {
     expect(clearTimeoutSpy).toHaveBeenCalled();
   });
 
-  it('reschedules the next run even after a fetch error', async () => {
+  it('retries a failed fetch with backoff instead of the full interval', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
     jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockRejectedValue(new Error('csw down'));
     const interval = config.get<number>('synchRecordsInterval');
@@ -97,8 +98,25 @@ describe('CatalogSyncManager', () => {
     manager.start(new CatalogRecords(), makeCacheManager().cacheManager);
     await new Promise((resolve) => setImmediate(resolve));
 
-    const scheduledWithInterval = setTimeoutSpy.mock.calls.filter((call) => call[1] === interval);
-    expect(scheduledWithInterval.length).toBeGreaterThanOrEqual(1);
+    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), syncRetryDelay(1, interval));
+  });
+
+  it('returns to the configured interval after a failed fetch succeeds', async () => {
+    // run the retry immediately so the test doesn't wait for the real backoff
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback: () => void) => {
+      callback();
+      return undefined as unknown as NodeJS.Timeout;
+    });
+    jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockRejectedValueOnce(new Error('csw down')).mockResolvedValue(RECORDS);
+    const interval = config.get<number>('synchRecordsInterval');
+
+    manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+    manager.start(new CatalogRecords(), makeCacheManager().cacheManager);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(setTimeoutSpy).toHaveBeenNthCalledWith(1, expect.any(Function), syncRetryDelay(1, interval));
+
+    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), interval);
   });
 
   it('does not rebuild providers when the same records return in a different order', async () => {

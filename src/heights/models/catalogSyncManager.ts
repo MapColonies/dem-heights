@@ -5,7 +5,7 @@ import { IConfig } from '../../common/interfaces';
 import { SERVICES } from '../../common/constants';
 import { CswClientWrapper } from '../../common/csw/cswClientWrapper';
 import { IService } from '../../common/csw/utils';
-import { isSame } from '../utilities';
+import { isSame, syncRetryDelay } from '../utilities';
 import { CatalogRecords } from './catalogRecords';
 import DEMTerrainCacheManager from './DEMTerrainCacheManager';
 
@@ -24,6 +24,7 @@ export class CatalogSyncManager {
   private readonly intervalMs: number;
   private timer: NodeJS.Timeout | undefined;
   private stopped = false;
+  private consecutiveFailures = 0;
   private catalogRecords: CatalogRecords | undefined;
   private cacheManager: DEMTerrainCacheManager | undefined;
 
@@ -66,11 +67,15 @@ export class CatalogSyncManager {
         catalogRecords.setValue(Object.fromEntries(records.map((record) => [record.id as string, record])));
         this.logger.info({ msg: `CatalogRecords UPDATED - ${records.length} records fetched`, location: '[CatalogSyncManager]' });
       }
+      this.consecutiveFailures = 0;
     } catch (err) {
+      this.consecutiveFailures++;
       this.logger.error({ msg: 'FETCH CatalogRecords ERROR', err, location: '[CatalogSyncManager]' });
     } finally {
       if (!this.stopped) {
-        this.timer = setTimeout(() => void this.syncOnce(), this.intervalMs);
+        // On startup pycsw is often not ready yet; waiting a full interval would leave heights without providers.
+        const delay = this.consecutiveFailures === 0 ? this.intervalMs : syncRetryDelay(this.consecutiveFailures, this.intervalMs);
+        this.timer = setTimeout(() => void this.syncOnce(), delay);
       }
     }
   }
