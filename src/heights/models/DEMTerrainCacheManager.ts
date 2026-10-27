@@ -82,3 +82,5 @@ export default class DEMTerrainCacheManager {
     return { url: objectUrl };
   }
 }
+
+export { GEOTIFF_PROTOCOL };

@@ -21,4 +21,11 @@ export interface PosWithProvider extends GeoPoint {
   providerKey?: string;
 }
 
+// productType is typed as TerrainTypes for reuse, but MIXED is rejected by the OpenAPI
+// catalogProductTypeEnum before this is built — only DSM/DTM ever reach it.
+export interface CatalogItemSelector {
+  productId: string;
+  productType: TerrainTypes;
+}
+
 export type HeightProviders = Record<string, GeotiffHeightProvider>;

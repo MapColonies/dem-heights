@@ -6,11 +6,12 @@ import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import PromisePool from '@supercharge/promise-pool';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { Feature } from '@turf/turf';
+import { CommonErrors } from '../../common/commonErrors';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerConfig';
-import { GeoPoint, HeightProviders, PosWithHeight, PosWithProvider, TerrainTypes } from '../interfaces';
-import DEMTerrainCacheManager from './DEMTerrainCacheManager';
+import { CatalogItemSelector, GeoPoint, HeightProviders, PosWithHeight, PosWithProvider, TerrainTypes } from '../interfaces';
+import DEMTerrainCacheManager, { GEOTIFF_PROTOCOL } from './DEMTerrainCacheManager';
 import { CatalogRecords } from './catalogRecords';
 
 export interface ICoordinates {
@@ -20,6 +21,61 @@ export interface ICoordinates {
 
 export interface IHeightModel {
   dem: number;
+}
+
+/**
+ * Sorts best-first: highest resolution (lowest resolutionMeter) wins, ties broken by newest updateDate.
+ * Shared by best-resolution auto-select and resolveCatalogItem's duplicate-productId tie-break.
+ */
+export function compareCatalogRecordsByResolutionAndDate(recordA: PycswDemCatalogRecord, recordB: PycswDemCatalogRecord): number {
+  const A_BEFORE_B = -1;
+  const B_BEFORE_A = 1;
+
+  switch (true) {
+    case (recordA.resolutionMeter as number) < (recordB.resolutionMeter as number):
+      return A_BEFORE_B;
+    case (recordA.resolutionMeter as number) > (recordB.resolutionMeter as number):
+      return B_BEFORE_A;
+    default: {
+      const dateB = new Date(recordB.updateDate as string | number | Date);
+      const dateA = new Date(recordA.updateDate as string | number | Date);
+      return dateB.getTime() - dateA.getTime();
+    }
+  }
+}
+
+export type ResolvedCatalogItem =
+  | { status: 'ready'; providerKey: string; matchCount: number }
+  | { status: 'not_ready' }
+  | { status: 'not_in_catalog' };
+
+/**
+ * Exact match only: a record's stored productType must equal productType literally
+ * (e.g. 'QUANTIZED_MESH_DTM_BEST' does not match 'DTM') — see MAPCO-12427 AC.
+ */
+export function resolveCatalogItem(
+  productId: string,
+  productType: TerrainTypes,
+  heightProviders: HeightProviders,
+  catalogRecordsMap: Record<string, PycswDemCatalogRecord>
+): ResolvedCatalogItem {
+  const isMatch = (record: PycswDemCatalogRecord | undefined): boolean =>
+    record !== undefined && record.productId === productId && (record.productType as string | undefined) === (productType as string);
+
+  const readyKeys = Object.keys(heightProviders).filter((key) => isMatch(catalogRecordsMap[key]));
+
+  if (readyKeys.length > 0) {
+    const [bestKey] = readyKeys.sort((a, b) => compareCatalogRecordsByResolutionAndDate(catalogRecordsMap[a], catalogRecordsMap[b]));
+    return { status: 'ready', providerKey: bestKey, matchCount: readyKeys.length };
+  }
+
+  const catalogMatchKey = Object.keys(catalogRecordsMap).find((key) => isMatch(catalogRecordsMap[key]));
+  if (catalogMatchKey === undefined) {
+    return { status: 'not_in_catalog' };
+  }
+
+  const hasGeotiffLink = catalogRecordsMap[catalogMatchKey].links?.some((link) => link.protocol === GEOTIFF_PROTOCOL) ?? false;
+  return hasGeotiffLink ? { status: 'not_ready' } : { status: 'not_in_catalog' };
 }
 
 @injectable()
@@ -39,6 +95,7 @@ export class HeightsManager {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(CommonErrors) private readonly commonErrors: CommonErrors,
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
     if (registry !== undefined) {
@@ -62,8 +119,22 @@ export class HeightsManager {
     }
   }
 
-  public async getPoints(points: GeoPoint[], requestedProductType: TerrainTypes, reqCtx?: Record<string, unknown>): Promise<PosWithHeight[]> {
+  public async getPoints(
+    points: GeoPoint[],
+    requestedProductType: TerrainTypes,
+    reqCtx?: Record<string, unknown>,
+    catalogItem?: CatalogItemSelector
+  ): Promise<PosWithHeight[]> {
     this.logger.info({ pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+
+    if (catalogItem !== undefined) {
+      this.logger.info({
+        msg: 'catalogItem selector provided; body productType is ignored for sampling',
+        catalogItem,
+        location: '[HeightsManager] [getPoints]',
+        ...reqCtx,
+      });
+    }
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     this.elevationsRequestsCounter?.inc({ points_number: points.length });
@@ -74,7 +145,7 @@ export class HeightsManager {
 
     this.runningRequests++;
     try {
-      const result = await this.samplePositionsHeights(points, requestedProductType, reqCtx);
+      const result = await this.samplePositionsHeights(points, requestedProductType, reqCtx, catalogItem);
       this.logger.info({
         totalRequests: result.totalRequests,
         pointsNumber: points.length,
@@ -90,7 +161,8 @@ export class HeightsManager {
   private async samplePositionsHeights(
     positionsArr: GeoPoint[],
     requestedProductType: TerrainTypes,
-    reqCtx?: Record<string, unknown>
+    reqCtx?: Record<string, unknown>,
+    catalogItem?: CatalogItemSelector
   ): Promise<{ positions: PosWithHeight[]; totalRequests: number }> {
     // Snapshot the provider map and catalog once per request. Both are rebuilt wholesale on a
     // background timer; resolving them fresh per access could pair a providerKey chosen against
@@ -99,8 +171,34 @@ export class HeightsManager {
     const heightProviders = this.heightProviders;
     const catalogRecordsMap = this.catalogRecordsMap;
 
+    let pinnedProviderKey: string | undefined;
+    if (catalogItem !== undefined) {
+      const resolution = resolveCatalogItem(catalogItem.productId, catalogItem.productType, heightProviders, catalogRecordsMap);
+
+      if (resolution.status === 'not_in_catalog') {
+        throw this.commonErrors.UNKNOWN_CATALOG_ITEM;
+      }
+      if (resolution.status === 'not_ready') {
+        throw this.commonErrors.CATALOG_ITEM_NOT_READY;
+      }
+      if (resolution.matchCount > 1) {
+        this.logger.warn({
+          msg: 'Multiple catalog items matched the given productId+catalogProductType; selected the best by resolution/date',
+          matchCount: resolution.matchCount,
+          selectedProviderKey: resolution.providerKey,
+          catalogItem,
+          location: '[HeightsManager] [samplePositionsHeights]',
+          ...reqCtx,
+        });
+      }
+      pinnedProviderKey = resolution.providerKey;
+    }
+
     const attachProviderStart = performance.now();
-    const positionsWithProviders = this.attachProviderToPositions(positionsArr, requestedProductType, heightProviders, catalogRecordsMap);
+    const positionsWithProviders =
+      pinnedProviderKey !== undefined
+        ? this.attachPinnedProviderToPositions(positionsArr, pinnedProviderKey, catalogRecordsMap)
+        : this.attachProviderToPositions(positionsArr, requestedProductType, heightProviders, catalogRecordsMap);
     this.logger.info({
       attachProviderTime: performance.now() - attachProviderStart,
       pointsNumber: positionsArr.length,
@@ -186,30 +284,35 @@ export class HeightsManager {
         booleanPointInPolygon([position.longitude, position.latitude], catalogRecordsMap[key].footprint as Feature<Polygon>)
       );
 
-      const sorted = footprintFiltered.sort(([aKey], [bKey]) => {
-        const A_BEFORE_B = -1;
-        const B_BEFORE_A = 1;
-        const recordA = catalogRecordsMap[aKey];
-        const recordB = catalogRecordsMap[bKey];
-
-        switch (true) {
-          case (recordA.resolutionMeter as number) < (recordB.resolutionMeter as number):
-            return A_BEFORE_B;
-          case (recordA.resolutionMeter as number) > (recordB.resolutionMeter as number):
-            return B_BEFORE_A;
-          default: {
-            const dateB = new Date(recordB.updateDate as string | number | Date);
-            const dateA = new Date(recordA.updateDate as string | number | Date);
-            return dateB.getTime() - dateA.getTime();
-          }
-        }
-      });
+      const sorted = footprintFiltered.sort(([aKey], [bKey]) =>
+        compareCatalogRecordsByResolutionAndDate(catalogRecordsMap[aKey], catalogRecordsMap[bKey])
+      );
 
       if (sorted.length === 0) {
         return { ...position } as PosWithProvider;
       }
 
       const [providerKey] = sorted[0];
+      return { ...position, providerKey } as PosWithProvider;
+    });
+  }
+
+  /**
+   * Pinned-selector branch: every point must lie inside the one resolved record's footprint.
+   * Unlike best-resolution auto-select, a miss fails the whole request instead of yielding a
+   * null-height point (AC: no partial success for a pinned request).
+   */
+  private attachPinnedProviderToPositions(
+    positions: GeoPoint[],
+    providerKey: string,
+    catalogRecordsMap: Record<string, PycswDemCatalogRecord>
+  ): PosWithProvider[] {
+    const footprint = catalogRecordsMap[providerKey].footprint as Feature<Polygon>;
+
+    return positions.map((position) => {
+      if (!booleanPointInPolygon([position.longitude, position.latitude], footprint)) {
+        throw this.commonErrors.POINT_OUTSIDE_CATALOG_ITEM_COVERAGE;
+      }
       return { ...position, providerKey } as PosWithProvider;
     });
   }

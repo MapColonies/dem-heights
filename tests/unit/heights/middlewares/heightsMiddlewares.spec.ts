@@ -119,5 +119,48 @@ describe('Get heights middlewares', function () {
         reqValidateMiddleware(mockRequest, mockResponse, mockNext);
       }).toThrow(commonErrors.TOO_MANY_POINTS_ERROR);
     });
+
+    it('Should pass through when neither productId nor catalogProductType is given', function () {
+      mockRequest = { body: { positions: [{ longitude: 1, latitude: 1 }] }, query: {} } as unknown as Request;
+      expect(() => {
+        // @ts-ignore
+        reqValidateMiddleware(mockRequest, mockResponse, mockNext);
+      }).not.toThrow();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('Should pass through when both productId and catalogProductType are given', function () {
+      mockRequest = {
+        body: { positions: [{ longitude: 1, latitude: 1 }] },
+        query: { productId: 'prod-1', catalogProductType: 'DTM' },
+      } as unknown as Request;
+      expect(() => {
+        // @ts-ignore
+        reqValidateMiddleware(mockRequest, mockResponse, mockNext);
+      }).not.toThrow();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('Should throw MISSING_REQUIRED_PROPERTY when only productId is given', function () {
+      mockRequest = {
+        body: { positions: [{ longitude: 1, latitude: 1 }] },
+        query: { productId: 'prod-1' },
+      } as unknown as Request;
+      expect(() => {
+        // @ts-ignore
+        reqValidateMiddleware(mockRequest, mockResponse, mockNext);
+      }).toThrow(commonErrors.MISSING_REQUIRED_PROPERTY('catalogProductType'));
+    });
+
+    it('Should throw MISSING_REQUIRED_PROPERTY when only catalogProductType is given', function () {
+      mockRequest = {
+        body: { positions: [{ longitude: 1, latitude: 1 }] },
+        query: { catalogProductType: 'DTM' },
+      } as unknown as Request;
+      expect(() => {
+        // @ts-ignore
+        reqValidateMiddleware(mockRequest, mockResponse, mockNext);
+      }).toThrow(commonErrors.MISSING_REQUIRED_PROPERTY('productId'));
+    });
   });
 });

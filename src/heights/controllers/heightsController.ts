@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import { injectable, inject } from 'tsyringe';
 import { HeightsManager } from '../models/heightsManager';
-import { GeoPoint, PosWithHeight, TerrainTypes } from '../interfaces';
+import { CatalogItemSelector, GeoPoint, PosWithHeight, TerrainTypes } from '../interfaces';
 import { CommonErrors } from '../../common/commonErrors';
 
 export interface GetHeightsPointsRequest {
@@ -9,12 +9,17 @@ export interface GetHeightsPointsRequest {
   productType?: TerrainTypes;
 }
 
+export interface GetHeightsPointsQuery {
+  productId?: string;
+  catalogProductType?: TerrainTypes;
+}
+
 export interface GetHeightsPointsResponse {
   data: PosWithHeight[];
   products: Record<string, unknown>;
 }
 
-export type GetHeightsHandler = RequestHandler<undefined, GetHeightsPointsResponse | Uint8Array, GetHeightsPointsRequest>;
+export type GetHeightsHandler = RequestHandler<undefined, GetHeightsPointsResponse | Uint8Array, GetHeightsPointsRequest, GetHeightsPointsQuery>;
 
 @injectable()
 export class HeightsController {
@@ -26,10 +31,15 @@ export class HeightsController {
   public getPoints: GetHeightsHandler = async (req, res, next) => {
     try {
       const userInput = req.body;
+      const { productId, catalogProductType } = req.query;
       const reqCtx = res.locals.reqCtx as Record<string, unknown>;
       const DEFAULT_TERRAIN_TYPE = TerrainTypes.MIXED;
 
-      const heights = await this.manager.getPoints(userInput.positions, userInput.productType ?? DEFAULT_TERRAIN_TYPE, reqCtx);
+      // Both-or-neither is already enforced by validateRequestMiddleware.
+      const catalogItem: CatalogItemSelector | undefined =
+        productId !== undefined && catalogProductType !== undefined ? { productId, productType: catalogProductType } : undefined;
+
+      const heights = await this.manager.getPoints(userInput.positions, userInput.productType ?? DEFAULT_TERRAIN_TYPE, reqCtx, catalogItem);
 
       res.locals.positions = heights;
       next();
