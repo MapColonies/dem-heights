@@ -3,7 +3,7 @@ import client from 'prom-client';
 import { container, inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
-import PromisePool from '@supercharge/promise-pool/dist';
+import PromisePool from '@supercharge/promise-pool';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
 import { Feature } from '@turf/turf';
 import { CommonErrors } from '../../common/commonErrors';
