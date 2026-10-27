@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.2](https://github.com/MapColonies/dem-heights/compare/v3.1.1...v3.1.2) (2026-10-27)
+
+
+### Build System
+
+* bump release-please-action to v5 ([#70](https://github.com/MapColonies/dem-heights/issues/70)) ([0bcbb15](https://github.com/MapColonies/dem-heights/commit/0bcbb1554597104c9f7b473ac720a4ec7165e397))
+
 ## [3.1.1](https://github.com/MapColonies/dem-heights/compare/v3.1.0...v3.1.1) (2026-10-27)
 
 
