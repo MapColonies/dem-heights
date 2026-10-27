@@ -8,8 +8,52 @@ permissions:
   checks: write
 
 jobs:
+  changes:
+    # release-please opens its PR with GH_PAT, which triggers CI; it only bumps versions and the changelog.
+    # Every job needs this one, so skipping it skips them all.
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
+    runs-on: ubuntu-latest
+    outputs:
+      helm: ${{ steps.filter.outputs.helm }}
+      openapi: ${{ steps.filter.outputs.openapi }}
+      tests: ${{ steps.filter.outputs.tests }}
+      docker: ${{ steps.filter.outputs.docker }}
+      deps: ${{ steps.filter.outputs.deps }}
+    steps:
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            deps: &deps
+              - '.github/workflows/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - '.npmrc'
+            build: &build
+              - *deps
+              - 'src/**'
+              - 'config/**'
+              - 'openapi3.yaml'
+              - 'tsconfig*.json'
+            helm:
+              - '.github/workflows/**'
+              - 'helm/**'
+            openapi:
+              - *deps
+              - 'openapi3.yaml'
+              - '.redocly.yaml'
+            tests:
+              - *build
+              - 'tests/**'
+              - '.env'
+            docker:
+              - *build
+              - 'Dockerfile'
+              - '.dockerignore'
+
   eslint:
     name: Run eslint
+    needs: changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,6 +78,8 @@ jobs:
 
   openapi-lint:
     name: Run OpenAPI lint Check
+    needs: changes
+    if: ${{ needs.changes.outputs.openapi == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
@@ -47,6 +93,8 @@ jobs:
 
   helm-lint:
     name: Run Helm lint Check
+    needs: changes
+    if: ${{ needs.changes.outputs.helm == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
@@ -58,6 +106,8 @@ jobs:
         uses: MapColonies/shared-workflows/actions/helm-lint@helm-lint-v1
 
   security:
+    needs: changes
+    if: ${{ needs.changes.outputs.deps == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -69,6 +119,8 @@ jobs:
 
   tests:
     name: Run Tests
+    needs: changes
+    if: ${{ needs.changes.outputs.tests == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -91,6 +143,8 @@ jobs:
           path: reports/**
 
   build_docker_image:
+    needs: changes
+    if: ${{ needs.changes.outputs.docker == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
