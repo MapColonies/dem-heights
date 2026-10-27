@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.1](https://github.com/MapColonies/dem-heights/compare/v3.1.0...v3.1.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* document 400 responses and all error codes in openapi3.yaml ([#60](https://github.com/MapColonies/dem-heights/issues/60)) ([8af2ef8](https://github.com/MapColonies/dem-heights/commit/8af2ef887cb6626082a5464869d4150c15d0e2e5))
+* retry failed catalog sync with backoff ([#65](https://github.com/MapColonies/dem-heights/issues/65)) ([1f5425c](https://github.com/MapColonies/dem-heights/commit/1f5425ce73273761cc883c8bb0dbf65b27b5479c))
+* return the containing pixel's height (nearest neighbour) ([#62](https://github.com/MapColonies/dem-heights/issues/62)) ([74446ca](https://github.com/MapColonies/dem-heights/commit/74446ca9869bb008ad5b641946e76d234fa93383))
+
+
+### Code Refactoring
+
+* import promise-pool from package root ([#69](https://github.com/MapColonies/dem-heights/issues/69)) ([ca7490e](https://github.com/MapColonies/dem-heights/commit/ca7490e25f2601186ed764f570948d42fa70e140))
+* in-process catalog sync + concurrent provider opens (MAPCO-11560) ([#57](https://github.com/MapColonies/dem-heights/issues/57)) ([e427a8b](https://github.com/MapColonies/dem-heights/commit/e427a8b73e7de035ce2585ebe7cb6fe371a2a4ad))
+
 ## [3.1.0](https://github.com/MapColonies/dem-heights/compare/v3.0.4...v3.1.0) (2026-10-08)
 
 
