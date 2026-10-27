@@ -1,5 +1,5 @@
 import { fromUrl } from 'geotiff';
-import type { GeoTIFFImage } from 'geotiff';
+import type { GeoTIFFImage, Pool } from 'geotiff';
 import PromisePool from '@supercharge/promise-pool';
 import { GeoPoint } from '../interfaces';
 
@@ -26,13 +26,15 @@ export default class GeotiffHeightProvider {
     private readonly tileHeight: number,
     private readonly noData: number,
     private readonly samplingConcurrency: number,
-    private readonly cornerOffset: number
+    private readonly cornerOffset: number,
+    private readonly decoderPool?: Pool
   ) {}
 
   public static async fromUrl(
     url: string,
     headers?: Record<string, string>,
-    samplingConcurrency: number = DEFAULT_SAMPLING_CONCURRENCY
+    samplingConcurrency: number = DEFAULT_SAMPLING_CONCURRENCY,
+    decoderPool?: Pool
   ): Promise<GeotiffHeightProvider> {
     const tiff = await fromUrl(url, headers ? { headers } : {});
     const image = await tiff.getImage(0);
@@ -54,7 +56,8 @@ export default class GeotiffHeightProvider {
       image.getTileHeight(),
       noData,
       samplingConcurrency,
-      pixelIsPoint ? HALF_PIXEL : 0
+      pixelIsPoint ? HALF_PIXEL : 0,
+      decoderPool
     );
   }
 
@@ -85,7 +88,7 @@ export default class GeotiffHeightProvider {
         const y0 = Math.min(...group.map(({ pixel }) => pixel.row));
         const x1 = Math.max(...group.map(({ pixel }) => pixel.column)) + 1;
         const y1 = Math.max(...group.map(({ pixel }) => pixel.row)) + 1;
-        const raster = (await this.image.readRasters({ window: [x0, y0, x1, y1] })) as unknown as number[][];
+        const raster = (await this.image.readRasters({ window: [x0, y0, x1, y1], pool: this.decoderPool })) as unknown as number[][];
         const band = raster[0];
 
         for (const { index, pixel } of group) {

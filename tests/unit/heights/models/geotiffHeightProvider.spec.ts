@@ -160,6 +160,17 @@ describe('GeotiffHeightProvider', () => {
     expect(image.readRasters).not.toHaveBeenCalled();
   });
 
+  it('decodes through the given pool', async () => {
+    const image = makeImage();
+    fromUrl.mockResolvedValue({ getImage: jest.fn().mockResolvedValue(image) });
+    const pool = {};
+    const provider = await GeotiffHeightProvider.fromUrl('http://gw/cogs/x.tif', undefined, undefined, pool as never);
+
+    await provider.sample([at(5.5, 7.5)]);
+
+    expect(image.readRasters).toHaveBeenCalledWith(expect.objectContaining({ pool }));
+  });
+
   it('passes token headers through to fromUrl', async () => {
     fromUrl.mockResolvedValue({ getImage: jest.fn().mockResolvedValue(makeImage()) });
     // eslint-disable-next-line @typescript-eslint/naming-convention
