@@ -1,6 +1,6 @@
 import { fromUrl } from 'geotiff';
 import type { GeoTIFFImage } from 'geotiff';
-import PromisePool from '@supercharge/promise-pool/dist';
+import PromisePool from '@supercharge/promise-pool';
 import { GeoPoint } from '../interfaces';
 
 const DEFAULT_NODATA = -32768;
