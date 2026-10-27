@@ -2,7 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import { IConfig } from 'config';
 import { Logger } from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
-import PromisePool from '@supercharge/promise-pool/dist';
+import PromisePool from '@supercharge/promise-pool';
 import { HeightProviders } from '../interfaces';
 import { SERVICES } from '../../common/constants';
 import GeotiffHeightProvider from './geotiffHeightProvider';
