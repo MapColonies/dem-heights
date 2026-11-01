@@ -35,7 +35,6 @@ export class HeightsController {
       const reqCtx = res.locals.reqCtx as Record<string, unknown>;
       const DEFAULT_TERRAIN_TYPE = TerrainTypes.MIXED;
 
-      // Both-or-neither is already enforced by validateRequestMiddleware.
       const catalogItem: CatalogItemSelector | undefined =
         productId !== undefined && catalogProductType !== undefined ? { productId, productType: catalogProductType } : undefined;
 

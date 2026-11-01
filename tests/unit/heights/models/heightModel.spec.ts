@@ -162,8 +162,8 @@ describe('Get Heights model', function () {
       await expect(
         heightsManager.getPoints(
           [
-            { longitude: 11, latitude: 11 }, // inside
-            { longitude: 0, latitude: 0 }, // outside
+            { longitude: 11, latitude: 11 },
+            { longitude: 0, latitude: 0 },
           ],
           TerrainTypes.MIXED,
           undefined,

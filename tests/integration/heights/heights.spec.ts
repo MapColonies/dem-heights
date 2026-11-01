@@ -210,8 +210,7 @@ describe('heights', function () {
   });
 
   describe('Given a productId + catalogProductType selector (pinned catalog-item mode)', function () {
-    // Own catalog, own footprint area, kept separate from 'Given seeded geotiff providers' above so adding
-    // these records can't change which provider best-resolution auto-select picks for that block's test point.
+    // Separate footprint so these records can't change auto-select's pick in the block above.
     const pinnedFootprint = {
       type: 'Polygon',
       coordinates: [
@@ -245,7 +244,7 @@ describe('heights', function () {
         ...basePinnedRecord,
         id: 'pin-nonexact',
         productId: 'pinned_nonexact_product',
-        productType: 'QUANTIZED_MESH_DTM_BEST', // not literally 'DTM' — demonstrates the exact-match limitation (MAPCO-12427)
+        productType: 'QUANTIZED_MESH_DTM_BEST',
         links: [{ protocol: 'GEOTIFF', url: 'https://tiles-dev.mapcolonies.net/api/dem/v1/cogs/pin-nonexact.tif' }],
       },
       {
@@ -371,8 +370,8 @@ describe('heights', function () {
       const response = await requestSender.getPoints(
         {
           positions: [
-            { longitude: 11, latitude: 11 }, // inside
-            { longitude: 0, latitude: 0 }, // outside
+            { longitude: 11, latitude: 11 },
+            { longitude: 0, latitude: 0 },
           ],
         } as GetHeightsPointsRequest,
         { productId: 'pinned_dtm_product', catalogProductType: 'DTM' }

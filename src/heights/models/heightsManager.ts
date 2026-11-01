@@ -23,10 +23,6 @@ export interface IHeightModel {
   dem: number;
 }
 
-/**
- * Sorts best-first: highest resolution (lowest resolutionMeter) wins, ties broken by newest updateDate.
- * Shared by best-resolution auto-select and resolveCatalogItem's duplicate-productId tie-break.
- */
 export function compareCatalogRecordsByResolutionAndDate(recordA: PycswDemCatalogRecord, recordB: PycswDemCatalogRecord): number {
   const A_BEFORE_B = -1;
   const B_BEFORE_A = 1;
@@ -49,10 +45,7 @@ export type ResolvedCatalogItem =
   | { status: 'not_ready' }
   | { status: 'not_in_catalog' };
 
-/**
- * Exact match only: a record's stored productType must equal productType literally
- * (e.g. 'QUANTIZED_MESH_DTM_BEST' does not match 'DTM') — see MAPCO-12427 AC.
- */
+// Exact match: a stored 'QUANTIZED_MESH_DTM_BEST' does not match 'DTM' (MAPCO-12427).
 export function resolveCatalogItem(
   productId: string,
   productType: TerrainTypes,
@@ -297,11 +290,7 @@ export class HeightsManager {
     });
   }
 
-  /**
-   * Pinned-selector branch: every point must lie inside the one resolved record's footprint.
-   * Unlike best-resolution auto-select, a miss fails the whole request instead of yielding a
-   * null-height point (AC: no partial success for a pinned request).
-   */
+  // Unlike auto-select, a point outside the pinned footprint fails the whole request instead of getting a null height.
   private attachPinnedProviderToPositions(
     positions: GeoPoint[],
     providerKey: string,
