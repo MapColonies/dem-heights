@@ -25,6 +25,20 @@ export const validateRequestMiddleware: (config: IConfig, logger: Logger, common
       throw commonErrors.TOO_MANY_POINTS_ERROR;
     }
 
+    const { productId, catalogProductType } = req.query;
+    const hasProductId = productId !== undefined;
+    const hasCatalogProductType = catalogProductType !== undefined;
+    if (hasProductId !== hasCatalogProductType) {
+      const missingProperty = hasProductId ? 'catalogProductType' : 'productId';
+      logger.error({
+        msg: 'productId and catalogProductType must both be provided or both omitted',
+        missingProperty,
+        location: '[validateRequestMiddleware]',
+        ...res.locals.reqCtx,
+      });
+      throw commonErrors.MISSING_REQUIRED_PROPERTY(missingProperty);
+    }
+
     next();
   };
 };

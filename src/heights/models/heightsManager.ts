@@ -1,15 +1,16 @@
-import { Polygon } from 'geojson';
+import { MultiPolygon, Polygon } from 'geojson';
 import client from 'prom-client';
 import { container, inject, injectable } from 'tsyringe';
 import { Logger } from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import PromisePool from '@supercharge/promise-pool';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
-import { Feature } from '@turf/turf';
+import { CommonErrors } from '../../common/commonErrors';
 import { SERVICES } from '../../common/constants';
 import { IConfig } from '../../common/interfaces';
 import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../containerConfig';
-import { GeoPoint, HeightProviders, PosWithHeight, PosWithProvider, TerrainTypes } from '../interfaces';
+import { CatalogItemSelector, GeoPoint, HeightProviders, PosWithHeight, PosWithProvider, TerrainTypes } from '../interfaces';
+import { compareCatalogRecordsByResolutionAndDate, resolveCatalogItem } from '../utilities';
 import DEMTerrainCacheManager from './DEMTerrainCacheManager';
 import { CatalogRecords } from './catalogRecords';
 
@@ -39,6 +40,7 @@ export class HeightsManager {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.CONFIG) private readonly config: IConfig,
+    @inject(CommonErrors) private readonly commonErrors: CommonErrors,
     @inject(SERVICES.METRICS_REGISTRY) registry?: client.Registry
   ) {
     if (registry !== undefined) {
@@ -62,8 +64,13 @@ export class HeightsManager {
     }
   }
 
-  public async getPoints(points: GeoPoint[], requestedProductType: TerrainTypes, reqCtx?: Record<string, unknown>): Promise<PosWithHeight[]> {
-    this.logger.info({ pointsNumber: points.length, location: '[HeightsManager] [getPoints]', ...reqCtx });
+  public async getPoints(
+    points: GeoPoint[],
+    requestedProductType: TerrainTypes,
+    reqCtx?: Record<string, unknown>,
+    catalogItem?: CatalogItemSelector
+  ): Promise<PosWithHeight[]> {
+    this.logger.info({ pointsNumber: points.length, catalogItem, location: '[HeightsManager] [getPoints]', ...reqCtx });
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     this.elevationsRequestsCounter?.inc({ points_number: points.length });
@@ -74,7 +81,7 @@ export class HeightsManager {
 
     this.runningRequests++;
     try {
-      const result = await this.samplePositionsHeights(points, requestedProductType, reqCtx);
+      const result = await this.samplePositionsHeights(points, requestedProductType, reqCtx, catalogItem);
       this.logger.info({
         totalRequests: result.totalRequests,
         pointsNumber: points.length,
@@ -90,7 +97,8 @@ export class HeightsManager {
   private async samplePositionsHeights(
     positionsArr: GeoPoint[],
     requestedProductType: TerrainTypes,
-    reqCtx?: Record<string, unknown>
+    reqCtx?: Record<string, unknown>,
+    catalogItem?: CatalogItemSelector
   ): Promise<{ positions: PosWithHeight[]; totalRequests: number }> {
     // Snapshot the provider map and catalog once per request. Both are rebuilt wholesale on a
     // background timer; resolving them fresh per access could pair a providerKey chosen against
@@ -99,8 +107,41 @@ export class HeightsManager {
     const heightProviders = this.heightProviders;
     const catalogRecordsMap = this.catalogRecordsMap;
 
+    let pinnedProviderKey: string | undefined;
+    if (catalogItem !== undefined) {
+      const resolution = resolveCatalogItem(catalogItem.productId, catalogItem.productType, heightProviders, catalogRecordsMap);
+
+      if (resolution.status === 'not_in_catalog') {
+        this.logger.error({ msg: 'Unknown catalog item', catalogItem, location: '[HeightsManager] [samplePositionsHeights]', ...reqCtx });
+        throw this.commonErrors.UNKNOWN_CATALOG_ITEM;
+      }
+      if (resolution.status === 'not_ready') {
+        this.logger.error({
+          msg: 'Catalog item has no loaded provider',
+          catalogItem,
+          location: '[HeightsManager] [samplePositionsHeights]',
+          ...reqCtx,
+        });
+        throw this.commonErrors.CATALOG_ITEM_NOT_READY;
+      }
+      if (resolution.matchCount > 1) {
+        this.logger.warn({
+          msg: 'Multiple catalog items matched the given productId+catalogProductType; selected the best by resolution/date',
+          matchCount: resolution.matchCount,
+          selectedProviderKey: resolution.providerKey,
+          catalogItem,
+          location: '[HeightsManager] [samplePositionsHeights]',
+          ...reqCtx,
+        });
+      }
+      pinnedProviderKey = resolution.providerKey;
+    }
+
     const attachProviderStart = performance.now();
-    const positionsWithProviders = this.attachProviderToPositions(positionsArr, requestedProductType, heightProviders, catalogRecordsMap);
+    const positionsWithProviders =
+      pinnedProviderKey !== undefined
+        ? this.attachPinnedProviderToPositions(positionsArr, pinnedProviderKey, catalogRecordsMap, reqCtx)
+        : this.attachProviderToPositions(positionsArr, requestedProductType, heightProviders, catalogRecordsMap);
     this.logger.info({
       attachProviderTime: performance.now() - attachProviderStart,
       pointsNumber: positionsArr.length,
@@ -183,33 +224,42 @@ export class HeightsManager {
 
     return positions.map((position) => {
       const footprintFiltered = productTypeFiltered.filter(([key]) =>
-        booleanPointInPolygon([position.longitude, position.latitude], catalogRecordsMap[key].footprint as Feature<Polygon>)
+        booleanPointInPolygon([position.longitude, position.latitude], catalogRecordsMap[key].footprint as Polygon | MultiPolygon)
       );
 
-      const sorted = footprintFiltered.sort(([aKey], [bKey]) => {
-        const A_BEFORE_B = -1;
-        const B_BEFORE_A = 1;
-        const recordA = catalogRecordsMap[aKey];
-        const recordB = catalogRecordsMap[bKey];
-
-        switch (true) {
-          case (recordA.resolutionMeter as number) < (recordB.resolutionMeter as number):
-            return A_BEFORE_B;
-          case (recordA.resolutionMeter as number) > (recordB.resolutionMeter as number):
-            return B_BEFORE_A;
-          default: {
-            const dateB = new Date(recordB.updateDate as string | number | Date);
-            const dateA = new Date(recordA.updateDate as string | number | Date);
-            return dateB.getTime() - dateA.getTime();
-          }
-        }
-      });
+      const sorted = footprintFiltered.sort(([aKey], [bKey]) =>
+        compareCatalogRecordsByResolutionAndDate(catalogRecordsMap[aKey], catalogRecordsMap[bKey])
+      );
 
       if (sorted.length === 0) {
         return { ...position } as PosWithProvider;
       }
 
       const [providerKey] = sorted[0];
+      return { ...position, providerKey } as PosWithProvider;
+    });
+  }
+
+  // Unlike auto-select, a point outside the pinned footprint fails the whole request instead of getting a null height.
+  private attachPinnedProviderToPositions(
+    positions: GeoPoint[],
+    providerKey: string,
+    catalogRecordsMap: Record<string, PycswDemCatalogRecord>,
+    reqCtx?: Record<string, unknown>
+  ): PosWithProvider[] {
+    const footprint = catalogRecordsMap[providerKey].footprint as Polygon | MultiPolygon;
+
+    return positions.map((position) => {
+      if (!booleanPointInPolygon([position.longitude, position.latitude], footprint)) {
+        this.logger.error({
+          msg: 'Point is outside the catalog item coverage',
+          position,
+          providerKey,
+          location: '[HeightsManager] [attachPinnedProviderToPositions]',
+          ...reqCtx,
+        });
+        throw this.commonErrors.POINT_OUTSIDE_CATALOG_ITEM_COVERAGE;
+      }
       return { ...position, providerKey } as PosWithProvider;
     });
   }

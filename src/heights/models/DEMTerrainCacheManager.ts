@@ -5,10 +5,9 @@ import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import PromisePool from '@supercharge/promise-pool';
 import { Pool } from 'geotiff';
 import { HeightProviders } from '../interfaces';
-import { SERVICES } from '../../common/constants';
+import { GEOTIFF_PROTOCOL, SERVICES } from '../../common/constants';
 import GeotiffHeightProvider from './geotiffHeightProvider';
 
-const GEOTIFF_PROTOCOL = 'GEOTIFF';
 const COGS_FOLDER = 'cogs/';
 
 @injectable()

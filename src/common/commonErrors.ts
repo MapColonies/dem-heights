@@ -19,6 +19,9 @@ export enum CommonErrorCodes {
   EMPTY_POSITIONS_ARRAY = 'EMPTY_POSITIONS_ARRAY',
   MISSING_REQUIRED_PROPERTY = 'MISSING_REQUIRED_PROPERTY',
   INVALID_REQUEST = 'INVALID_REQUEST',
+  UNKNOWN_CATALOG_ITEM = 'UNKNOWN_CATALOG_ITEM',
+  CATALOG_ITEM_NOT_READY = 'CATALOG_ITEM_NOT_READY',
+  POINT_OUTSIDE_CATALOG_ITEM_COVERAGE = 'POINT_OUTSIDE_CATALOG_ITEM_COVERAGE',
 }
 
 export const commonErrorCodesToStatusMap = new Map([
@@ -27,6 +30,9 @@ export const commonErrorCodesToStatusMap = new Map([
   [CommonErrorCodes.EMPTY_POSITIONS_ARRAY, httpStatusCodes.BAD_REQUEST],
   [CommonErrorCodes.MISSING_REQUIRED_PROPERTY, httpStatusCodes.BAD_REQUEST],
   [CommonErrorCodes.INVALID_REQUEST, httpStatusCodes.BAD_REQUEST],
+  [CommonErrorCodes.UNKNOWN_CATALOG_ITEM, httpStatusCodes.BAD_REQUEST],
+  [CommonErrorCodes.CATALOG_ITEM_NOT_READY, httpStatusCodes.SERVICE_UNAVAILABLE],
+  [CommonErrorCodes.POINT_OUTSIDE_CATALOG_ITEM_COVERAGE, httpStatusCodes.BAD_REQUEST],
 ]);
 
 @singleton()
@@ -55,6 +61,34 @@ export class CommonErrors {
     const err = new Error(`Request's positions array must not be empty`) as HttpErrorWithCode;
     err.status = httpStatusCodes.BAD_REQUEST;
     err.errorCode = CommonErrorCodes.EMPTY_POSITIONS_ARRAY;
+    return err;
+  }
+
+  public get UNKNOWN_CATALOG_ITEM(): HttpErrorWithCode {
+    const err = new Error(`No catalog item with a GEOTIFF provider matches the given productId and catalogProductType`) as HttpErrorWithCode;
+    err.status = httpStatusCodes.BAD_REQUEST;
+    err.errorCode = CommonErrorCodes.UNKNOWN_CATALOG_ITEM;
+    return err;
+  }
+
+  public get CATALOG_ITEM_NOT_READY(): HttpErrorWithCode {
+    const err = new Error(`The selected catalog item exists but has no loaded provider yet`) as HttpErrorWithCode;
+    err.status = httpStatusCodes.SERVICE_UNAVAILABLE;
+    err.errorCode = CommonErrorCodes.CATALOG_ITEM_NOT_READY;
+    return err;
+  }
+
+  public get POINT_OUTSIDE_CATALOG_ITEM_COVERAGE(): HttpErrorWithCode {
+    const err = new Error(`A requested point is outside the selected catalog item's coverage`) as HttpErrorWithCode;
+    err.status = httpStatusCodes.BAD_REQUEST;
+    err.errorCode = CommonErrorCodes.POINT_OUTSIDE_CATALOG_ITEM_COVERAGE;
+    return err;
+  }
+
+  public MISSING_REQUIRED_PROPERTY(propertyName: string): HttpErrorWithCode {
+    const err = new Error(`Request's property ${propertyName} is a required property`) as HttpErrorWithCode;
+    err.status = httpStatusCodes.BAD_REQUEST;
+    err.errorCode = CommonErrorCodes.MISSING_REQUIRED_PROPERTY;
     return err;
   }
 
