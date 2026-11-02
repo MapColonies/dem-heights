@@ -1,13 +1,12 @@
 import { container } from 'tsyringe';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import { CommonErrorCodes } from '../../../../src/common/commonErrors';
-import { HeightsManager, compareCatalogRecordsByResolutionAndDate, resolveCatalogItem } from '../../../../src/heights/models/heightsManager';
+import { HeightsManager } from '../../../../src/heights/models/heightsManager';
 import mockJsonPoints, { positionsOutsideOfProviders, emptyPositionsRequest } from '../../../../src/heights/MOCKS/mockData';
 import { GetHeightsPointsRequest } from '../../../../src/heights/controllers/heightsController';
-import { HeightProviders, TerrainTypes } from '../../../../src/heights/interfaces';
+import { TerrainTypes } from '../../../../src/heights/interfaces';
 import { CATALOG_RECORDS_MAP, DEM_TERRAIN_CACHE_MANAGER } from '../../../../src/containerConfig';
 import DEMTerrainCacheManager from '../../../../src/heights/models/DEMTerrainCacheManager';
-import GeotiffHeightProvider from '../../../../src/heights/models/geotiffHeightProvider';
 import { CatalogRecords } from '../../../../src/heights/models/catalogRecords';
 import { registerTestValues } from '../../../configurations/testContainerConfig';
 
@@ -135,6 +134,45 @@ describe('Get Heights model', function () {
       expect(result[0].productId).toBe('pinned_prod');
     });
 
+    it('samples a pinned record whose footprint is a MultiPolygon', async function () {
+      const multiPolygonRecord = {
+        ...pinnedRecord,
+        footprint: {
+          type: 'MultiPolygon',
+          coordinates: [
+            pinnedFootprint.coordinates,
+            [
+              [
+                [20, 20],
+                [20, 22],
+                [22, 22],
+                [22, 20],
+                [20, 20],
+              ],
+            ],
+          ],
+        },
+      };
+      await container
+        .resolve<DEMTerrainCacheManager>(DEM_TERRAIN_CACHE_MANAGER)
+        .initProviders([multiPolygonRecord] as unknown as PycswDemCatalogRecord[]);
+      container
+        .resolve<CatalogRecords>(CATALOG_RECORDS_MAP)
+        .setValue({ [multiPolygonRecord.id]: multiPolygonRecord as unknown as PycswDemCatalogRecord });
+
+      const result = await heightsManager.getPoints(
+        [
+          { longitude: 11, latitude: 11 },
+          { longitude: 21, latitude: 21 },
+        ],
+        TerrainTypes.MIXED,
+        undefined,
+        { productId: 'pinned_prod', productType: TerrainTypes.DTM }
+      );
+
+      expect(result.map((position) => position.height)).toEqual([100, 100]);
+    });
+
     it('rejects with UNKNOWN_CATALOG_ITEM when the selector matches nothing', async function () {
       await expect(
         heightsManager.getPoints([{ longitude: 11, latitude: 11 }], TerrainTypes.MIXED, undefined, {
@@ -171,68 +209,5 @@ describe('Get Heights model', function () {
         )
       ).rejects.toMatchObject({ errorCode: CommonErrorCodes.POINT_OUTSIDE_CATALOG_ITEM_COVERAGE });
     });
-  });
-});
-
-describe('resolveCatalogItem', function () {
-  const makeRecord = (overrides: Record<string, unknown> = {}): PycswDemCatalogRecord =>
-    ({
-      productId: 'prod-1',
-      productType: 'DTM',
-      resolutionMeter: 30,
-      updateDate: '2023-01-01T00:00:00.000Z',
-      links: [{ protocol: 'GEOTIFF', url: 'https://x/cogs/a.tif' }],
-      ...overrides,
-    } as unknown as PycswDemCatalogRecord);
-
-  it('returns ready with the provider key for a single exact match', function () {
-    const catalogRecordsMap = { rec1: makeRecord() };
-    const heightProviders = { rec1: {} as GeotiffHeightProvider } as unknown as HeightProviders;
-
-    expect(resolveCatalogItem('prod-1', TerrainTypes.DTM, heightProviders, catalogRecordsMap)).toEqual({
-      status: 'ready',
-      providerKey: 'rec1',
-      matchCount: 1,
-    });
-  });
-
-  it('tie-breaks duplicate matches using the shared resolution/date comparator', function () {
-    const catalogRecordsMap = {
-      worse: makeRecord({ resolutionMeter: 100 }),
-      better: makeRecord({ resolutionMeter: 10 }),
-    };
-    const heightProviders = { worse: {} as GeotiffHeightProvider, better: {} as GeotiffHeightProvider } as unknown as HeightProviders;
-
-    const result = resolveCatalogItem('prod-1', TerrainTypes.DTM, heightProviders, catalogRecordsMap);
-
-    expect(result).toEqual({ status: 'ready', providerKey: 'better', matchCount: 2 });
-    expect(compareCatalogRecordsByResolutionAndDate(catalogRecordsMap.better, catalogRecordsMap.worse)).toBeLessThan(0);
-  });
-
-  it('returns not_ready when the matching record has a GEOTIFF link but no loaded provider', function () {
-    const catalogRecordsMap = { rec1: makeRecord() };
-
-    expect(resolveCatalogItem('prod-1', TerrainTypes.DTM, {} as unknown as HeightProviders, catalogRecordsMap)).toEqual({
-      status: 'not_ready',
-    });
-  });
-
-  it('returns not_in_catalog when the matching record has no GEOTIFF link', function () {
-    const catalogRecordsMap = { rec1: makeRecord({ links: [{ protocol: 'TERRAIN_QMESH', url: 'https://x' }] }) };
-
-    expect(resolveCatalogItem('prod-1', TerrainTypes.DTM, {} as unknown as HeightProviders, catalogRecordsMap)).toEqual({
-      status: 'not_in_catalog',
-    });
-  });
-
-  it('returns not_in_catalog when nothing matches', function () {
-    expect(resolveCatalogItem('missing', TerrainTypes.DTM, {} as unknown as HeightProviders, {})).toEqual({ status: 'not_in_catalog' });
-  });
-
-  it('returns not_in_catalog for a record whose stored productType is not exactly DSM/DTM', function () {
-    const catalogRecordsMap = { rec1: makeRecord({ productType: 'QUANTIZED_MESH_DTM_BEST' }) };
-    const heightProviders = { rec1: {} as GeotiffHeightProvider } as unknown as HeightProviders;
-
-    expect(resolveCatalogItem('prod-1', TerrainTypes.DTM, heightProviders, catalogRecordsMap)).toEqual({ status: 'not_in_catalog' });
   });
 });

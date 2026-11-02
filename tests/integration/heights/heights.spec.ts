@@ -55,6 +55,7 @@ describe('heights', function () {
         const response = await requestSender.getPoints(mockJsonData);
 
         expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
         expect(response.body).toHaveProperty('data');
         expect(response.body).toHaveProperty('products');
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
@@ -74,6 +75,7 @@ describe('heights', function () {
         });
 
         expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
         expect(response.body).toHaveProperty('data');
         expect(response.body).toHaveProperty('products');
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
@@ -89,6 +91,7 @@ describe('heights', function () {
         const response = await requestSender.getPoints({ positions: mockJsonData.positions } as GetHeightsPointsRequest);
 
         expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
       });
 
@@ -101,6 +104,7 @@ describe('heights', function () {
         });
 
         expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
         expect(response.body).toHaveProperty('data');
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonData.positions.length);
 
@@ -118,6 +122,7 @@ describe('heights', function () {
         const response = await requestSender.getPoints(mockJsonDataOutOfBounds);
 
         expect(response.status).toBe(httpStatusCodes.OK);
+        expect(response).toSatisfyApiSpec();
         expect(response.body).toHaveProperty('data');
         expect((response.body as GetHeightsPointsResponse).data).toHaveLength(mockJsonDataOutOfBounds.positions.length);
 
@@ -138,6 +143,7 @@ describe('heights', function () {
         const response = await requestSender.getPoints(mockJsonDataLowDensity);
 
         expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+        expect(response).toSatisfyApiSpec();
         expect(response.body).toHaveProperty('errorCode');
         expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.TOO_MANY_POINTS_ERROR);
       });
@@ -146,6 +152,7 @@ describe('heights', function () {
         const response = await requestSender.getPoints(emptyPositionsRequest);
 
         expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+        expect(response).toSatisfyApiSpec();
         expect(response.body).toHaveProperty('errorCode');
         expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.EMPTY_POSITIONS_ARRAY);
       });
@@ -198,6 +205,7 @@ describe('heights', function () {
       const response = await requestSender.getPoints({ positions: [{ longitude: 35.0, latitude: 32.5 }] } as GetHeightsPointsRequest);
 
       expect(response.status).toBe(httpStatusCodes.OK);
+      expect(response).toSatisfyApiSpec();
       const body = response.body as GetHeightsPointsResponse;
       expect(body.data).toHaveLength(1);
       expect(body.data[0].height).toBe(123);
@@ -305,6 +313,18 @@ describe('heights', function () {
       });
 
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response).toSatisfyApiSpec();
+      expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.INVALID_REQUEST);
+    });
+
+    it('returns 400 INVALID_REQUEST for an empty productId, rejected at the OpenAPI layer', async function () {
+      const response = await requestSender.getPoints({ positions: [{ longitude: 11, latitude: 11 }] } as GetHeightsPointsRequest, {
+        productId: '',
+        catalogProductType: 'DTM',
+      });
+
+      expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response).toSatisfyApiSpec();
       expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.INVALID_REQUEST);
     });
 
@@ -314,6 +334,7 @@ describe('heights', function () {
       });
 
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response).toSatisfyApiSpec();
       expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.MISSING_REQUIRED_PROPERTY);
     });
 
@@ -323,6 +344,7 @@ describe('heights', function () {
       });
 
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response).toSatisfyApiSpec();
       expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.MISSING_REQUIRED_PROPERTY);
     });
 
@@ -333,6 +355,7 @@ describe('heights', function () {
       });
 
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response).toSatisfyApiSpec();
       expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.UNKNOWN_CATALOG_ITEM);
     });
 
@@ -343,6 +366,7 @@ describe('heights', function () {
       });
 
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response).toSatisfyApiSpec();
       expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.UNKNOWN_CATALOG_ITEM);
     });
 
@@ -353,6 +377,7 @@ describe('heights', function () {
       });
 
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response).toSatisfyApiSpec();
       expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.UNKNOWN_CATALOG_ITEM);
     });
 
@@ -363,6 +388,7 @@ describe('heights', function () {
       });
 
       expect(response.status).toBe(httpStatusCodes.SERVICE_UNAVAILABLE);
+      expect(response).toSatisfyApiSpec();
       expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.CATALOG_ITEM_NOT_READY);
     });
 
@@ -378,6 +404,7 @@ describe('heights', function () {
       );
 
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response).toSatisfyApiSpec();
       expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.POINT_OUTSIDE_CATALOG_ITEM_COVERAGE);
     });
 
@@ -388,6 +415,7 @@ describe('heights', function () {
       );
 
       expect(response.status).toBe(httpStatusCodes.BAD_REQUEST);
+      expect(response).toSatisfyApiSpec();
       expect((response.body as HttpErrorWithCode).errorCode).toBe(CommonErrorCodes.INVALID_REQUEST);
     });
   });
