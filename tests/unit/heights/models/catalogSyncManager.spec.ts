@@ -211,27 +211,50 @@ describe('CatalogSyncManager', () => {
       expect(manager.isReady()).toBe(false);
     });
 
-    it('is false when records are loaded but no provider opened', () => {
-      jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockReturnValue(new Promise(() => undefined));
-      const catalogRecords = new CatalogRecords();
-      catalogRecords.setValue({ r1: RECORDS[0] });
+    it('is false while the catalog fetch keeps failing', async () => {
+      jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockRejectedValue(new Error('csw down'));
 
       manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
-      manager.start(catalogRecords, makeCacheManager().cacheManager);
+      manager.start(new CatalogRecords(), makeCacheManager().cacheManager);
+      await new Promise((resolve) => setImmediate(resolve));
 
       expect(manager.isReady()).toBe(false);
     });
 
-    it('is true when records and providers are loaded', () => {
-      jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockReturnValue(new Promise(() => undefined));
-      const catalogRecords = new CatalogRecords();
-      catalogRecords.setValue({ r1: RECORDS[0] });
-      const { cacheManager } = makeCacheManager();
-      cacheManager.heightProviders = { r1: {} as never };
+    it('is true after a successful fetch even when no provider opened', async () => {
+      jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockResolvedValue(RECORDS);
 
       manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
-      manager.start(catalogRecords, cacheManager);
+      manager.start(new CatalogRecords(), makeCacheManager(true).cacheManager);
+      await new Promise((resolve) => setImmediate(resolve));
 
+      expect(manager.isReady()).toBe(true);
+    });
+
+    it('is true after a successful fetch of an empty catalog', async () => {
+      jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockResolvedValue([]);
+
+      manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+      manager.start(new CatalogRecords(), makeCacheManager().cacheManager);
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(manager.isReady()).toBe(true);
+    });
+
+    it('stays true when a later fetch fails', async () => {
+      // run the retry immediately so the second fetch happens within the test
+      jest.spyOn(global, 'setTimeout').mockImplementationOnce((callback: () => void) => {
+        callback();
+        return undefined as unknown as NodeJS.Timeout;
+      });
+      const getRecords = jest.spyOn(CswClientWrapper.prototype, 'getRecords');
+      getRecords.mockResolvedValueOnce(RECORDS).mockRejectedValue(new Error('csw down'));
+
+      manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+      manager.start(new CatalogRecords(), makeCacheManager().cacheManager);
+      await new Promise((resolve) => setImmediate(resolve));
+
+      expect(getRecords).toHaveBeenCalledTimes(2);
       expect(manager.isReady()).toBe(true);
     });
   });

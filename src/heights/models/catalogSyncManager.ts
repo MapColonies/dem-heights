@@ -25,6 +25,7 @@ export class CatalogSyncManager {
   private timer: NodeJS.Timeout | undefined;
   private stopped = false;
   private consecutiveFailures = 0;
+  private catalogLoaded = false;
   private catalogRecords: CatalogRecords | undefined;
   private cacheManager: DEMTerrainCacheManager | undefined;
 
@@ -45,8 +46,9 @@ export class CatalogSyncManager {
     void this.syncOnce();
   }
 
+  // An empty catalog or failed COG opens still count as ready: clients get null heights instead of the Service losing every endpoint.
   public isReady(): boolean {
-    return Object.keys(this.cacheManager?.heightProviders ?? {}).length > 0;
+    return this.catalogLoaded;
   }
 
   public stop(): void {
@@ -77,6 +79,7 @@ export class CatalogSyncManager {
           await cacheManager.openMissingProviders(records);
         }
         providersIncomplete = cacheManager.hasMissingProviders(records);
+        this.catalogLoaded = true;
       }
       // Missing providers retry on the failure backoff, not the full interval.
       this.consecutiveFailures = providersIncomplete ? this.consecutiveFailures + 1 : 0;
