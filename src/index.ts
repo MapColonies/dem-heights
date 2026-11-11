@@ -21,7 +21,7 @@ getApp()
     const catalogSyncManager = container.resolve<CatalogSyncManager>(CATALOG_SYNC_MANAGER);
     const readinessCheck = async (): Promise<void> => {
       if (!catalogSyncManager.isReady()) {
-        throw new Error('catalog records or height providers not loaded');
+        throw new Error('height providers not loaded');
       }
       return Promise.resolve();
     };

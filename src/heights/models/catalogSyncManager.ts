@@ -46,9 +46,7 @@ export class CatalogSyncManager {
   }
 
   public isReady(): boolean {
-    const hasRecords = Object.keys(this.catalogRecords?.getValue() ?? {}).length > 0;
-    const hasProviders = Object.keys(this.cacheManager?.heightProviders ?? {}).length > 0;
-    return hasRecords && hasProviders;
+    return Object.keys(this.cacheManager?.heightProviders ?? {}).length > 0;
   }
 
   public stop(): void {
