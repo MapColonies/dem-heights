@@ -66,13 +66,15 @@ export class CatalogSyncManager {
       let providersIncomplete = false;
       if (catalogRecords && cacheManager) {
         const catalogChanged = !isSame(sortById(records), sortById(Object.values(catalogRecords.getValue())));
-        if (catalogChanged || cacheManager.hasMissingProviders(records)) {
+        if (catalogChanged) {
           // Rebuild providers before publishing the new catalog. Otherwise, during initProviders'
           // await window a reader sees the new catalog paired with stale providers, and a removed
           // record resolves to an undefined catalog entry (throws on .footprint access).
           await cacheManager.initProviders(records);
           catalogRecords.setValue(Object.fromEntries(records.map((record) => [record.id as string, record])));
           this.logger.info({ msg: `CatalogRecords UPDATED - ${records.length} records fetched`, location: '[CatalogSyncManager]' });
+        } else if (cacheManager.hasMissingProviders(records)) {
+          await cacheManager.openMissingProviders(records);
         }
         providersIncomplete = cacheManager.hasMissingProviders(records);
       }

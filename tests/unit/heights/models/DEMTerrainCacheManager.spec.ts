@@ -70,6 +70,29 @@ describe('DEMTerrainCacheManager', () => {
     expect(fromUrlSpy.mock.calls[0][3]).toBeUndefined();
   });
 
+  it('openMissingProviders opens only records without a provider and keeps the existing ones', async () => {
+    const records = [
+      { id: 'a', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/a.tif' }] },
+      { id: 'b', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/b.tif' }] },
+    ] as unknown as PycswDemCatalogRecord[];
+    const providerA = { id: 'a' } as unknown as GeotiffHeightProvider;
+    const providerB = { id: 'b' } as unknown as GeotiffHeightProvider;
+    const fromUrlSpy = jest
+      .spyOn(GeotiffHeightProvider, 'fromUrl')
+      .mockResolvedValueOnce(providerA)
+      .mockRejectedValueOnce(new Error('open failed'))
+      .mockResolvedValueOnce(providerB);
+
+    const manager = new DEMTerrainCacheManager(config, jsLogger({ enabled: false }));
+    await manager.initProviders(records);
+    await manager.openMissingProviders(records);
+
+    expect(fromUrlSpy).toHaveBeenCalledTimes(3);
+    expect(fromUrlSpy.mock.calls[2][0]).toContain('b.tif');
+    expect(manager.heightProviders).toEqual({ a: providerA, b: providerB });
+    expect(manager.heightProviders.a).toBe(providerA);
+  });
+
   describe('hasMissingProviders', () => {
     const records = [
       { id: 'a', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/a.tif' }] },

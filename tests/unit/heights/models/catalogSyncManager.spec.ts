@@ -9,10 +9,19 @@ import { syncRetryDelay } from '../../../../src/heights/utilities';
 
 const RECORDS = [{ id: 'r1', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/r1.tif' }] }] as unknown as PycswDemCatalogRecord[];
 
-function makeCacheManager(missingProviders = false): { cacheManager: DEMTerrainCacheManager; initProviders: jest.Mock } {
+function makeCacheManager(missingProviders = false): {
+  cacheManager: DEMTerrainCacheManager;
+  initProviders: jest.Mock;
+  openMissingProviders: jest.Mock;
+} {
   const initProviders = jest.fn().mockResolvedValue(undefined);
+  const openMissingProviders = jest.fn().mockResolvedValue(undefined);
   const hasMissingProviders = jest.fn().mockReturnValue(missingProviders);
-  return { cacheManager: { initProviders, hasMissingProviders, heightProviders: {} } as unknown as DEMTerrainCacheManager, initProviders };
+  return {
+    cacheManager: { initProviders, openMissingProviders, hasMissingProviders, heightProviders: {} } as unknown as DEMTerrainCacheManager,
+    initProviders,
+    openMissingProviders,
+  };
 }
 
 describe('CatalogSyncManager', () => {
@@ -155,17 +164,30 @@ describe('CatalogSyncManager', () => {
     expect(Object.keys(catalogRecords.getValue())).toEqual(['r1']);
   });
 
-  it('rebuilds providers for an unchanged catalog when some providers are missing', async () => {
+  it('opens only the missing providers for an unchanged catalog, without a full rebuild', async () => {
     jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockResolvedValue(RECORDS);
     const catalogRecords = new CatalogRecords();
     catalogRecords.setValue(Object.fromEntries(RECORDS.map((r) => [r.id as string, r])));
-    const { cacheManager, initProviders } = makeCacheManager(true);
+    const { cacheManager, initProviders, openMissingProviders } = makeCacheManager(true);
 
     manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
     manager.start(catalogRecords, cacheManager);
     await new Promise((resolve) => setImmediate(resolve));
 
+    expect(openMissingProviders).toHaveBeenCalledWith(RECORDS);
+    expect(initProviders).not.toHaveBeenCalled();
+  });
+
+  it('does a full rebuild when the catalog changed, even with providers missing', async () => {
+    jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockResolvedValue(RECORDS);
+    const { cacheManager, initProviders, openMissingProviders } = makeCacheManager(true);
+
+    manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+    manager.start(new CatalogRecords(), cacheManager);
+    await new Promise((resolve) => setImmediate(resolve));
+
     expect(initProviders).toHaveBeenCalledWith(RECORDS);
+    expect(openMissingProviders).not.toHaveBeenCalled();
   });
 
   it('retries with backoff while providers are still missing after a rebuild', async () => {
