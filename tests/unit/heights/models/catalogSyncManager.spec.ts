@@ -9,9 +9,10 @@ import { syncRetryDelay } from '../../../../src/heights/utilities';
 
 const RECORDS = [{ id: 'r1', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/r1.tif' }] }] as unknown as PycswDemCatalogRecord[];
 
-function makeCacheManager(): { cacheManager: DEMTerrainCacheManager; initProviders: jest.Mock } {
+function makeCacheManager(missingProviders = false): { cacheManager: DEMTerrainCacheManager; initProviders: jest.Mock } {
   const initProviders = jest.fn().mockResolvedValue(undefined);
-  return { cacheManager: { initProviders } as unknown as DEMTerrainCacheManager, initProviders };
+  const hasMissingProviders = jest.fn().mockReturnValue(missingProviders);
+  return { cacheManager: { initProviders, hasMissingProviders, heightProviders: {} } as unknown as DEMTerrainCacheManager, initProviders };
 }
 
 describe('CatalogSyncManager', () => {
@@ -144,7 +145,7 @@ describe('CatalogSyncManager', () => {
       expect(Object.keys(catalogRecords.getValue())).toEqual([]);
       await Promise.resolve();
     });
-    const cacheManager = { initProviders } as unknown as DEMTerrainCacheManager;
+    const cacheManager = { initProviders, hasMissingProviders: () => false } as unknown as DEMTerrainCacheManager;
 
     manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
     manager.start(catalogRecords, cacheManager);
@@ -152,5 +153,64 @@ describe('CatalogSyncManager', () => {
 
     expect(initProviders).toHaveBeenCalledWith(RECORDS);
     expect(Object.keys(catalogRecords.getValue())).toEqual(['r1']);
+  });
+
+  it('rebuilds providers for an unchanged catalog when some providers are missing', async () => {
+    jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockResolvedValue(RECORDS);
+    const catalogRecords = new CatalogRecords();
+    catalogRecords.setValue(Object.fromEntries(RECORDS.map((r) => [r.id as string, r])));
+    const { cacheManager, initProviders } = makeCacheManager(true);
+
+    manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+    manager.start(catalogRecords, cacheManager);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(initProviders).toHaveBeenCalledWith(RECORDS);
+  });
+
+  it('retries with backoff while providers are still missing after a rebuild', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockResolvedValue(RECORDS);
+    const interval = config.get<number>('synchRecordsInterval');
+
+    manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+    manager.start(new CatalogRecords(), makeCacheManager(true).cacheManager);
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), syncRetryDelay(1, interval));
+  });
+
+  describe('isReady', () => {
+    it('is false before the first sync', () => {
+      jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockReturnValue(new Promise(() => undefined));
+      manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+      expect(manager.isReady()).toBe(false);
+      manager.start(new CatalogRecords(), makeCacheManager().cacheManager);
+      expect(manager.isReady()).toBe(false);
+    });
+
+    it('is false when records are loaded but no provider opened', () => {
+      jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockReturnValue(new Promise(() => undefined));
+      const catalogRecords = new CatalogRecords();
+      catalogRecords.setValue({ r1: RECORDS[0] });
+
+      manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+      manager.start(catalogRecords, makeCacheManager().cacheManager);
+
+      expect(manager.isReady()).toBe(false);
+    });
+
+    it('is true when records and providers are loaded', () => {
+      jest.spyOn(CswClientWrapper.prototype, 'getRecords').mockReturnValue(new Promise(() => undefined));
+      const catalogRecords = new CatalogRecords();
+      catalogRecords.setValue({ r1: RECORDS[0] });
+      const { cacheManager } = makeCacheManager();
+      cacheManager.heightProviders = { r1: {} as never };
+
+      manager = new CatalogSyncManager(config, jsLogger({ enabled: false }));
+      manager.start(catalogRecords, cacheManager);
+
+      expect(manager.isReady()).toBe(true);
+    });
   });
 });

@@ -11,6 +11,8 @@ import GeotiffHeightProvider from './geotiffHeightProvider';
 const GEOTIFF_PROTOCOL = 'GEOTIFF';
 const COGS_FOLDER = 'cogs/';
 
+const hasGeotiffLink = (record: PycswDemCatalogRecord): boolean => record.links?.some((link) => link.protocol === GEOTIFF_PROTOCOL) ?? false;
+
 @injectable()
 export default class DEMTerrainCacheManager {
   public heightProviders: HeightProviders = {};
@@ -25,7 +27,7 @@ export default class DEMTerrainCacheManager {
   public async initProviders(demCatalogRecords: PycswDemCatalogRecord[]): Promise<void> {
     const heightProviders: HeightProviders = {};
 
-    const geotiffRecords = demCatalogRecords.filter((record) => record.links?.some((link) => link.protocol === GEOTIFF_PROTOCOL));
+    const geotiffRecords = demCatalogRecords.filter(hasGeotiffLink);
     const samplingConcurrency = Number(this.config.get<number>('samplingConcurrency'));
 
     // Open providers concurrently but bounded — each fromUrl is an independent gateway round-trip.
@@ -51,6 +53,10 @@ export default class DEMTerrainCacheManager {
       });
 
     this.heightProviders = heightProviders;
+  }
+
+  public hasMissingProviders(demCatalogRecords: PycswDemCatalogRecord[]): boolean {
+    return demCatalogRecords.some((record) => hasGeotiffLink(record) && !((record.id as string) in this.heightProviders));
   }
 
   private transformRouteToObjectUrl(linkUrl: string): string {

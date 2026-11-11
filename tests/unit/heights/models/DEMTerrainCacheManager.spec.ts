@@ -69,4 +69,31 @@ describe('DEMTerrainCacheManager', () => {
 
     expect(fromUrlSpy.mock.calls[0][3]).toBeUndefined();
   });
+
+  describe('hasMissingProviders', () => {
+    const records = [
+      { id: 'a', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/a.tif' }] },
+      { id: 'b', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/b.tif' }] },
+      { id: 'noGeotiff', links: [{ protocol: 'WMS', url: 'https://gw/wms' }] },
+    ] as unknown as PycswDemCatalogRecord[];
+
+    it('is true when a geotiff record has no provider', async () => {
+      jest
+        .spyOn(GeotiffHeightProvider, 'fromUrl')
+        .mockRejectedValueOnce(new Error('open failed'))
+        .mockResolvedValue({} as GeotiffHeightProvider);
+      const manager = new DEMTerrainCacheManager(config, jsLogger({ enabled: false }));
+      await manager.initProviders(records);
+
+      expect(manager.hasMissingProviders(records)).toBe(true);
+    });
+
+    it('is false when every geotiff record has a provider, ignoring records without a geotiff link', async () => {
+      jest.spyOn(GeotiffHeightProvider, 'fromUrl').mockResolvedValue({} as GeotiffHeightProvider);
+      const manager = new DEMTerrainCacheManager(config, jsLogger({ enabled: false }));
+      await manager.initProviders(records);
+
+      expect(manager.hasMissingProviders(records)).toBe(false);
+    });
+  });
 });
