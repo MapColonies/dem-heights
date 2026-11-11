@@ -66,7 +66,6 @@ export class CatalogSyncManager {
       let providersIncomplete = false;
       if (catalogRecords && cacheManager) {
         const catalogChanged = !isSame(sortById(records), sortById(Object.values(catalogRecords.getValue())));
-        // An unchanged catalog would otherwise never retry a COG that failed to open.
         if (catalogChanged || cacheManager.hasMissingProviders(records)) {
           // Rebuild providers before publishing the new catalog. Otherwise, during initProviders'
           // await window a reader sees the new catalog paired with stale providers, and a removed
