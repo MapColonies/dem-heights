@@ -25,6 +25,7 @@ export class CatalogSyncManager {
   private timer: NodeJS.Timeout | undefined;
   private stopped = false;
   private consecutiveFailures = 0;
+  private catalogLoaded = false;
   private catalogRecords: CatalogRecords | undefined;
   private cacheManager: DEMTerrainCacheManager | undefined;
 
@@ -45,6 +46,11 @@ export class CatalogSyncManager {
     void this.syncOnce();
   }
 
+  // An empty catalog or failed COG opens still count as ready: clients get null heights instead of the Service losing every endpoint.
+  public isReady(): boolean {
+    return this.catalogLoaded;
+  }
+
   public stop(): void {
     this.stopped = true;
     if (this.timer) {
@@ -59,15 +65,24 @@ export class CatalogSyncManager {
 
     try {
       const records = await this.fetchCatalogRecords();
-      if (catalogRecords && cacheManager && !isSame(sortById(records), sortById(Object.values(catalogRecords.getValue())))) {
-        // Rebuild providers before publishing the new catalog. Otherwise, during initProviders'
-        // await window a reader sees the new catalog paired with stale providers, and a removed
-        // record resolves to an undefined catalog entry (throws on .footprint access).
-        await cacheManager.initProviders(records);
-        catalogRecords.setValue(Object.fromEntries(records.map((record) => [record.id as string, record])));
-        this.logger.info({ msg: `CatalogRecords UPDATED - ${records.length} records fetched`, location: '[CatalogSyncManager]' });
+      let providersIncomplete = false;
+      if (catalogRecords && cacheManager) {
+        const catalogChanged = !isSame(sortById(records), sortById(Object.values(catalogRecords.getValue())));
+        if (catalogChanged) {
+          // Rebuild providers before publishing the new catalog. Otherwise, during initProviders'
+          // await window a reader sees the new catalog paired with stale providers, and a removed
+          // record resolves to an undefined catalog entry (throws on .footprint access).
+          await cacheManager.initProviders(records);
+          catalogRecords.setValue(Object.fromEntries(records.map((record) => [record.id as string, record])));
+          this.logger.info({ msg: `CatalogRecords UPDATED - ${records.length} records fetched`, location: '[CatalogSyncManager]' });
+        } else if (cacheManager.hasMissingProviders(records)) {
+          await cacheManager.openMissingProviders(records);
+        }
+        providersIncomplete = cacheManager.hasMissingProviders(records);
+        this.catalogLoaded = true;
       }
-      this.consecutiveFailures = 0;
+      // Missing providers retry on the failure backoff, not the full interval.
+      this.consecutiveFailures = providersIncomplete ? this.consecutiveFailures + 1 : 0;
     } catch (err) {
       this.consecutiveFailures++;
       this.logger.error({ msg: 'FETCH CatalogRecords ERROR', err, location: '[CatalogSyncManager]' });

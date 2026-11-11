@@ -79,6 +79,11 @@ spec:
           readinessProbe:
             initialDelaySeconds: {{ .Values.initialDelaySeconds }}
             httpGet:
+              path: /readiness
+              port: {{ .Values.env.targetPort }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.initialDelaySeconds }}
+            httpGet:
               path: /liveness
               port: {{ .Values.env.targetPort }}
           {{- if .Values.resources.enabled }}
