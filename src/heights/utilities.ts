@@ -18,3 +18,9 @@ export const isSame = (src1: any, src2: any): boolean => {
 export const syncRetryDelay = (consecutiveFailures: number, maxDelay: number): number => {
   return Math.min(FIRST_SYNC_RETRY_DELAY_MS * SYNC_RETRY_BACKOFF_FACTOR ** (consecutiveFailures - 1), maxDelay);
 };
+
+// add some random jitter to the delay
+export const jitteredRetryDelay = (consecutiveFailures: number, maxDelay: number): number => {
+  const delay = syncRetryDelay(consecutiveFailures, maxDelay);
+  return delay + Math.random() * delay;
+};
