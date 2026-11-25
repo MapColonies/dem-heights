@@ -31,4 +31,7 @@ data:
   S3_GATEWAY_DEM_URL: {{ .Values.env.s3GatewayDemUrl | quote }}
   SYNCH_RECORDS_INTERVAL: {{ .Values.env.synchRecordsInterval | quote }}
   MAXIMUM_TILES_PER_REQUEST: {{ .Values.env.maximumTilesPerRequest | quote }}
+  SAMPLING_CONCURRENCY: {{ .Values.env.samplingConcurrency | quote }}
+  DECODER_WORKERS: {{ .Values.env.decoderWorkers | quote }}
+  TILE_CACHE_SIZE_MB: {{ .Values.env.tileCacheSizeMb | quote }}
 {{- end }}
