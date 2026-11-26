@@ -10,6 +10,10 @@ export default class TileCache {
     this.tiles = new LRUCache<string, Tile>({ maxSize: maxBytes });
   }
 
+  public get size(): number {
+    return this.tiles.calculatedSize;
+  }
+
   public get(key: string): Tile | undefined {
     return this.tiles.get(key);
   }
@@ -17,9 +21,5 @@ export default class TileCache {
   // A tile larger than the whole budget is not stored.
   public set(key: string, tile: Tile, bytes: number): void {
     this.tiles.set(key, tile, { size: bytes });
-  }
-
-  public get size(): number {
-    return this.tiles.calculatedSize;
   }
 }
