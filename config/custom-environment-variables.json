@@ -64,5 +64,6 @@
   "productMetadataFields": "productType,updateDate,resolutionMeter,absoluteAccuracyLEP90",
   "maximumTilesPerRequest": "MAXIMUM_TILES_PER_REQUEST",
   "samplingConcurrency": "SAMPLING_CONCURRENCY",
-  "decoderWorkers": "DECODER_WORKERS"
+  "decoderWorkers": "DECODER_WORKERS",
+  "tileCacheSizeMb": "TILE_CACHE_SIZE_MB"
 }

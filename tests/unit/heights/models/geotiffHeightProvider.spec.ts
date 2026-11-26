@@ -1,4 +1,5 @@
 import GeotiffHeightProvider from '../../../../src/heights/models/geotiffHeightProvider';
+import TileCache from '../../../../src/heights/models/tileCache';
 
 jest.mock('geotiff', () => ({
   fromUrl: jest.fn(),
@@ -93,7 +94,7 @@ describe('GeotiffHeightProvider', () => {
 
       expect(heights).toEqual([linearGrid(0, 7), linearGrid(SIZE - 1, 7), linearGrid(5, SIZE - 1)]);
       const windows = edgeImage.readRasters.mock.calls.map(([options]) => options.window);
-      expect(windows).toContainEqual([SIZE - 1, 7, SIZE, 8]);
+      expect(windows).toContainEqual([96, 0, SIZE, TILE]);
     });
 
     it('returns null for a point outside the raster', async () => {
@@ -148,6 +149,61 @@ describe('GeotiffHeightProvider', () => {
 
     expect(image.readRasters).toHaveBeenCalledTimes(2);
     expect(heights).toEqual([linearGrid(1, 1), linearGrid(3, 7), linearGrid(15, 4), linearGrid(17, 1), linearGrid(20, 5)]);
+  });
+
+  describe('tile cache', () => {
+    const MB = 1024 * 1024;
+    async function cachedProvider(image: ReturnType<typeof makeImage>, cache: TileCache, key: string): Promise<GeotiffHeightProvider> {
+      fromUrl.mockResolvedValue({ getImage: jest.fn().mockResolvedValue(image) });
+      return GeotiffHeightProvider.fromUrl('http://gw/cogs/x.tif', undefined, undefined, undefined, cache, key);
+    }
+
+    it('reads a tile once across calls and answers later calls from the cache', async () => {
+      const image = makeImage();
+      const provider = await cachedProvider(image, new TileCache(MB), 'a');
+
+      const first = await provider.sample([at(1.5, 1.5)]);
+      const second = await provider.sample([at(3.2, 7.9), at(15.9, 4.2)]);
+
+      expect(image.readRasters).toHaveBeenCalledTimes(1);
+      expect(first).toEqual([linearGrid(1, 1)]);
+      expect(second).toEqual([linearGrid(3, 7), linearGrid(15, 4)]);
+    });
+
+    it('reads again on every call without a cache', async () => {
+      const image = makeImage();
+      const provider = await providerFor(image);
+
+      await provider.sample([at(1.5, 1.5)]);
+      await provider.sample([at(1.5, 1.5)]);
+
+      expect(image.readRasters).toHaveBeenCalledTimes(2);
+    });
+
+    it('keeps tiles of providers with different keys apart', async () => {
+      const cache = new TileCache(MB);
+      const older = await cachedProvider(makeImage(), cache, 'record@1');
+      const newerImage = makeImage((column, row) => -linearGrid(column, row));
+      const newer = await cachedProvider(newerImage, cache, 'record@2');
+
+      await older.sample([at(5.5, 7.5)]);
+      const [height] = await newer.sample([at(5.5, 7.5)]);
+
+      expect(newerImage.readRasters).toHaveBeenCalledTimes(1);
+      expect(height).toBe(-linearGrid(5, 7));
+    });
+
+    it('does not cache a failed read', async () => {
+      const image = makeImage();
+      image.readRasters.mockRejectedValueOnce(new Error('gateway down'));
+      const provider = await cachedProvider(image, new TileCache(MB), 'a');
+
+      await expect(provider.sample([at(5.5, 7.5)])).rejects.toThrow('gateway down');
+      const [height] = await provider.sample([at(5.5, 7.5)]);
+
+      expect(height).toBe(linearGrid(5, 7));
+      expect(image.readRasters).toHaveBeenCalledTimes(2);
+    });
   });
 
   it('does not read for points outside the raster', async () => {

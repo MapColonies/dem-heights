@@ -2,6 +2,7 @@ import { fromUrl } from 'geotiff';
 import type { GeoTIFFImage, Pool } from 'geotiff';
 import PromisePool from '@supercharge/promise-pool';
 import { GeoPoint } from '../interfaces';
+import TileCache, { Tile } from './tileCache';
 
 const DEFAULT_NODATA = -32768;
 const DEFAULT_SAMPLING_CONCURRENCY = 16;
@@ -27,14 +28,18 @@ export default class GeotiffHeightProvider {
     private readonly noData: number,
     private readonly samplingConcurrency: number,
     private readonly cornerOffset: number,
-    private readonly decoderPool?: Pool
+    private readonly cacheKey: string,
+    private readonly decoderPool?: Pool,
+    private readonly tileCache?: TileCache
   ) {}
 
   public static async fromUrl(
     url: string,
     headers?: Record<string, string>,
     samplingConcurrency: number = DEFAULT_SAMPLING_CONCURRENCY,
-    decoderPool?: Pool
+    decoderPool?: Pool,
+    tileCache?: TileCache,
+    cacheKey: string = url
   ): Promise<GeotiffHeightProvider> {
     const tiff = await fromUrl(url, headers ? { headers } : {});
     const image = await tiff.getImage(0);
@@ -57,23 +62,27 @@ export default class GeotiffHeightProvider {
       noData,
       samplingConcurrency,
       pixelIsPoint ? HALF_PIXEL : 0,
-      decoderPool
+      cacheKey,
+      decoderPool,
+      tileCache
     );
   }
 
   public async sample(points: GeoPoint[]): Promise<(number | null)[]> {
     const heights = new Array<number | null>(points.length).fill(null);
 
-    // One read per internal tile: points in the same tile share a window, so the tile is fetched and decoded once.
-    const groups = new Map<string, { index: number; pixel: PixelIndex }[]>();
+    // One read per internal tile: points in the same tile share it, so the tile is fetched and decoded once.
+    const groups = new Map<string, { tileX: number; tileY: number; points: { index: number; pixel: PixelIndex }[] }>();
     points.forEach((point, index) => {
       const pixel = this.locate(point);
       if (pixel === null) {
         return;
       }
-      const key = `${Math.floor(pixel.column / this.tileWidth)}:${Math.floor(pixel.row / this.tileHeight)}`;
-      const group = groups.get(key) ?? [];
-      group.push({ index, pixel });
+      const tileX = Math.floor(pixel.column / this.tileWidth);
+      const tileY = Math.floor(pixel.row / this.tileHeight);
+      const key = `${tileX}:${tileY}`;
+      const group = groups.get(key) ?? { tileX, tileY, points: [] };
+      group.points.push({ index, pixel });
       groups.set(key, group);
     });
 
@@ -83,21 +92,32 @@ export default class GeotiffHeightProvider {
       .handleError((error) => {
         throw error;
       })
-      .process(async (group) => {
-        const x0 = Math.min(...group.map(({ pixel }) => pixel.column));
-        const y0 = Math.min(...group.map(({ pixel }) => pixel.row));
-        const x1 = Math.max(...group.map(({ pixel }) => pixel.column)) + 1;
-        const y1 = Math.max(...group.map(({ pixel }) => pixel.row)) + 1;
-        const raster = (await this.image.readRasters({ window: [x0, y0, x1, y1], pool: this.decoderPool })) as unknown as number[][];
-        const band = raster[0];
+      .process(async ({ tileX, tileY, points: tilePoints }) => {
+        const x0 = tileX * this.tileWidth;
+        const y0 = tileY * this.tileHeight;
+        const width = Math.min(x0 + this.tileWidth, this.rasterWidth) - x0;
+        const tile = await this.readTile(tileX, tileY, x0, y0, width);
 
-        for (const { index, pixel } of group) {
-          const value = band[(pixel.row - y0) * (x1 - x0) + (pixel.column - x0)];
+        for (const { index, pixel } of tilePoints) {
+          const value = tile[(pixel.row - y0) * width + (pixel.column - x0)];
           heights[index] = value === this.noData || Number.isNaN(value) ? null : value;
         }
       });
 
     return heights;
+  }
+
+  private async readTile(tileX: number, tileY: number, x0: number, y0: number, width: number): Promise<Tile> {
+    const key = `${this.cacheKey}|${tileX}:${tileY}`;
+    const cached = this.tileCache?.get(key);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const window = [x0, y0, x0 + width, Math.min(y0 + this.tileHeight, this.rasterHeight)];
+    const raster = (await this.image.readRasters({ window, pool: this.decoderPool })) as unknown as Tile[];
+    const band = raster[0];
+    this.tileCache?.set(key, band, (band as Partial<Float64Array>).byteLength ?? band.length * Float64Array.BYTES_PER_ELEMENT);
+    return band;
   }
 
   private locate(point: GeoPoint): PixelIndex | null {

@@ -7,19 +7,24 @@ import { Pool } from 'geotiff';
 import { HeightProviders } from '../interfaces';
 import { SERVICES } from '../../common/constants';
 import GeotiffHeightProvider from './geotiffHeightProvider';
+import TileCache from './tileCache';
 
 const GEOTIFF_PROTOCOL = 'GEOTIFF';
 const COGS_FOLDER = 'cogs/';
+const BYTES_PER_MB = 1_048_576;
 
 @injectable()
 export default class DEMTerrainCacheManager {
   public heightProviders: HeightProviders = {};
   private readonly decoderPool?: Pool;
+  private readonly tileCache?: TileCache;
 
   public constructor(@inject(SERVICES.CONFIG) private readonly config: IConfig, @inject(SERVICES.LOGGER) private readonly logger: Logger) {
     const decoderWorkers = Number(this.config.get<number>('decoderWorkers'));
     // Tile decoding is CPU-bound; on the main thread a large request blocks the event loop, readiness probe included.
     this.decoderPool = decoderWorkers > 0 ? new Pool(decoderWorkers) : undefined;
+    const tileCacheSizeMb = Number(this.config.get<number>('tileCacheSizeMb'));
+    this.tileCache = tileCacheSizeMb > 0 ? new TileCache(tileCacheSizeMb * BYTES_PER_MB) : undefined;
   }
 
   public async initProviders(demCatalogRecords: PycswDemCatalogRecord[]): Promise<void> {
@@ -47,7 +52,16 @@ export default class DEMTerrainCacheManager {
         }
         const objectUrl = this.transformRouteToObjectUrl(link.url as string);
         const { url, headers } = this.buildAuthenticatedUrl(objectUrl);
-        heightProviders[record.id as string] = await GeotiffHeightProvider.fromUrl(url, headers, samplingConcurrency, this.decoderPool);
+        // A republished record gets a new updateDate, so its tiles never come from the old file.
+        const cacheKey = `${record.id as string}@${String(record.updateDate)}`;
+        heightProviders[record.id as string] = await GeotiffHeightProvider.fromUrl(
+          url,
+          headers,
+          samplingConcurrency,
+          this.decoderPool,
+          this.tileCache,
+          cacheKey
+        );
       });
 
     this.heightProviders = heightProviders;

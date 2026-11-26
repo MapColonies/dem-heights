@@ -3,6 +3,7 @@ import jsLogger from '@map-colonies/js-logger';
 import { PycswDemCatalogRecord } from '@map-colonies/mc-model-types';
 import DEMTerrainCacheManager from '../../../../src/heights/models/DEMTerrainCacheManager';
 import GeotiffHeightProvider from '../../../../src/heights/models/geotiffHeightProvider';
+import TileCache from '../../../../src/heights/models/tileCache';
 
 describe('DEMTerrainCacheManager', () => {
   afterEach(() => jest.restoreAllMocks());
@@ -68,5 +69,35 @@ describe('DEMTerrainCacheManager', () => {
     await manager.initProviders(records);
 
     expect(fromUrlSpy.mock.calls[0][3]).toBeUndefined();
+  });
+
+  it('shares one tile cache across providers and keys each by record id and update date', async () => {
+    const records = [
+      { id: 'a', updateDate: '2026-01-01T00:00:00.000Z', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/a.tif' }] },
+      { id: 'b', updateDate: '2026-02-01T00:00:00.000Z', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/b.tif' }] },
+    ] as unknown as PycswDemCatalogRecord[];
+    const fromUrlSpy = jest.spyOn(GeotiffHeightProvider, 'fromUrl').mockResolvedValue({} as GeotiffHeightProvider);
+
+    const manager = new DEMTerrainCacheManager(config, jsLogger({ enabled: false }));
+    await manager.initProviders(records);
+
+    const caches = fromUrlSpy.mock.calls.map((call) => call[4]);
+    expect(caches[0]).toBeInstanceOf(TileCache);
+    expect(caches[1]).toBe(caches[0]);
+    expect(fromUrlSpy.mock.calls.map((call) => call[5]).sort((first, second) => String(first).localeCompare(String(second)))).toEqual([
+      'a@2026-01-01T00:00:00.000Z',
+      'b@2026-02-01T00:00:00.000Z',
+    ]);
+  });
+
+  it('passes no tile cache when tileCacheSizeMb is 0', async () => {
+    const records = [{ id: 'a', links: [{ protocol: 'GEOTIFF', url: 'https://gw/cogs/a.tif' }] }] as unknown as PycswDemCatalogRecord[];
+    const fromUrlSpy = jest.spyOn(GeotiffHeightProvider, 'fromUrl').mockResolvedValue({} as GeotiffHeightProvider);
+    const noCache = { ...config, get: <T>(key: string): T => (key === 'tileCacheSizeMb' ? 0 : config.get<T>(key)) as T };
+
+    const manager = new DEMTerrainCacheManager(noCache as typeof config, jsLogger({ enabled: false }));
+    await manager.initProviders(records);
+
+    expect(fromUrlSpy.mock.calls[0][4]).toBeUndefined();
   });
 });

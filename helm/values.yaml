@@ -58,6 +58,11 @@ env:
   s3GatewayDemUrl: ''
   synchRecordsInterval: 600000
   maximumTilesPerRequest: 250
+  samplingConcurrency: 16
+  # Worker threads that decode COG tiles; 0 decodes on the main thread. Each busy worker uses a full CPU.
+  decoderWorkers: 2
+  # Decoded tiles kept in memory; 0 turns the cache off. Counts against resources.value.limits.memory.
+  tileCacheSizeMb: 128
 
 resources:
   enabled: true

@@ -52,5 +52,6 @@
   "productMetadataFields": "productType,updateDate,resolutionMeter,absoluteAccuracyLEP90",
   "maximumTilesPerRequest": 150,
   "samplingConcurrency": 16,
-  "decoderWorkers": 2
+  "decoderWorkers": 2,
+  "tileCacheSizeMb": 128
 }
